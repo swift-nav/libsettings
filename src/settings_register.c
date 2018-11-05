@@ -167,6 +167,8 @@ struct setreg_s {
   bool write_callback_registered;
   bool write_resp_callback_registered;
   bool read_resp_callback_registered;
+  sbp_msg_callbacks_node_t *write_cb_node;
+  sbp_msg_callbacks_node_t *write_resp_cb_node;
   sbp_msg_callbacks_node_t *read_resp_cb_node;
 };
 
@@ -566,7 +568,7 @@ static int settings_register_write_callback(setreg_t *ctx)
                                SBP_MSG_SETTINGS_WRITE,
                                settings_write_callback,
                                ctx,
-                               NULL)
+                               &ctx->write_cb_node)
         != 0) {
       setreg_api.log(log_err, "error registering settings write callback");
       return -1;
@@ -632,7 +634,7 @@ static int settings_register_write_resp_callback(setreg_t *ctx)
                                SBP_MSG_SETTINGS_WRITE_RESP,
                                settings_write_resp_callback,
                                ctx,
-                               NULL)
+                               &ctx->write_resp_cb_node)
         != 0) {
       setreg_api.log(log_err, "error registering settings write resp callback");
       return -1;
