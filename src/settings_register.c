@@ -68,6 +68,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -680,7 +681,7 @@ static int int_to_string(const void *priv, char *str, int slen, const void *blob
   case 2:
     return snprintf(str, slen, "%hd", *(s16 *)blob);
   case 4:
-    return snprintf(str, slen, "%d", *(s32 *)blob);
+    return snprintf(str, slen, "%" PRId32, *(s32 *)blob);
   default:
     return -1;
   }
@@ -703,7 +704,7 @@ static bool int_from_string(const void *priv, void *blob, int blen, const char *
   case 2:
     return sscanf(str, "%hd", (s16 *)blob) == 1;
   case 4:
-    return sscanf(str, "%d", (s32 *)blob) == 1;
+    return sscanf(str, "%" PRId32, (s32 *)blob) == 1;
   default:
     return false;
   }
