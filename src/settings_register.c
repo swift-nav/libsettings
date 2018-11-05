@@ -215,6 +215,7 @@ static int setting_send_write_response(msg_settings_write_resp_t *write_response
 static void compare_init(setreg_t *ctx, const char *data, size_t data_len)
 {
   registration_state_t *r = &ctx->registration_state;
+  memset(r, 0, sizeof(registration_state_t));
 
   assert(data_len <= sizeof(r->compare_data));
 
@@ -232,7 +233,12 @@ static void compare_init(setreg_t *ctx, const char *data, size_t data_len)
  */
 static void compare_check(setreg_t *ctx, const char *data, size_t data_len)
 {
+  assert(ctx);
+  assert(data);
+
   registration_state_t *r = &ctx->registration_state;
+
+  assert(r);
 
   if (!r->pending) {
     return;
@@ -527,6 +533,9 @@ static int settings_update_watch_only(setreg_t *ctx, char *msg, uint8_t len)
 static void settings_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t msg[], void *context)
 {
   (void)sender_id;
+  assert(msg);
+  assert(context);
+
   setreg_t *ctx = (setreg_t *)context;
   msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
@@ -913,17 +922,24 @@ static void setting_data_members_destroy(setting_data_t *setting_data)
  */
 static void setting_data_list_remove(setreg_t *ctx, setting_data_t **setting_data)
 {
-  if (ctx->setting_data_list != NULL) {
-    setting_data_t *s;
-    /* Find element before the one to remove */
-    for (s = ctx->setting_data_list; s->next != NULL; s = s->next) {
-      if (s->next == *setting_data) {
-        setting_data_members_destroy(s->next);
-        free(s->next);
-        *setting_data = NULL;
-        s->next = s->next->next;
-      }
+  if (ctx->setting_data_list == NULL) {
+    return;
+  }
+
+  setting_data_t *s;
+  /* Find element before the one to remove */
+  for (s = ctx->setting_data_list; s->next != NULL; s = s->next) {
+    if (s->next != *setting_data) {
+      continue;
     }
+
+    struct setting_data_s *to_be_freed = s->next;
+
+    *setting_data = NULL;
+    s->next = s->next->next;
+
+    setting_data_members_destroy(to_be_freed);
+    free(to_be_freed);
   }
 }
 
