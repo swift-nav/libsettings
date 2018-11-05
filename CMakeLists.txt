@@ -97,9 +97,14 @@ endif ()
 # Targets
 ################################################################################
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-  include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
-  add_subdirectory(libsbp/c)
-endif()
+if (LIBSBP_SEARCH_PATH)
+  include_directories("${LIBSBP_SEARCH_PATH}/include")
+  link_directories(LIBSBP_SEARCH_PATH/src)
+else (LIBSBP_SEARCH_PATH)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
+    include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
+    add_subdirectory(libsbp/c)
+  endif()
+endif(LIBSBP_SEARCH_PATH)
 
 add_subdirectory(src)
