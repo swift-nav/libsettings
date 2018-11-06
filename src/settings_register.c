@@ -80,16 +80,17 @@
 
 #include <libsettings/settings_register.h>
 
-#define REGISTER_TIMEOUT_MS 100
+#define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
 
-#define WATCH_INIT_TIMEOUT_MS 100
+#define WATCH_INIT_TIMEOUT_MS 500
 #define WATCH_INIT_TRIES 5
 
 #define SBP_PAYLOAD_SIZE_MAX 255
 
 static uint16_t sys_sender_id = -1;
-void sbp_sys_sender_id_set(uint16_t id)
+
+void settings_sender_id_set(uint16_t id)
 {
   sys_sender_id = id;
 }
@@ -178,8 +179,10 @@ static setreg_api_t setreg_api = {
   .ctx = NULL,
   .send = NULL,
   .send_from = NULL,
-  .wait_resp = NULL,
-  .signal_resp = NULL,
+  .wait_init = NULL,
+  .wait = NULL,
+  .wait_deinit = NULL,
+  .signal = NULL,
   .register_cb = NULL,
   .unregister_cb = NULL,
 };
@@ -200,7 +203,7 @@ static int setting_send_write_response(msg_settings_write_resp_t *write_response
 {
   if (setreg_api.send(setreg_api.ctx, SBP_MSG_SETTINGS_WRITE_RESP, len, (uint8_t *)write_response)
       != 0) {
-    setreg_api.log(log_err, "error sending settings write response");
+    setreg_api.log(log_err, "sending settings write response failed");
     return -1;
   }
   return 0;
@@ -230,8 +233,9 @@ static void compare_init(setreg_t *ctx, const char *data, size_t data_len)
  * @param ctx: settings context
  * @param data: settings message payload string to match with header string
  * @param data_len: length of payload string
+ * @return 0 for match, 1 no comparison pending, -1 for comparison failure
  */
-static void compare_check(setreg_t *ctx, const char *data, size_t data_len)
+static int compare_check(setreg_t *ctx, const char *data, size_t data_len)
 {
   assert(ctx);
   assert(data);
@@ -241,15 +245,18 @@ static void compare_check(setreg_t *ctx, const char *data, size_t data_len)
   assert(r);
 
   if (!r->pending) {
-    return;
+    return 1;
   }
 
   if ((data_len >= r->compare_data_len)
       && (memcmp(data, r->compare_data, r->compare_data_len) == 0)) {
     r->match = true;
     r->pending = false;
-    setreg_api.signal_resp(setreg_api.ctx);
+    setreg_api.signal(setreg_api.ctx);
+    return 0;
   }
+
+  return -1;
 }
 
 /**
@@ -285,16 +292,26 @@ static void setting_update_value(setting_data_t *setting_data, const char *value
     /* Revert value if conversion fails */
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
     *write_result = SBP_SETTINGS_WRITE_STATUS_PARSE_FAILED;
-  } else if (setting_data->notify != NULL) {
-    /* Call notify function */
-    int notify_response = setting_data->notify(setting_data->notify_context);
-    if (notify_response != SBP_SETTINGS_WRITE_STATUS_OK) {
-      if (!setting_data->watchonly) {
-        /* Revert value if notify returns error */
-        memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
-        *write_result = notify_response;
-      }
-    }
+    return;
+  }
+  
+  if (NULL == setting_data->notify) {
+    return;
+  }
+
+  /* Call notify function */
+  int notify_response = setting_data->notify(setting_data->notify_context);
+
+  if (setting_data->watchonly) {
+    /* No need for actions */
+    return;
+  }
+
+  if (notify_response != SBP_SETTINGS_WRITE_STATUS_OK)
+  {
+    /* Revert value if notify returns error */
+    memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
+    *write_result = notify_response;
   }
 }
 
@@ -448,9 +465,10 @@ static int setreg_parse(const char *msg,
 static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
 {
   setreg_t *ctx = (setreg_t *)context;
+  (void)sender_id;
 
   if (sender_id != SBP_SENDER_ID) {
-    setreg_api.log(log_warning, "invalid sender");
+    setreg_api.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
     return;
   }
 
@@ -464,7 +482,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   const char *name = NULL;
   const char *value = NULL;
   if (setreg_parse((char *)msg, len, &section, &name, &value) != 0) {
-    setreg_api.log(log_warning, "error in settings write message");
+    setreg_api.log(log_warning, "settings write message failed");
     return;
   }
 
@@ -572,19 +590,22 @@ static void settings_write_resp_callback(uint16_t sender_id, uint8_t len, uint8_
  */
 static int settings_register_write_callback(setreg_t *ctx)
 {
-  if (!ctx->write_callback_registered) {
-    if (setreg_api.register_cb(setreg_api.ctx, 
-                               SBP_MSG_SETTINGS_WRITE,
-                               settings_write_callback,
-                               ctx,
-                               &ctx->write_cb_node)
-        != 0) {
-      setreg_api.log(log_err, "error registering settings write callback");
-      return -1;
-    } else {
-      ctx->write_callback_registered = true;
-    }
+  if (ctx->write_callback_registered) {
+    /* Already done */
+    return 0;
   }
+
+  if (setreg_api.register_cb(setreg_api.ctx, 
+                              SBP_MSG_SETTINGS_WRITE,
+                              settings_write_callback,
+                              ctx,
+                              &ctx->write_cb_node)
+      != 0) {
+    setreg_api.log(log_err, "error registering settings write callback");
+    return -1;
+  }
+
+  ctx->write_callback_registered = true;
   return 0;
 }
 
@@ -595,19 +616,22 @@ static int settings_register_write_callback(setreg_t *ctx)
  */
 static int settings_register_read_resp_callback(setreg_t *ctx)
 {
-  if (!ctx->read_resp_callback_registered) {
-    if (setreg_api.register_cb(setreg_api.ctx,
-                               SBP_MSG_SETTINGS_READ_RESP,
-                               settings_read_resp_callback,
-                               ctx,
-                               &ctx->read_resp_cb_node)
-        != 0) {
-      setreg_api.log(log_err, "error registering settings read resp callback");
-      return -1;
-    } else {
-      ctx->read_resp_callback_registered = true;
-    }
+  if (ctx->read_resp_callback_registered) {
+    /* Already done */
+    return 0;
   }
+
+  if (setreg_api.register_cb(setreg_api.ctx,
+                              SBP_MSG_SETTINGS_READ_RESP,
+                              settings_read_resp_callback,
+                              ctx,
+                              &ctx->read_resp_cb_node)
+      != 0) {
+    setreg_api.log(log_err, "error registering settings read resp callback");
+    return -1;
+  }
+
+  ctx->read_resp_callback_registered = true;
   return 0;
 }
 
@@ -619,15 +643,17 @@ static int settings_register_read_resp_callback(setreg_t *ctx)
  */
 static int settings_unregister_read_resp_callback(setreg_t *ctx)
 {
-  if (ctx->read_resp_callback_registered) {
-    if (setreg_api.unregister_cb(setreg_api.ctx, &ctx->read_resp_cb_node)
-        != 0) {
-      setreg_api.log(log_err, "error unregistering settings read resp callback");
-      return -1;
-    } else {
-      ctx->read_resp_callback_registered = false;
-    }
+  if (!ctx->read_resp_callback_registered) {
+    return 0;
   }
+
+  if (setreg_api.unregister_cb(setreg_api.ctx, &ctx->read_resp_cb_node)
+      != 0) {
+    setreg_api.log(log_err, "error unregistering settings read resp callback");
+    return -1;
+  }
+
+  ctx->read_resp_callback_registered = false;
   return 0;
 }
 
@@ -638,19 +664,22 @@ static int settings_unregister_read_resp_callback(setreg_t *ctx)
  */
 static int settings_register_write_resp_callback(setreg_t *ctx)
 {
-  if (!ctx->write_resp_callback_registered) {
-    if (setreg_api.register_cb(setreg_api.ctx,
-                               SBP_MSG_SETTINGS_WRITE_RESP,
-                               settings_write_resp_callback,
-                               ctx,
-                               &ctx->write_resp_cb_node)
-        != 0) {
-      setreg_api.log(log_err, "error registering settings write resp callback");
-      return -1;
-    } else {
-      ctx->write_resp_callback_registered = true;
-    }
+  if (ctx->write_resp_callback_registered) {
+    /* Already done */
+    return 0;
   }
+
+  if (setreg_api.register_cb(setreg_api.ctx,
+                              SBP_MSG_SETTINGS_WRITE_RESP,
+                              settings_write_resp_callback,
+                              ctx,
+                              &ctx->write_resp_cb_node)
+      != 0) {
+    setreg_api.log(log_err, "error registering settings write resp callback");
+    return -1;
+  }
+
+  ctx->write_resp_callback_registered = true;
   return 0;
 }
 
@@ -1031,25 +1060,41 @@ static int setting_perform_request_reply_from(setreg_t *ctx,
                                               uint8_t retries,
                                               uint16_t sender_id)
 {
-  /* Register with daemon */
   compare_init(ctx, message, header_length);
 
   uint8_t tries = 0;
   bool success = false;
+
+  /* Prime semaphores etc if applicable */
+  if (setreg_api.wait_init) {
+    setreg_api.wait_init(setreg_api.ctx);
+  }
+
   do {
     setreg_api.send_from(setreg_api.ctx,
                          message_type,
                          message_length,
                          (uint8_t *)message,
                          sender_id);
-    setreg_api.wait_resp(setreg_api.ctx, timeout_ms);
-    success = compare_match(ctx);
+
+    if (setreg_api.wait(setreg_api.ctx, timeout_ms)) {
+      size_t len1 = strlen(message) + 1;
+      setreg_api.log(log_err, "Waiting reply for msg id %d with %s.%s timed out", message_type, message, message + len1);
+    } else {
+      success = compare_match(ctx);
+    }
+
   } while (!success && (++tries < retries));
+
+  /* Defuse semaphores etc if applicable */
+  if (setreg_api.wait_deinit) {
+    setreg_api.wait_deinit(setreg_api.ctx);
+  }
 
   compare_deinit(ctx);
 
   if (!success) {
-    setreg_api.log(log_err, "setting req/reply failed");
+    setreg_api.log(log_err, "setting req/reply failed for msg id %d", message_type);
     return -1;
   }
 
@@ -1328,14 +1373,14 @@ static int settings_add_setting(setreg_t *ctx,
       setreg_api.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
-      setreg_api.log(log_err, "error reading watched setting to initial value");
+      setreg_api.log(log_err, "error reading watched %s.%s to initial value", section, name);
     }
   } else {
     if (settings_register_write_callback(ctx) != 0) {
       setreg_api.log(log_err, "error registering settings write callback");
     }
     if (setting_register(ctx, setting_data) != 0) {
-      setreg_api.log(log_err, "error registering setting with settings manager");
+      setreg_api.log(log_err, "error registering %s.%s with settings manager", section, name);
       setting_data_list_remove(ctx, &setting_data);
       return -1;
     }

@@ -34,7 +34,9 @@ extern "C" {
 typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload);
 typedef int (*settings_send_from_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload, uint16_t sbp_sender_id);
 
-typedef void (*settings_wait_t)(void *ctx, int timeout_ms);
+typedef int (*settings_wait_init_t)(void *ctx);
+typedef int (*settings_wait_t)(void *ctx, int timeout_ms);
+typedef int (*settings_wait_deinit_t)(void *ctx);
 typedef void (*settings_signal_t)(void *ctx);
 
 typedef int (*settings_reg_cb_t)(void *ctx,
@@ -50,8 +52,10 @@ typedef struct setreg_api_s {
   void *ctx;
   settings_send_t send;
   settings_send_from_t send_from;
-  settings_wait_t wait_resp;
-  settings_signal_t signal_resp;
+  settings_wait_init_t wait_init;       /* Optional, needed if wait uses semaphores etc */
+  settings_wait_t wait;
+  settings_wait_deinit_t wait_deinit;   /* Optional, needed if wait uses semaphores etc */
+  settings_signal_t signal;
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
@@ -88,7 +92,7 @@ enum {
   SBP_SETTINGS_WRITE_STATUS_SERVICE_FAILED = 6,  /**< System failure during setting */
 };
 
-void sbp_sys_sender_id_set(uint16_t id);
+void settings_sender_id_set(uint16_t id);
 
 /**
  * @brief   Settings notify callback.
