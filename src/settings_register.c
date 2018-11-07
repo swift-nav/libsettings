@@ -90,15 +90,16 @@
 
 static uint16_t sys_sender_id = -1;
 
-void settings_sender_id_set(uint16_t id) { sys_sender_id = id; }
+void settings_sender_id_set(uint16_t id)
+{
+  sys_sender_id = id;
+}
 
 static int log_err = 3;
 static int log_warning = 4;
 
-typedef int (*to_string_fn)(const void *priv, char *str, int slen,
-                            const void *blob, int blen);
-typedef bool (*from_string_fn)(const void *priv, void *blob, int blen,
-                               const char *str);
+typedef int (*to_string_fn)(const void *priv, char *str, int slen, const void *blob, int blen);
+typedef bool (*from_string_fn)(const void *priv, void *blob, int blen, const char *str);
 typedef int (*format_type_fn)(const void *priv, char *str, int slen);
 
 /**
@@ -175,18 +176,21 @@ struct setreg_s {
 static const char *const bool_enum_names[] = {"False", "True", NULL};
 
 static setreg_api_t setreg_api = {
-    .ctx = NULL,
-    .send = NULL,
-    .send_from = NULL,
-    .wait_init = NULL,
-    .wait = NULL,
-    .wait_deinit = NULL,
-    .signal = NULL,
-    .register_cb = NULL,
-    .unregister_cb = NULL,
+  .ctx = NULL,
+  .send = NULL,
+  .send_from = NULL,
+  .wait_init = NULL,
+  .wait = NULL,
+  .wait_deinit = NULL,
+  .signal = NULL,
+  .register_cb = NULL,
+  .unregister_cb = NULL,
 };
 
-void setreg_api_init(const setreg_api_t *api) { setreg_api = *api; }
+void setreg_api_init(const setreg_api_t *api)
+{
+  setreg_api = *api;
+}
 
 /**
  * @brief setting_send_write_response
@@ -194,11 +198,10 @@ void setreg_api_init(const setreg_api_t *api) { setreg_api = *api; }
  * @param len: length of the message
  * @return zero on success, -1 if message failed to send
  */
-static int
-setting_send_write_response(msg_settings_write_resp_t *write_response,
-                            uint8_t len) {
-  if (setreg_api.send(setreg_api.ctx, SBP_MSG_SETTINGS_WRITE_RESP, len,
-                      (uint8_t *)write_response) != 0) {
+static int setting_send_write_response(msg_settings_write_resp_t *write_response, uint8_t len)
+{
+  if (setreg_api.send(setreg_api.ctx, SBP_MSG_SETTINGS_WRITE_RESP, len, (uint8_t *)write_response)
+      != 0) {
     setreg_api.log(log_err, "sending settings write response failed");
     return -1;
   }
@@ -211,7 +214,8 @@ setting_send_write_response(msg_settings_write_resp_t *write_response,
  * @param data: formatted settings header string to match with incoming messages
  * @param data_len: length of match string
  */
-static void compare_init(setreg_t *ctx, const char *data, size_t data_len) {
+static void compare_init(setreg_t *ctx, const char *data, size_t data_len)
+{
   registration_state_t *r = &ctx->registration_state;
   memset(r, 0, sizeof(registration_state_t));
 
@@ -230,7 +234,8 @@ static void compare_init(setreg_t *ctx, const char *data, size_t data_len) {
  * @param data_len: length of payload string
  * @return 0 for match, 1 no comparison pending, -1 for comparison failure
  */
-static int compare_check(setreg_t *ctx, const char *data, size_t data_len) {
+static int compare_check(setreg_t *ctx, const char *data, size_t data_len)
+{
   assert(ctx);
   assert(data);
 
@@ -242,8 +247,8 @@ static int compare_check(setreg_t *ctx, const char *data, size_t data_len) {
     return 1;
   }
 
-  if ((data_len >= r->compare_data_len) &&
-      (memcmp(data, r->compare_data, r->compare_data_len) == 0)) {
+  if ((data_len >= r->compare_data_len)
+      && (memcmp(data, r->compare_data, r->compare_data_len) == 0)) {
     r->match = true;
     r->pending = false;
     setreg_api.signal(setreg_api.ctx);
@@ -257,7 +262,8 @@ static int compare_check(setreg_t *ctx, const char *data, size_t data_len) {
  * @brief compare_deinit - clean up compare structure after transaction
  * @param ctx: settings context
  */
-static void compare_deinit(setreg_t *ctx) {
+static void compare_deinit(setreg_t *ctx)
+{
   registration_state_t *r = &ctx->registration_state;
   r->pending = false;
 }
@@ -270,7 +276,9 @@ static void compare_deinit(setreg_t *ctx) {
  * @param write_result: result to pass to write response
  */
 static void setting_update_value(setting_data_t *setting_data,
-                                 const char *value, uint8_t *write_result) {
+                                 const char *value,
+                                 uint8_t *write_result)
+{
   if (setting_data->readonly) {
     *write_result = SBP_SETTINGS_WRITE_STATUS_READ_ONLY;
     return;
@@ -281,7 +289,8 @@ static void setting_update_value(setting_data_t *setting_data,
   memcpy(setting_data->var_copy, setting_data->var, setting_data->var_len);
   if (!setting_data->type_data->from_string(setting_data->type_data->priv,
                                             setting_data->var,
-                                            setting_data->var_len, value)) {
+                                            setting_data->var_len,
+                                            value)) {
     /* Revert value if conversion fails */
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
     *write_result = SBP_SETTINGS_WRITE_STATUS_PARSE_FAILED;
@@ -314,8 +323,8 @@ static void setting_update_value(setting_data_t *setting_data,
  * @param blen: length of the destination buffer
  * @return bytes written to the buffer, -1 in case of failure
  */
-static int message_header_get(setting_data_t *setting_data, char *buf,
-                              int blen) {
+static int message_header_get(setting_data_t *setting_data, char *buf, int blen)
+{
   int n = 0;
   int l;
 
@@ -343,13 +352,16 @@ static int message_header_get(setting_data_t *setting_data, char *buf,
  * @param blen: length of the destination buffer
  * @return bytes written to the buffer, -1 in case of failure
  */
-static int message_data_get(setting_data_t *setting_data, char *buf, int blen) {
+static int message_data_get(setting_data_t *setting_data, char *buf, int blen)
+{
   int n = 0;
   int l;
 
   /* Value */
-  l = setting_data->type_data->to_string(setting_data->type_data->priv, &buf[n],
-                                         blen - n, setting_data->var,
+  l = setting_data->type_data->to_string(setting_data->type_data->priv,
+                                         &buf[n],
+                                         blen - n,
+                                         setting_data->var,
                                          setting_data->var_len);
   if ((l < 0) || (l >= blen - n)) {
     return -1;
@@ -358,8 +370,7 @@ static int message_data_get(setting_data_t *setting_data, char *buf, int blen) {
 
   /* Type information */
   if (setting_data->type_data->format_type != NULL) {
-    l = setting_data->type_data->format_type(setting_data->type_data->priv,
-                                             &buf[n], blen - n);
+    l = setting_data->type_data->format_type(setting_data->type_data->priv, &buf[n], blen - n);
     if ((l < 0) || (l >= blen - n)) {
       return -1;
     }
@@ -377,8 +388,8 @@ static int message_data_get(setting_data_t *setting_data, char *buf, int blen) {
  * @param len: length of the destination buffer
  * @return bytes written to the buffer, -1 in case of failure
  */
-static int setting_format_setting(setting_data_t *setting_data, char *buf,
-                                  int len) {
+static int setting_format_setting(setting_data_t *setting_data, char *buf, int len)
+{
   int result = 0;
   int written = 0;
 
@@ -404,12 +415,11 @@ static int setting_format_setting(setting_data_t *setting_data, char *buf,
  * @param name: setting name string to match
  * @return the setting type entry if a match is found, otherwise NULL
  */
-static setting_data_t *setting_data_lookup(setreg_t *ctx, const char *section,
-                                           const char *name) {
+static setting_data_t *setting_data_lookup(setreg_t *ctx, const char *section, const char *name)
+{
   setting_data_t *setting_data = ctx->setting_data_list;
   while (setting_data != NULL) {
-    if ((strcmp(setting_data->section, section) == 0) &&
-        (strcmp(setting_data->name, name) == 0)) {
+    if ((strcmp(setting_data->section, section) == 0) && (strcmp(setting_data->name, name) == 0)) {
       break;
     }
     setting_data = setting_data->next;
@@ -417,13 +427,16 @@ static setting_data_t *setting_data_lookup(setreg_t *ctx, const char *section,
   return setting_data;
 }
 
-static int setreg_parse(const char *msg, uint8_t msg_n, const char **section,
-                        const char **name, const char **value) {
+static int setreg_parse(const char *msg,
+                        uint8_t msg_n,
+                        const char **section,
+                        const char **name,
+                        const char **value)
+{
   const char **result_holders[] = {section, name, value};
   uint8_t start = 0;
   uint8_t end = 0;
-  for (uint8_t i = 0; i < sizeof(result_holders) / sizeof(*result_holders);
-       i++) {
+  for (uint8_t i = 0; i < sizeof(result_holders) / sizeof(*result_holders); i++) {
     bool found = false;
     *(result_holders[i]) = NULL;
     while (end < msg_n) {
@@ -449,14 +462,13 @@ static int setreg_parse(const char *msg, uint8_t msg_n, const char **section,
 /**
  * @brief settings_write_callback - callback for SBP_MSG_SETTINGS_WRITE
  */
-static void settings_write_callback(uint16_t sender_id, uint8_t len,
-                                    uint8_t *msg, void *context) {
+static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
+{
   setreg_t *ctx = (setreg_t *)context;
   (void)sender_id;
 
   if (sender_id != SBP_SENDER_ID) {
-    setreg_api.log(log_warning, "invalid sender %d != %d", sender_id,
-                   SBP_SENDER_ID);
+    setreg_api.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
     return;
   }
 
@@ -492,8 +504,8 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len,
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
   write_response->status = write_result;
   resp_len += sizeof(write_response->status);
-  int l = setting_format_setting(setting_data, write_response->setting,
-                                 SBP_PAYLOAD_SIZE_MAX - resp_len);
+  int l =
+    setting_format_setting(setting_data, write_response->setting, SBP_PAYLOAD_SIZE_MAX - resp_len);
   if (l < 0) {
     return;
   }
@@ -502,7 +514,8 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len,
   setting_send_write_response(write_response, resp_len);
 }
 
-static int settings_update_watch_only(setreg_t *ctx, char *msg, uint8_t len) {
+static int settings_update_watch_only(setreg_t *ctx, char *msg, uint8_t len)
+{
   /* Extract parameters from message:
    * 3 null terminated strings: section, setting and value
    */
@@ -535,8 +548,11 @@ static int settings_update_watch_only(setreg_t *ctx, char *msg, uint8_t len) {
 /**
  * @brief settings_read_resp_callback - callback for SBP_MSG_SETTINGS_READ_RESP
  */
-static void settings_read_resp_callback(uint16_t sender_id, uint8_t len,
-                                        uint8_t msg[], void *context) {
+static void settings_read_resp_callback(uint16_t sender_id,
+                                        uint8_t len,
+                                        uint8_t msg[],
+                                        void *context)
+{
   (void)sender_id;
   assert(msg);
   assert(context);
@@ -556,18 +572,20 @@ static void settings_read_resp_callback(uint16_t sender_id, uint8_t len,
  * @brief settings_write_resp_callback - callback for
  * SBP_MSG_SETTINGS_WRITE_RESP
  */
-static void settings_write_resp_callback(uint16_t sender_id, uint8_t len,
-                                         uint8_t msg[], void *context) {
+static void settings_write_resp_callback(uint16_t sender_id,
+                                         uint8_t len,
+                                         uint8_t msg[],
+                                         void *context)
+{
   (void)sender_id;
   setreg_t *ctx = (setreg_t *)context;
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  compare_check(ctx, write_response->setting,
-                len - sizeof(write_response->status));
+  compare_check(ctx, write_response->setting, len - sizeof(write_response->status));
 
-  if (settings_update_watch_only(ctx, write_response->setting,
-                                 len - sizeof(write_response->status)) != 0) {
+  if (settings_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
+      != 0) {
     setreg_api.log(log_warning, "error in settings read response message");
   }
 }
@@ -578,15 +596,19 @@ static void settings_write_resp_callback(uint16_t sender_id, uint8_t len,
  * @param ctx: settings context
  * @return zero on success, -1 if registration failed
  */
-static int settings_register_write_callback(setreg_t *ctx) {
+static int settings_register_write_callback(setreg_t *ctx)
+{
   if (ctx->write_callback_registered) {
     /* Already done */
     return 0;
   }
 
-  if (setreg_api.register_cb(setreg_api.ctx, SBP_MSG_SETTINGS_WRITE,
-                             settings_write_callback, ctx,
-                             &ctx->write_cb_node) != 0) {
+  if (setreg_api.register_cb(setreg_api.ctx,
+                             SBP_MSG_SETTINGS_WRITE,
+                             settings_write_callback,
+                             ctx,
+                             &ctx->write_cb_node)
+      != 0) {
     setreg_api.log(log_err, "error registering settings write callback");
     return -1;
   }
@@ -601,15 +623,19 @@ static int settings_register_write_callback(setreg_t *ctx) {
  * @param ctx: settings context
  * @return zero on success, -1 if registration failed
  */
-static int settings_register_read_resp_callback(setreg_t *ctx) {
+static int settings_register_read_resp_callback(setreg_t *ctx)
+{
   if (ctx->read_resp_callback_registered) {
     /* Already done */
     return 0;
   }
 
-  if (setreg_api.register_cb(setreg_api.ctx, SBP_MSG_SETTINGS_READ_RESP,
-                             settings_read_resp_callback, ctx,
-                             &ctx->read_resp_cb_node) != 0) {
+  if (setreg_api.register_cb(setreg_api.ctx,
+                             SBP_MSG_SETTINGS_READ_RESP,
+                             settings_read_resp_callback,
+                             ctx,
+                             &ctx->read_resp_cb_node)
+      != 0) {
     setreg_api.log(log_err, "error registering settings read resp callback");
     return -1;
   }
@@ -624,7 +650,8 @@ static int settings_register_read_resp_callback(setreg_t *ctx) {
  * @param ctx: settings context
  * @return zero on success, -1 if deregistration failed
  */
-static int settings_unregister_read_resp_callback(setreg_t *ctx) {
+static int settings_unregister_read_resp_callback(setreg_t *ctx)
+{
   if (!ctx->read_resp_callback_registered) {
     return 0;
   }
@@ -644,15 +671,19 @@ static int settings_unregister_read_resp_callback(setreg_t *ctx) {
  * @param ctx: settings context
  * @return zero on success, -1 if registration failed
  */
-static int settings_register_write_resp_callback(setreg_t *ctx) {
+static int settings_register_write_resp_callback(setreg_t *ctx)
+{
   if (ctx->write_resp_callback_registered) {
     /* Already done */
     return 0;
   }
 
-  if (setreg_api.register_cb(setreg_api.ctx, SBP_MSG_SETTINGS_WRITE_RESP,
-                             settings_write_resp_callback, ctx,
-                             &ctx->write_resp_cb_node) != 0) {
+  if (setreg_api.register_cb(setreg_api.ctx,
+                             SBP_MSG_SETTINGS_WRITE_RESP,
+                             settings_write_resp_callback,
+                             ctx,
+                             &ctx->write_resp_cb_node)
+      != 0) {
     setreg_api.log(log_err, "error registering settings write resp callback");
     return -1;
   }
@@ -661,52 +692,42 @@ static int settings_register_write_resp_callback(setreg_t *ctx) {
   return 0;
 }
 
-static int float_to_string(const void *priv, char *str, int slen,
-                           const void *blob, int blen) {
+static int float_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
+{
   (void)priv;
 
   switch (blen) {
-  case 4:
-    return snprintf(str, slen, "%.12g", (double)*(float *)blob);
-  case 8:
-    return snprintf(str, slen, "%.12g", *(double *)blob);
-  default:
-    return -1;
+  case 4: return snprintf(str, slen, "%.12g", (double)*(float *)blob);
+  case 8: return snprintf(str, slen, "%.12g", *(double *)blob);
+  default: return -1;
   }
 }
 
-static bool float_from_string(const void *priv, void *blob, int blen,
-                              const char *str) {
+static bool float_from_string(const void *priv, void *blob, int blen, const char *str)
+{
   (void)priv;
 
   switch (blen) {
-  case 4:
-    return sscanf(str, "%g", (float *)blob) == 1;
-  case 8:
-    return sscanf(str, "%lg", (double *)blob) == 1;
-  default:
-    return false;
+  case 4: return sscanf(str, "%g", (float *)blob) == 1;
+  case 8: return sscanf(str, "%lg", (double *)blob) == 1;
+  default: return false;
   }
 }
 
-static int int_to_string(const void *priv, char *str, int slen,
-                         const void *blob, int blen) {
+static int int_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
+{
   (void)priv;
 
   switch (blen) {
-  case 1:
-    return snprintf(str, slen, "%hhd", *(s8 *)blob);
-  case 2:
-    return snprintf(str, slen, "%hd", *(s16 *)blob);
-  case 4:
-    return snprintf(str, slen, "%" PRId32, *(s32 *)blob);
-  default:
-    return -1;
+  case 1: return snprintf(str, slen, "%hhd", *(s8 *)blob);
+  case 2: return snprintf(str, slen, "%hd", *(s16 *)blob);
+  case 4: return snprintf(str, slen, "%" PRId32, *(s32 *)blob);
+  default: return -1;
   }
 }
 
-static bool int_from_string(const void *priv, void *blob, int blen,
-                            const char *str) {
+static bool int_from_string(const void *priv, void *blob, int blen, const char *str)
+{
   (void)priv;
 
   switch (blen) {
@@ -719,25 +740,22 @@ static bool int_from_string(const void *priv, void *blob, int blen,
     }
     return false;
   }
-  case 2:
-    return sscanf(str, "%hd", (s16 *)blob) == 1;
-  case 4:
-    return sscanf(str, "%" PRId32, (s32 *)blob) == 1;
-  default:
-    return false;
+  case 2: return sscanf(str, "%hd", (s16 *)blob) == 1;
+  case 4: return sscanf(str, "%" PRId32, (s32 *)blob) == 1;
+  default: return false;
   }
 }
 
-static int str_to_string(const void *priv, char *str, int slen,
-                         const void *blob, int blen) {
+static int str_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
+{
   (void)priv;
   (void)blen;
 
   return snprintf(str, slen, "%s", (char *)blob);
 }
 
-static bool str_from_string(const void *priv, void *blob, int blen,
-                            const char *str) {
+static bool str_from_string(const void *priv, void *blob, int blen, const char *str)
+{
   (void)priv;
 
   int l = snprintf(blob, blen, "%s", str);
@@ -748,8 +766,8 @@ static bool str_from_string(const void *priv, void *blob, int blen,
   return true;
 }
 
-static int enum_to_string(const void *priv, char *str, int slen,
-                          const void *blob, int blen) {
+static int enum_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
+{
   (void)blen;
 
   const char *const *enum_names = priv;
@@ -757,8 +775,8 @@ static int enum_to_string(const void *priv, char *str, int slen,
   return snprintf(str, slen, "%s", enum_names[index]);
 }
 
-static bool enum_from_string(const void *priv, void *blob, int blen,
-                             const char *str) {
+static bool enum_from_string(const void *priv, void *blob, int blen, const char *str)
+{
   (void)blen;
 
   const char *const *enum_names = priv;
@@ -777,7 +795,8 @@ static bool enum_from_string(const void *priv, void *blob, int blen,
   return true;
 }
 
-static int enum_format_type(const void *priv, char *str, int slen) {
+static int enum_format_type(const void *priv, char *str, int slen)
+{
   int n = 0;
   int l;
 
@@ -816,7 +835,8 @@ static int enum_format_type(const void *priv, char *str, int slen) {
  * @param type: type struct to be matched
  * @return the setting type entry if a match is found, otherwise NULL
  */
-static type_data_t *type_data_lookup(setreg_t *ctx, settings_type_t type) {
+static type_data_t *type_data_lookup(setreg_t *ctx, settings_type_t type)
+{
   type_data_t *type_data = ctx->type_data_list;
   for (int i = 0; i < type && type_data != NULL; i++) {
     type_data = type_data->next;
@@ -824,16 +844,16 @@ static type_data_t *type_data_lookup(setreg_t *ctx, settings_type_t type) {
   return type_data;
 }
 
-static void setting_data_list_insert(setreg_t *ctx,
-                                     setting_data_t *setting_data) {
+static void setting_data_list_insert(setreg_t *ctx, setting_data_t *setting_data)
+{
   if (ctx->setting_data_list == NULL) {
     ctx->setting_data_list = setting_data;
   } else {
     setting_data_t *s;
     /* Find last element in the same section */
     for (s = ctx->setting_data_list; s->next != NULL; s = s->next) {
-      if ((strcmp(s->section, setting_data->section) == 0) &&
-          (strcmp(s->next->section, setting_data->section) != 0)) {
+      if ((strcmp(s->section, setting_data->section) == 0)
+          && (strcmp(s->next->section, setting_data->section) != 0)) {
         break;
       }
     }
@@ -850,7 +870,8 @@ static void setting_data_list_insert(setreg_t *ctx,
  * @param ctx: settings context
  * @return true if response was matched, false if not response has been received
  */
-static bool compare_match(setreg_t *ctx) {
+static bool compare_match(setreg_t *ctx)
+{
   registration_state_t *r = &ctx->registration_state;
   return r->match;
 }
@@ -865,9 +886,13 @@ static bool compare_match(setreg_t *ctx) {
  * @param type: type enum that is used to identify this type
  * @return
  */
-static int type_register(setreg_t *ctx, to_string_fn to_string,
-                         from_string_fn from_string, format_type_fn format_type,
-                         const void *priv, settings_type_t *type) {
+static int type_register(setreg_t *ctx,
+                         to_string_fn to_string,
+                         from_string_fn from_string,
+                         format_type_fn format_type,
+                         const void *priv,
+                         settings_type_t *type)
+{
   type_data_t *type_data = (type_data_t *)malloc(sizeof(*type_data));
   if (type_data == NULL) {
     setreg_api.log(log_err, "error allocating type data");
@@ -897,7 +922,8 @@ static int type_register(setreg_t *ctx, to_string_fn to_string,
  * @brief setting_data_members_destroy - deinit for settings data
  * @param setting_data: setting to deinit
  */
-static void setting_data_members_destroy(setting_data_t *setting_data) {
+static void setting_data_members_destroy(setting_data_t *setting_data)
+{
   if (setting_data->section) {
     free(setting_data->section);
     setting_data->section = NULL;
@@ -919,8 +945,8 @@ static void setting_data_members_destroy(setting_data_t *setting_data) {
  * @param ctx: settings context
  * @param setting_data: setting to remove
  */
-static void setting_data_list_remove(setreg_t *ctx,
-                                     setting_data_t **setting_data) {
+static void setting_data_list_remove(setreg_t *ctx, setting_data_t **setting_data)
+{
   if (ctx->setting_data_list == NULL) {
     return;
   }
@@ -956,11 +982,17 @@ static void setting_data_list_remove(setreg_t *ctx,
  * @param watchonly: set to true to indicate a non-owned setting watch
  * @return the newly created setting, NULL if failed
  */
-static setting_data_t *
-setting_create_setting(setreg_t *ctx, const char *section, const char *name,
-                       void *var, size_t var_len, settings_type_t type,
-                       settings_notify_fn notify, void *notify_context,
-                       bool readonly, bool watchonly) {
+static setting_data_t *setting_create_setting(setreg_t *ctx,
+                                              const char *section,
+                                              const char *name,
+                                              void *var,
+                                              size_t var_len,
+                                              settings_type_t type,
+                                              settings_notify_fn notify,
+                                              void *notify_context,
+                                              bool readonly,
+                                              bool watchonly)
+{
   /* Look up type data */
   type_data_t *type_data = type_data_lookup(ctx, type);
   if (type_data == NULL) {
@@ -969,29 +1001,28 @@ setting_create_setting(setreg_t *ctx, const char *section, const char *name,
   }
 
   /* Set up setting data */
-  setting_data_t *setting_data =
-      (setting_data_t *)malloc(sizeof(*setting_data));
+  setting_data_t *setting_data = (setting_data_t *)malloc(sizeof(*setting_data));
   if (setting_data == NULL) {
     setreg_api.log(log_err, "error allocating setting data");
     return NULL;
   }
 
   *setting_data = (setting_data_t){
-      .section = strdup(section),
-      .name = strdup(name),
-      .var = var,
-      .var_len = var_len,
-      .var_copy = malloc(var_len),
-      .type_data = type_data,
-      .notify = notify,
-      .notify_context = notify_context,
-      .readonly = readonly,
-      .watchonly = watchonly,
-      .next = NULL,
+    .section = strdup(section),
+    .name = strdup(name),
+    .var = var,
+    .var_len = var_len,
+    .var_copy = malloc(var_len),
+    .type_data = type_data,
+    .notify = notify,
+    .notify_context = notify_context,
+    .readonly = readonly,
+    .watchonly = watchonly,
+    .next = NULL,
   };
 
-  if ((setting_data->section == NULL) || (setting_data->name == NULL) ||
-      (setting_data->var_copy == NULL)) {
+  if ((setting_data->section == NULL) || (setting_data->name == NULL)
+      || (setting_data->var_copy == NULL)) {
     setreg_api.log(log_err, "error allocating setting data members");
     setting_data_members_destroy(setting_data);
     free(setting_data);
@@ -1016,11 +1047,15 @@ setting_create_setting(setreg_t *ctx, const char *section, const char *name,
  * @param sender_id: sender_id to use for outgoing message
  * @return zero on success, -1 the transaction failed to complete
  */
-static int
-setting_perform_request_reply_from(setreg_t *ctx, uint16_t message_type,
-                                   char *message, uint8_t message_length,
-                                   uint8_t header_length, uint32_t timeout_ms,
-                                   uint8_t retries, uint16_t sender_id) {
+static int setting_perform_request_reply_from(setreg_t *ctx,
+                                              uint16_t message_type,
+                                              char *message,
+                                              uint8_t message_length,
+                                              uint8_t header_length,
+                                              uint32_t timeout_ms,
+                                              uint8_t retries,
+                                              uint16_t sender_id)
+{
   compare_init(ctx, message, header_length);
 
   uint8_t tries = 0;
@@ -1032,14 +1067,19 @@ setting_perform_request_reply_from(setreg_t *ctx, uint16_t message_type,
   }
 
   do {
-    setreg_api.send_from(setreg_api.ctx, message_type, message_length,
-                         (uint8_t *)message, sender_id);
+    setreg_api.send_from(setreg_api.ctx,
+                         message_type,
+                         message_length,
+                         (uint8_t *)message,
+                         sender_id);
 
     if (setreg_api.wait(setreg_api.ctx, timeout_ms)) {
       size_t len1 = strlen(message) + 1;
       setreg_api.log(log_err,
                      "Waiting reply for msg id %d with %s.%s timed out",
-                     message_type, message, message + len1);
+                     message_type,
+                     message,
+                     message + len1);
     } else {
       success = compare_match(ctx);
     }
@@ -1054,8 +1094,7 @@ setting_perform_request_reply_from(setreg_t *ctx, uint16_t message_type,
   compare_deinit(ctx);
 
   if (!success) {
-    setreg_api.log(log_err, "setting req/reply failed for msg id %d",
-                   message_type);
+    setreg_api.log(log_err, "setting req/reply failed for msg id %d", message_type);
     return -1;
   }
 
@@ -1074,13 +1113,22 @@ setting_perform_request_reply_from(setreg_t *ctx, uint16_t message_type,
  * @param retries: number of times to retry the transaction
  * @return zero on success, -1 the transaction failed to complete
  */
-static int setting_perform_request_reply(setreg_t *ctx, uint16_t message_type,
-                                         char *message, uint8_t message_length,
+static int setting_perform_request_reply(setreg_t *ctx,
+                                         uint16_t message_type,
+                                         char *message,
+                                         uint8_t message_length,
                                          uint8_t header_length,
-                                         uint16_t timeout_ms, uint8_t retries) {
-  return setting_perform_request_reply_from(ctx, message_type, message,
-                                            message_length, header_length,
-                                            timeout_ms, retries, sys_sender_id);
+                                         uint16_t timeout_ms,
+                                         uint8_t retries)
+{
+  return setting_perform_request_reply_from(ctx,
+                                            message_type,
+                                            message,
+                                            message_length,
+                                            header_length,
+                                            timeout_ms,
+                                            retries,
+                                            sys_sender_id);
 }
 
 /**
@@ -1089,7 +1137,8 @@ static int setting_perform_request_reply(setreg_t *ctx, uint16_t message_type,
  * @param setting_data: setting to register with settings daemon
  * @return zero on success, -1 the transaction failed to complete
  */
-static int setting_register(setreg_t *ctx, setting_data_t *setting_data) {
+static int setting_register(setreg_t *ctx, setting_data_t *setting_data)
+{
   /* Build message */
   char msg[SBP_PAYLOAD_SIZE_MAX];
   uint8_t msg_len = 0;
@@ -1111,9 +1160,13 @@ static int setting_register(setreg_t *ctx, setting_data_t *setting_data) {
   }
   msg_len += l;
 
-  return setting_perform_request_reply(ctx, SBP_MSG_SETTINGS_REGISTER, msg,
-                                       msg_len, msg_header_len,
-                                       REGISTER_TIMEOUT_MS, REGISTER_TRIES);
+  return setting_perform_request_reply(ctx,
+                                       SBP_MSG_SETTINGS_REGISTER,
+                                       msg,
+                                       msg_len,
+                                       msg_header_len,
+                                       REGISTER_TIMEOUT_MS,
+                                       REGISTER_TRIES);
 }
 
 /**
@@ -1123,8 +1176,8 @@ static int setting_register(setreg_t *ctx, setting_data_t *setting_data) {
  * @param setting_data: setting to read from settings daemon
  * @return zero on success, -1 the transaction failed to complete
  */
-static int setting_read_watched_value(setreg_t *ctx,
-                                      setting_data_t *setting_data) {
+static int setting_read_watched_value(setreg_t *ctx, setting_data_t *setting_data)
+{
   int result = 0;
   /* Build message */
   char msg[SBP_PAYLOAD_SIZE_MAX];
@@ -1148,9 +1201,14 @@ static int setting_read_watched_value(setreg_t *ctx,
     return -1;
   }
 
-  result = setting_perform_request_reply_from(
-      ctx, SBP_MSG_SETTINGS_READ_REQ, msg, msg_len, msg_len,
-      WATCH_INIT_TIMEOUT_MS, WATCH_INIT_TRIES, SBP_SENDER_ID);
+  result = setting_perform_request_reply_from(ctx,
+                                              SBP_MSG_SETTINGS_READ_REQ,
+                                              msg,
+                                              msg_len,
+                                              msg_len,
+                                              WATCH_INIT_TIMEOUT_MS,
+                                              WATCH_INIT_TRIES,
+                                              SBP_SENDER_ID);
 
   settings_unregister_read_resp_callback(ctx);
   return result;
@@ -1160,7 +1218,8 @@ static int setting_read_watched_value(setreg_t *ctx,
  * @brief members_destroy - deinit for settings context members
  * @param ctx: settings context to deinit
  */
-static void members_destroy(setreg_t *ctx) {
+static void members_destroy(setreg_t *ctx)
+{
   /* Free type data list elements */
   while (ctx->type_data_list != NULL) {
     type_data_t *t = ctx->type_data_list;
@@ -1181,13 +1240,15 @@ static void members_destroy(setreg_t *ctx) {
  * @brief destroy - deinit for settings context
  * @param ctx: settings context to deinit
  */
-static void destroy(setreg_t **ctx) {
+static void destroy(setreg_t **ctx)
+{
   members_destroy(*ctx);
   free(*ctx);
   *ctx = NULL;
 }
 
-setreg_t *setreg_create(void) {
+setreg_t *setreg_create(void)
+{
   setreg_t *ctx = (setreg_t *)malloc(sizeof(*ctx));
   if (ctx == NULL) {
     setreg_api.log(log_err, "error allocating context");
@@ -1204,29 +1265,26 @@ setreg_t *setreg_create(void) {
   /* Register standard types */
   settings_type_t type;
 
-  if (type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type) !=
-      0) {
+  if (type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type) != 0) {
     destroy(&ctx);
     return ctx;
   }
   assert(type == SETTINGS_TYPE_INT);
 
-  if (type_register(ctx, float_to_string, float_from_string, NULL, NULL,
-                    &type) != 0) {
+  if (type_register(ctx, float_to_string, float_from_string, NULL, NULL, &type) != 0) {
     destroy(&ctx);
     return ctx;
   }
   assert(type == SETTINGS_TYPE_FLOAT);
 
-  if (type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type) !=
-      0) {
+  if (type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type) != 0) {
     destroy(&ctx);
     return ctx;
   }
   assert(type == SETTINGS_TYPE_STRING);
 
-  if (type_register(ctx, enum_to_string, enum_from_string, enum_format_type,
-                    bool_enum_names, &type) != 0) {
+  if (type_register(ctx, enum_to_string, enum_from_string, enum_format_type, bool_enum_names, &type)
+      != 0) {
     destroy(&ctx);
     return ctx;
   }
@@ -1235,7 +1293,8 @@ setreg_t *setreg_create(void) {
   return ctx;
 }
 
-void setreg_destroy(setreg_t **ctx) {
+void setreg_destroy(setreg_t **ctx)
+{
   if (ctx == NULL || *ctx == NULL) {
     return;
   }
@@ -1243,14 +1302,13 @@ void setreg_destroy(setreg_t **ctx) {
   destroy(ctx);
 }
 
-int setreg_add_enum(setreg_t *ctx, const char *const enum_names[],
-                    settings_type_t *type) {
+int setreg_add_enum(setreg_t *ctx, const char *const enum_names[], settings_type_t *type)
+{
   assert(ctx != NULL);
   assert(enum_names != NULL);
   assert(type != NULL);
 
-  return type_register(ctx, enum_to_string, enum_from_string, enum_format_type,
-                       enum_names, type);
+  return type_register(ctx, enum_to_string, enum_from_string, enum_format_type, enum_names, type);
 }
 
 /**
@@ -1271,11 +1329,17 @@ int setreg_add_enum(setreg_t *ctx, const char *const enum_names[],
  * @param watchonly: set to true to indicate a non-owned setting watch
  * @return zero on success, -1 if the addition of the setting has failed
  */
-static int settings_add_setting(setreg_t *ctx, const char *section,
-                                const char *name, void *var, size_t var_len,
-                                settings_type_t type, settings_notify_fn notify,
-                                void *notify_context, bool readonly,
-                                bool watchonly) {
+static int settings_add_setting(setreg_t *ctx,
+                                const char *section,
+                                const char *name,
+                                void *var,
+                                size_t var_len,
+                                settings_type_t type,
+                                settings_notify_fn notify,
+                                void *notify_context,
+                                bool readonly,
+                                bool watchonly)
+{
   assert(ctx != NULL);
   assert(section != NULL);
   assert(name != NULL);
@@ -1286,9 +1350,16 @@ static int settings_add_setting(setreg_t *ctx, const char *section,
     return -1;
   }
 
-  setting_data_t *setting_data =
-      setting_create_setting(ctx, section, name, var, var_len, type, notify,
-                             notify_context, readonly, watchonly);
+  setting_data_t *setting_data = setting_create_setting(ctx,
+                                                        section,
+                                                        name,
+                                                        var,
+                                                        var_len,
+                                                        type,
+                                                        notify,
+                                                        notify_context,
+                                                        readonly,
+                                                        watchonly);
   if (setting_data == NULL) {
     setreg_api.log(log_err, "error creating setting data");
     return -1;
@@ -1302,16 +1373,14 @@ static int settings_add_setting(setreg_t *ctx, const char *section,
       setreg_api.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
-      setreg_api.log(log_err, "error reading watched %s.%s to initial value",
-                     section, name);
+      setreg_api.log(log_err, "error reading watched %s.%s to initial value", section, name);
     }
   } else {
     if (settings_register_write_callback(ctx) != 0) {
       setreg_api.log(log_err, "error registering settings write callback");
     }
     if (setting_register(ctx, setting_data) != 0) {
-      setreg_api.log(log_err, "error registering %s.%s with settings manager",
-                     section, name);
+      setreg_api.log(log_err, "error registering %s.%s with settings manager", section, name);
       setting_data_list_remove(ctx, &setting_data);
       return -1;
     }
@@ -1319,22 +1388,63 @@ static int settings_add_setting(setreg_t *ctx, const char *section,
   return 0;
 }
 
-int setreg_add_setting(setreg_t *ctx, const char *section, const char *name,
-                       void *var, size_t var_len, settings_type_t type,
-                       settings_notify_fn notify, void *notify_context) {
-  return settings_add_setting(ctx, section, name, var, var_len, type, notify,
-                              notify_context, false, false);
+int setreg_add_setting(setreg_t *ctx,
+                       const char *section,
+                       const char *name,
+                       void *var,
+                       size_t var_len,
+                       settings_type_t type,
+                       settings_notify_fn notify,
+                       void *notify_context)
+{
+  return settings_add_setting(ctx,
+                              section,
+                              name,
+                              var,
+                              var_len,
+                              type,
+                              notify,
+                              notify_context,
+                              false,
+                              false);
 }
 
-int setreg_add_readonly(setreg_t *ctx, const char *section, const char *name,
-                        const void *var, size_t var_len, settings_type_t type) {
-  return settings_add_setting(ctx, section, name, (void *)var, var_len, type,
-                              NULL, NULL, true, false);
+int setreg_add_readonly(setreg_t *ctx,
+                        const char *section,
+                        const char *name,
+                        const void *var,
+                        size_t var_len,
+                        settings_type_t type)
+{
+  return settings_add_setting(ctx,
+                              section,
+                              name,
+                              (void *)var,
+                              var_len,
+                              type,
+                              NULL,
+                              NULL,
+                              true,
+                              false);
 }
 
-int setreg_add_watch(setreg_t *ctx, const char *section, const char *name,
-                     void *var, size_t var_len, settings_type_t type,
-                     settings_notify_fn notify, void *notify_context) {
-  return settings_add_setting(ctx, section, name, var, var_len, type, notify,
-                              notify_context, false, true);
+int setreg_add_watch(setreg_t *ctx,
+                     const char *section,
+                     const char *name,
+                     void *var,
+                     size_t var_len,
+                     settings_type_t type,
+                     settings_notify_fn notify,
+                     void *notify_context)
+{
+  return settings_add_setting(ctx,
+                              section,
+                              name,
+                              var,
+                              var_len,
+                              type,
+                              notify,
+                              notify_context,
+                              false,
+                              true);
 }

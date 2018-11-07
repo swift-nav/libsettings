@@ -31,18 +31,22 @@
 extern "C" {
 #endif
 
-typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len,
-                               uint8_t *payload);
-typedef int (*settings_send_from_t)(void *ctx, uint16_t msg_type, uint8_t len,
-                                    uint8_t *payload, uint16_t sbp_sender_id);
+typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload);
+typedef int (*settings_send_from_t)(void *ctx,
+                                    uint16_t msg_type,
+                                    uint8_t len,
+                                    uint8_t *payload,
+                                    uint16_t sbp_sender_id);
 
 typedef int (*settings_wait_init_t)(void *ctx);
 typedef int (*settings_wait_t)(void *ctx, int timeout_ms);
 typedef int (*settings_wait_deinit_t)(void *ctx);
 typedef void (*settings_signal_t)(void *ctx);
 
-typedef int (*settings_reg_cb_t)(void *ctx, uint16_t msg_type,
-                                 sbp_msg_callback_t cb, void *cb_context,
+typedef int (*settings_reg_cb_t)(void *ctx,
+                                 uint16_t msg_type,
+                                 sbp_msg_callback_t cb,
+                                 void *cb_context,
                                  sbp_msg_callbacks_node_t **node);
 typedef int (*settings_unreg_cb_t)(void *ctx, sbp_msg_callbacks_node_t **node);
 
@@ -52,11 +56,9 @@ typedef struct setreg_api_s {
   void *ctx;
   settings_send_t send;
   settings_send_from_t send_from;
-  settings_wait_init_t
-      wait_init; /* Optional, needed if wait uses semaphores etc */
+  settings_wait_init_t wait_init; /* Optional, needed if wait uses semaphores etc */
   settings_wait_t wait;
-  settings_wait_deinit_t
-      wait_deinit; /* Optional, needed if wait uses semaphores etc */
+  settings_wait_deinit_t wait_deinit; /* Optional, needed if wait uses semaphores etc */
   settings_signal_t signal;
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
@@ -84,17 +86,14 @@ enum {
  * @brief Settings error codes
  */
 enum {
-  SBP_SETTINGS_WRITE_STATUS_OK = 0, /**< Setting written               */
+  SBP_SETTINGS_WRITE_STATUS_OK = 0,               /**< Setting written               */
   SBP_SETTINGS_WRITE_STATUS_VALUE_REJECTED = 1,   /**< Setting value invalid   */
   SBP_SETTINGS_WRITE_STATUS_SETTING_REJECTED = 2, /**< Setting does not exist */
-  SBP_SETTINGS_WRITE_STATUS_PARSE_FAILED =
-      3, /**< Could not parse setting value */
+  SBP_SETTINGS_WRITE_STATUS_PARSE_FAILED = 3,     /**< Could not parse setting value */
   // READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary
-  SBP_SETTINGS_WRITE_STATUS_READ_ONLY = 4, /**< Setting is read only          */
-  SBP_SETTINGS_WRITE_STATUS_MODIFY_DISABLED =
-      5, /**< Setting is not modifiable     */
-  SBP_SETTINGS_WRITE_STATUS_SERVICE_FAILED =
-      6, /**< System failure during setting */
+  SBP_SETTINGS_WRITE_STATUS_READ_ONLY = 4,       /**< Setting is read only          */
+  SBP_SETTINGS_WRITE_STATUS_MODIFY_DISABLED = 5, /**< Setting is not modifiable     */
+  SBP_SETTINGS_WRITE_STATUS_SERVICE_FAILED = 6,  /**< System failure during setting */
 };
 
 void settings_sender_id_set(uint16_t id);
@@ -155,8 +154,7 @@ void setreg_destroy(setreg_t **ctx);
  * @retval 0                The enum type was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_enum(setreg_t *ctx, const char *const enum_names[],
-                    settings_type_t *type);
+int setreg_add_enum(setreg_t *ctx, const char *const enum_names[], settings_type_t *type);
 
 /**
  * @brief   Register a setting.
@@ -180,9 +178,14 @@ int setreg_add_enum(setreg_t *ctx, const char *const enum_names[],
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_setting(setreg_t *ctx, const char *section, const char *name,
-                       void *var, size_t var_len, settings_type_t type,
-                       settings_notify_fn notify, void *notify_context);
+int setreg_add_setting(setreg_t *ctx,
+                       const char *section,
+                       const char *name,
+                       void *var,
+                       size_t var_len,
+                       settings_type_t type,
+                       settings_notify_fn notify,
+                       void *notify_context);
 
 /**
  * @brief   Register a read-only setting.
@@ -200,8 +203,12 @@ int setreg_add_setting(setreg_t *ctx, const char *section, const char *name,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_readonly(setreg_t *ctx, const char *section, const char *name,
-                        const void *var, size_t var_len, settings_type_t type);
+int setreg_add_readonly(setreg_t *ctx,
+                        const char *section,
+                        const char *name,
+                        const void *var,
+                        size_t var_len,
+                        settings_type_t type);
 
 /**
  * @brief   Create and add a watch only setting.
@@ -222,9 +229,14 @@ int setreg_add_readonly(setreg_t *ctx, const char *section, const char *name,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_watch(setreg_t *ctx, const char *section, const char *name,
-                     void *var, size_t var_len, settings_type_t type,
-                     settings_notify_fn notify, void *notify_context);
+int setreg_add_watch(setreg_t *ctx,
+                     const char *section,
+                     const char *name,
+                     void *var,
+                     size_t var_len,
+                     settings_type_t type,
+                     settings_notify_fn notify,
+                     void *notify_context);
 
 #ifdef __cplusplus
 }
