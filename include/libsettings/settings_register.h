@@ -11,8 +11,8 @@
  */
 
 /**
- * @file    settings.h
- * @brief   Settings API.
+ * @file    settings_register.h
+ * @brief   Settings registration API.
  *
  * @defgroup    settings Settings
  * @addtogroup  settings
@@ -52,7 +52,7 @@ typedef int (*settings_unreg_cb_t)(void *ctx, sbp_msg_callbacks_node_t **node);
 
 typedef void (*settings_log_t)(int priority, const char *format, ...);
 
-typedef struct setreg_api_s {
+typedef struct settings_api_s {
   void *ctx;
   settings_send_t send;
   settings_send_from_t send_from;
@@ -63,9 +63,9 @@ typedef struct setreg_api_s {
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
-} setreg_api_t;
+} settings_api_t;
 
-void setreg_api_init(const setreg_api_t *api);
+void settings_api_init(const settings_api_t *api);
 
 /**
  * @brief   Settings type.
@@ -85,16 +85,16 @@ enum {
 /**
  * @brief Settings error codes
  */
-enum {
-  SBP_SETTINGS_WRITE_STATUS_OK = 0,               /**< Setting written               */
-  SBP_SETTINGS_WRITE_STATUS_VALUE_REJECTED = 1,   /**< Setting value invalid   */
-  SBP_SETTINGS_WRITE_STATUS_SETTING_REJECTED = 2, /**< Setting does not exist */
-  SBP_SETTINGS_WRITE_STATUS_PARSE_FAILED = 3,     /**< Could not parse setting value */
+typedef enum settings_write_res_e {
+  SETTINGS_WR_OK = 0,               /**< Setting written               */
+  SETTINGS_WR_VALUE_REJECTED = 1,   /**< Setting value invalid   */
+  SETTINGS_WR_SETTING_REJECTED = 2, /**< Setting does not exist */
+  SETTINGS_WR_PARSE_FAILED = 3,     /**< Could not parse setting value */
   // READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary
-  SBP_SETTINGS_WRITE_STATUS_READ_ONLY = 4,       /**< Setting is read only          */
-  SBP_SETTINGS_WRITE_STATUS_MODIFY_DISABLED = 5, /**< Setting is not modifiable     */
-  SBP_SETTINGS_WRITE_STATUS_SERVICE_FAILED = 6,  /**< System failure during setting */
-};
+  SETTINGS_WR_READ_ONLY = 4,        /**< Setting is read only          */
+  SETTINGS_WR_MODIFY_DISABLED = 5,  /**< Setting is not modifiable     */
+  SETTINGS_WR_SERVICE_FAILED = 6,   /**< System failure during setting */
+} settings_write_res_t;
 
 void settings_sender_id_set(uint16_t id);
 
@@ -116,11 +116,11 @@ void settings_sender_id_set(uint16_t id);
 typedef int (*settings_notify_fn)(void *context);
 
 /**
- * @struct  setreg_t
+ * @struct  settings_t
  *
  * @brief   Opaque context for settings.
  */
-typedef struct setreg_s setreg_t;
+typedef struct settings_s settings_t;
 
 /**
  * @brief   Create a settings context.
@@ -129,7 +129,7 @@ typedef struct setreg_s setreg_t;
  * @return                  Pointer to the created context, or NULL if the
  *                          operation failed.
  */
-setreg_t *setreg_create(void);
+settings_t *settings_create(void);
 
 /**
  * @brief   Destroy a settings context.
@@ -139,7 +139,7 @@ setreg_t *setreg_create(void);
  *
  * @param[inout] ctx        Double pointer to the context to destroy.
  */
-void setreg_destroy(setreg_t **ctx);
+void settings_destroy(settings_t **ctx);
 
 /**
  * @brief   Register an enum type.
@@ -154,7 +154,7 @@ void setreg_destroy(setreg_t **ctx);
  * @retval 0                The enum type was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_enum(setreg_t *ctx, const char *const enum_names[], settings_type_t *type);
+int settings_register_enum(settings_t *ctx, const char *const enum_names[], settings_type_t *type);
 
 /**
  * @brief   Register a setting.
@@ -178,14 +178,14 @@ int setreg_add_enum(setreg_t *ctx, const char *const enum_names[], settings_type
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_setting(setreg_t *ctx,
-                       const char *section,
-                       const char *name,
-                       void *var,
-                       size_t var_len,
-                       settings_type_t type,
-                       settings_notify_fn notify,
-                       void *notify_context);
+int settings_register_setting(settings_t *ctx,
+                              const char *section,
+                              const char *name,
+                              void *var,
+                              size_t var_len,
+                              settings_type_t type,
+                              settings_notify_fn notify,
+                              void *notify_context);
 
 /**
  * @brief   Register a read-only setting.
@@ -203,12 +203,12 @@ int setreg_add_setting(setreg_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_readonly(setreg_t *ctx,
-                        const char *section,
-                        const char *name,
-                        const void *var,
-                        size_t var_len,
-                        settings_type_t type);
+int settings_register_readonly(settings_t *ctx,
+                               const char *section,
+                               const char *name,
+                               const void *var,
+                               size_t var_len,
+                               settings_type_t type);
 
 /**
  * @brief   Create and add a watch only setting.
@@ -229,14 +229,14 @@ int setreg_add_readonly(setreg_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int setreg_add_watch(setreg_t *ctx,
-                     const char *section,
-                     const char *name,
-                     void *var,
-                     size_t var_len,
-                     settings_type_t type,
-                     settings_notify_fn notify,
-                     void *notify_context);
+int settings_register_watch(settings_t *ctx,
+                            const char *section,
+                            const char *name,
+                            void *var,
+                            size_t var_len,
+                            settings_type_t type,
+                            settings_notify_fn notify,
+                            void *notify_context);
 
 #ifdef __cplusplus
 }
