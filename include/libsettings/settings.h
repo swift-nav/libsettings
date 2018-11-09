@@ -11,8 +11,8 @@
  */
 
 /**
- * @file    settings_register.h
- * @brief   Settings registration API.
+ * @file    settings.h
+ * @brief   Settings API.
  *
  * @defgroup    settings Settings
  * @addtogroup  settings
@@ -30,6 +30,42 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief   Settings type.
+ */
+typedef int settings_type_t;
+
+/**
+ * @struct  settings_t
+ *
+ * @brief   Opaque context for settings.
+ */
+typedef struct settings_s settings_t;
+
+/**
+ * @brief   Standard settings type definitions.
+ */
+enum {
+  SETTINGS_TYPE_INT,    /**< Integer. 8, 16, or 32 bits.                   */
+  SETTINGS_TYPE_FLOAT,  /**< Float. Single or double precision.            */
+  SETTINGS_TYPE_STRING, /**< String.                                       */
+  SETTINGS_TYPE_BOOL    /**< Boolean.                                      */
+};
+
+/**
+ * @brief Settings error codes
+ */
+typedef enum settings_write_res_e {
+  SETTINGS_WR_OK = 0,               /**< Setting written               */
+  SETTINGS_WR_VALUE_REJECTED = 1,   /**< Setting value invalid   */
+  SETTINGS_WR_SETTING_REJECTED = 2, /**< Setting does not exist */
+  SETTINGS_WR_PARSE_FAILED = 3,     /**< Could not parse setting value */
+  // READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary
+  SETTINGS_WR_READ_ONLY = 4,       /**< Setting is read only          */
+  SETTINGS_WR_MODIFY_DISABLED = 5, /**< Setting is not modifiable     */
+  SETTINGS_WR_SERVICE_FAILED = 6,  /**< System failure during setting */
+} settings_write_res_t;
 
 typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload);
 typedef int (*settings_send_from_t)(void *ctx,
@@ -65,39 +101,6 @@ typedef struct settings_api_s {
   settings_log_t log;
 } settings_api_t;
 
-void settings_api_init(const settings_api_t *api);
-
-/**
- * @brief   Settings type.
- */
-typedef int settings_type_t;
-
-/**
- * @brief   Standard settings type definitions.
- */
-enum {
-  SETTINGS_TYPE_INT,    /**< Integer. 8, 16, or 32 bits.                   */
-  SETTINGS_TYPE_FLOAT,  /**< Float. Single or double precision.            */
-  SETTINGS_TYPE_STRING, /**< String.                                       */
-  SETTINGS_TYPE_BOOL    /**< Boolean.                                      */
-};
-
-/**
- * @brief Settings error codes
- */
-typedef enum settings_write_res_e {
-  SETTINGS_WR_OK = 0,               /**< Setting written               */
-  SETTINGS_WR_VALUE_REJECTED = 1,   /**< Setting value invalid   */
-  SETTINGS_WR_SETTING_REJECTED = 2, /**< Setting does not exist */
-  SETTINGS_WR_PARSE_FAILED = 3,     /**< Could not parse setting value */
-  // READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary
-  SETTINGS_WR_READ_ONLY = 4,        /**< Setting is read only          */
-  SETTINGS_WR_MODIFY_DISABLED = 5,  /**< Setting is not modifiable     */
-  SETTINGS_WR_SERVICE_FAILED = 6,   /**< System failure during setting */
-} settings_write_res_t;
-
-void settings_sender_id_set(uint16_t id);
-
 /**
  * @brief   Settings notify callback.
  * @details Signature of a user-provided callback function to be executed
@@ -116,20 +119,13 @@ void settings_sender_id_set(uint16_t id);
 typedef int (*settings_notify_fn)(void *context);
 
 /**
- * @struct  settings_t
- *
- * @brief   Opaque context for settings.
- */
-typedef struct settings_s settings_t;
-
-/**
  * @brief   Create a settings context.
  * @details Create and initialize a settings context.
  *
  * @return                  Pointer to the created context, or NULL if the
  *                          operation failed.
  */
-settings_t *settings_create(void);
+settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl);
 
 /**
  * @brief   Destroy a settings context.
@@ -243,5 +239,3 @@ int settings_register_watch(settings_t *ctx,
 #endif
 
 #endif /* LIBSETTINGS_SETTINGS_H */
-
-/** @} */
