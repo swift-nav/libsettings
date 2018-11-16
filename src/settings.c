@@ -80,6 +80,8 @@
 
 #include <libsettings/settings.h>
 
+#include <internal/registration_state.h>
+
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
 
@@ -88,8 +90,6 @@
 
 static int log_err = 3;
 static int log_warning = 4;
-
-#define SBP_PAYLOAD_SIZE_MAX 255
 
 typedef int (*to_string_fn)(const void *priv, char *str, int slen, const void *blob, int blen);
 typedef bool (*from_string_fn)(const void *priv, void *blob, int blen, const char *str);
@@ -133,20 +133,6 @@ typedef struct setting_data_s {
 } setting_data_t;
 
 /**
- * @brief Registration Helper Struct
- *
- * This helper struct is used watch for async callbacks during the
- * registration/add watch read req phases of setup to allow a
- * synchronous blocking stragety. These are for ephemeral use.
- */
-typedef struct {
-  bool pending;
-  bool match;
-  uint8_t compare_data[SBP_PAYLOAD_SIZE_MAX];
-  uint8_t compare_data_len;
-} registration_state_t;
-
-/**
  * @brief Settings Context
  *
  * This is the main context for managing client interactions with
@@ -186,67 +172,6 @@ static int setting_send_write_response(settings_t *ctx,
     return -1;
   }
   return 0;
-}
-
-/**
- * @brief compare_init - set up compare structure for synchronous req/reply
- * @param ctx: settings context
- * @param data: formatted settings header string to match with incoming messages
- * @param data_len: length of match string
- */
-static void compare_init(settings_t *ctx, const char *data, size_t data_len)
-{
-  registration_state_t *r = &ctx->registration_state;
-  memset(r, 0, sizeof(registration_state_t));
-
-  assert(data_len <= sizeof(r->compare_data));
-
-  memcpy(r->compare_data, data, data_len);
-  r->compare_data_len = data_len;
-  r->match = false;
-  r->pending = true;
-}
-
-/**
- * @brief compare_check - used by message callbacks to perform comparison
- * @param ctx: settings context
- * @param data: settings message payload string to match with header string
- * @param data_len: length of payload string
- * @return 0 for match, 1 no comparison pending, -1 for comparison failure
- */
-static int compare_check(settings_t *ctx, const char *data, size_t data_len)
-{
-  assert(ctx);
-  assert(data);
-
-  settings_api_t *api = &ctx->api_impl;
-  registration_state_t *r = &ctx->registration_state;
-
-  assert(r);
-
-  if (!r->pending) {
-    return 1;
-  }
-
-  if ((data_len >= r->compare_data_len)
-      && (memcmp(data, r->compare_data, r->compare_data_len) == 0)) {
-    r->match = true;
-    r->pending = false;
-    api->signal(api->ctx);
-    return 0;
-  }
-
-  return -1;
-}
-
-/**
- * @brief compare_deinit - clean up compare structure after transaction
- * @param ctx: settings context
- */
-static void compare_deinit(settings_t *ctx)
-{
-  registration_state_t *r = &ctx->registration_state;
-  r->pending = false;
 }
 
 /**
@@ -454,7 +379,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   }
 
   /* Check for a response to a pending registration request */
-  compare_check(ctx, (char *)msg, len);
+  registration_state_check(&ctx->registration_state, &ctx->api_impl, (char *)msg, len);
 
   /* Extract parameters from message:
    * 3 null terminated strings: section, setting and value
@@ -542,7 +467,7 @@ static void settings_read_resp_callback(uint16_t sender_id,
   msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  compare_check(ctx, read_response->setting, len);
+  registration_state_check(&ctx->registration_state, &ctx->api_impl, read_response->setting, len);
 
   if (settings_update_watch_only(ctx, read_response->setting, len) != 0) {
     ctx->api_impl.log(log_warning, "error in settings read response message");
@@ -563,7 +488,10 @@ static void settings_write_resp_callback(uint16_t sender_id,
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  compare_check(ctx, write_response->setting, len - sizeof(write_response->status));
+  registration_state_check(&ctx->registration_state,
+                           &ctx->api_impl,
+                           write_response->setting,
+                           len - sizeof(write_response->status));
 
   if (settings_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
       != 0) {
@@ -770,20 +698,6 @@ static void setting_data_list_insert(settings_t *ctx, setting_data_t *setting_da
 }
 
 /**
- * @brief compare_match - returns status of current comparison
- * This is used as the value to block on until the comparison has been matched
- * successfully or until (based on implementation) a number of retries or a
- * timeout has expired.
- * @param ctx: settings context
- * @return true if response was matched, false if not response has been received
- */
-static bool compare_match(settings_t *ctx)
-{
-  registration_state_t *r = &ctx->registration_state;
-  return r->match;
-}
-
-/**
  * @brief type_register - register type data for reference when adding settings
  * @param ctx: settings context
  * @param to_string: serialization method
@@ -935,7 +849,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                                               uint8_t retries,
                                               uint16_t sender_id)
 {
-  compare_init(ctx, message, header_length);
+  registration_state_init(&ctx->registration_state, message, header_length);
 
   uint8_t tries = 0;
   bool success = false;
@@ -960,7 +874,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                         message,
                         message + len1);
     } else {
-      success = compare_match(ctx);
+      success = registration_state_match(&ctx->registration_state);
     }
 
   } while (!success && (++tries < retries));
@@ -970,7 +884,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
     ctx->api_impl.wait_deinit(ctx->api_impl.ctx);
   }
 
-  compare_deinit(ctx);
+  registration_state_deinit(&ctx->registration_state);
 
   if (!success) {
     ctx->api_impl.log(log_err, "setting req/reply failed for msg id %d", message_type);
