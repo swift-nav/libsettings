@@ -109,3 +109,4 @@ else (LIBSBP_SEARCH_PATH)
 endif(LIBSBP_SEARCH_PATH)
 
 add_subdirectory(src)
+add_subdirectory(tests)
