@@ -15,10 +15,14 @@ else (CMAKE_CROSSCOMPILING)
 
   ################
   # Define a test
-  add_executable(test_libsettings src/test_registration_state.cpp)
+  add_executable(
+    test_libsettings
+    src/test_registration_state.cpp
+    ${PROJECT_SOURCE_DIR}/src/registration_state.c)
   add_dependencies(test_libsettings gtest)
   include_directories(${source_dir}/include)
   include_directories(${GTEST_INCLUDE_DIRS})
+  include_directories(${PROJECT_SOURCE_DIR}/include)
   target_link_libraries(test_libsettings ${GTEST_BOTH_LIBRARIES} pthread)
 
   ################################
