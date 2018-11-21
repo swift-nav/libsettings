@@ -1,6 +1,5 @@
 set(libsettings_HEADERS
   ${PROJECT_SOURCE_DIR}/include/libsettings/settings.h
-  ${PROJECT_SOURCE_DIR}/include/internal/registration_state.h
   )
 
 add_library(settings settings.c registration_state.c)
