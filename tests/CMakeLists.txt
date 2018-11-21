@@ -1,29 +1,38 @@
 if (CMAKE_CROSSCOMPILING)
   message(STATUS "Skipping unit tests, cross compiling")
 else (CMAKE_CROSSCOMPILING)
-  ##################################
-  # Download and install GoogleTest
-
-  include(ExternalProject)
-  ExternalProject_Add(gtest
-    URL https://github.com/google/googletest/archive/release-1.8.1.zip
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-    INSTALL_COMMAND ""
-  )
   enable_testing()
-  find_package(GTest REQUIRED)
+
+  ############
+  # Prepare gtest
+  add_subdirectory("${PROJECT_SOURCE_DIR}/thirdparty/googletest" "thirdparty/googletest")
+
+  mark_as_advanced(
+    BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
+    gmock_build_tests gtest_build_samples gtest_build_tests
+    gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
+  )
+
+  set_target_properties(gtest PROPERTIES FOLDER extern)
+  set_target_properties(gtest_main PROPERTIES FOLDER extern)
+  set_target_properties(gmock PROPERTIES FOLDER extern)
+  set_target_properties(gmock_main PROPERTIES FOLDER extern)
+
+  macro(package_add_test TESTNAME)
+    add_executable(${TESTNAME} ${ARGN})
+    target_link_libraries(${TESTNAME} gtest gmock gtest_main)
+    add_test(${TESTNAME} ${TESTNAME})
+    set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
+  endmacro()
 
   ################
   # Define a test
-  add_executable(
+  package_add_test(
     test_libsettings
     src/test_registration_state.cpp
     ${PROJECT_SOURCE_DIR}/src/registration_state.c)
   add_dependencies(test_libsettings gtest)
-  include_directories(${source_dir}/include)
-  include_directories(${GTEST_INCLUDE_DIRS})
   include_directories(${PROJECT_SOURCE_DIR}/include)
-  target_link_libraries(test_libsettings ${GTEST_BOTH_LIBRARIES} pthread)
 
   ################################
   # Unit Tests
