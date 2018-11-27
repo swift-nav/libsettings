@@ -1,0 +1,22 @@
+#!/usr/bin/python
+
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+
+setup(
+  name = 'settings',
+  ext_modules=[
+    Extension("settings",
+              sources=["${CMAKE_CURRENT_SOURCE_DIR}/settings.pyx",
+                       "${CMAKE_CURRENT_SOURCE_DIR}/../src/settings.c",
+                       "${CMAKE_CURRENT_SOURCE_DIR}/../src/request_state.c"],
+              include_dirs=[
+                "${CMAKE_CURRENT_SOURCE_DIR}/../libsbp/c/include/",
+                "${CMAKE_CURRENT_SOURCE_DIR}/../include/",
+              ],
+              extra_compile_args=["-Wno-unused-label"],
+        )
+    ],
+    cmdclass = {'build_ext': build_ext},
+)

@@ -57,3 +57,7 @@ dkms.conf
 
 # build
 .build/
+
+# Python
+python/setup.py
+python/settings.c
