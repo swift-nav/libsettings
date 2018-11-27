@@ -234,6 +234,33 @@ int settings_register_watch(settings_t *ctx,
                             settings_notify_fn notify,
                             void *notify_context);
 
+int settings_write(settings_t *ctx,
+                   const char *section,
+                   const char *name,
+                   const void *value,
+                   size_t value_len,
+                   settings_type_t type);
+
+int settings_write_int(settings_t *ctx,
+                       const char *section,
+                       const char *name,
+                       int value);
+
+int settings_write_float(settings_t *ctx,
+                         const char *section,
+                         const char *name,
+                         float value);
+
+int settings_write_str(settings_t *ctx,
+                       const char *section,
+                       const char *name,
+                       const char *str);
+
+int settings_write_bool(settings_t *ctx,
+                        const char *section,
+                        const char *name,
+                        bool value);
+
 #ifdef __cplusplus
 }
 #endif

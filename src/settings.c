@@ -159,7 +159,7 @@ static const char *const bool_enum_names[] = {"False", "True", NULL};
 
 /**
  * @brief setting_send_write_response
- * @param write_response: pre-formatted read response sbp message
+ * @param write_response: pre-formatted write response sbp message
  * @param len: length of the message
  * @return zero on success, -1 if message failed to send
  */
@@ -293,9 +293,10 @@ static int message_data_get(setting_data_t *setting_data, char *buf, int blen)
  * @param setting_data: the setting to format
  * @param buf: buffer to hold formatted setting string
  * @param len: length of the destination buffer
+ * @param msg_hdr_len: length of the msg header
  * @return bytes written to the buffer, -1 in case of failure
  */
-static int setting_format_setting(setting_data_t *setting_data, char *buf, int len)
+static int setting_format_setting(setting_data_t *setting_data, char *buf, int len, uint8_t *msg_hdr_len)
 {
   int result = 0;
   int written = 0;
@@ -305,6 +306,10 @@ static int setting_format_setting(setting_data_t *setting_data, char *buf, int l
     return result;
   }
   written += result;
+
+  if (msg_hdr_len != NULL) {
+    *msg_hdr_len = result;
+  }
 
   result = message_data_get(setting_data, buf + written, len - written);
   if (result < 0) {
@@ -379,7 +384,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   write_response->status = write_result;
   resp_len += sizeof(write_response->status);
   int l =
-    setting_format_setting(setting_data, write_response->setting, SBP_PAYLOAD_SIZE_MAX - resp_len);
+    setting_format_setting(setting_data, write_response->setting, SBP_PAYLOAD_SIZE_MAX - resp_len, NULL);
   if (l < 0) {
     return;
   }
@@ -460,6 +465,13 @@ static void settings_write_resp_callback(uint16_t sender_id,
                            write_response->setting,
                            len - sizeof(write_response->status));
 
+  if (write_response->status != SETTINGS_WR_OK) {
+    ctx->api_impl.log(log_warning,
+                      "Setting write rejected (code: %d), not updating watched values",
+                      write_response->status);
+    return;
+  }
+
   if (settings_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
       != 0) {
     ctx->api_impl.log(log_warning, "error in settings read response message");
@@ -490,6 +502,27 @@ static int settings_register_write_callback(settings_t *ctx)
   }
 
   ctx->write_callback_registered = true;
+  return 0;
+}
+
+/**
+ * @brief settings_unregister_write_callback - deregister callback for
+ * SBP_MSG_SETTINGS_WRITE
+ * @param ctx: settings context
+ * @return zero on success, -1 if deregistration failed
+ */
+static int settings_unregister_write_callback(settings_t *ctx)
+{
+  if (!ctx->write_callback_registered) {
+    return 0;
+  }
+
+  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->write_cb_node) != 0) {
+    ctx->api_impl.log(log_err, "error unregistering settings write callback");
+    return -1;
+  }
+
+  ctx->write_callback_registered = false;
   return 0;
 }
 
@@ -543,7 +576,7 @@ static int settings_unregister_read_resp_callback(settings_t *ctx)
 
 /**
  * @brief settings_register_write_resp_callback - register callback for
- * SBP_MSG_SETTINGS_READ_RESP
+ * SBP_MSG_SETTINGS_WRITE_RESP
  * @param ctx: settings context
  * @return zero on success, -1 if registration failed
  */
@@ -565,6 +598,27 @@ static int settings_register_write_resp_callback(settings_t *ctx)
   }
 
   ctx->write_resp_callback_registered = true;
+  return 0;
+}
+
+/**
+ * @brief settings_unregister_write_resp_callback - deregister callback for
+ * SBP_MSG_SETTINGS_WRITE_RESP
+ * @param ctx: settings context
+ * @return zero on success, -1 if deregistration failed
+ */
+static int settings_unregister_write_resp_callback(settings_t *ctx)
+{
+  if (!ctx->write_resp_callback_registered) {
+    return 0;
+  }
+
+  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->write_resp_cb_node) != 0) {
+    ctx->api_impl.log(log_err, "error unregistering settings write resp callback");
+    return -1;
+  }
+
+  ctx->write_resp_callback_registered = false;
   return 0;
 }
 
@@ -902,26 +956,15 @@ static int setting_perform_request_reply(settings_t *ctx,
  */
 static int setting_register(settings_t *ctx, setting_data_t *setting_data)
 {
-  /* Build message */
-  char msg[SBP_PAYLOAD_SIZE_MAX];
-  uint8_t msg_len = 0;
+  char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
   uint8_t msg_header_len;
-  int l;
 
-  l = message_header_get(setting_data, &msg[msg_len], sizeof(msg) - msg_len);
-  if (l < 0) {
-    ctx->api_impl.log(log_err, "error building settings message");
+  uint8_t msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
+
+  if (msg_len < 0) {
+    ctx->api_impl.log(log_err, "%s: Setting format failed", __FUNCTION__);
     return -1;
   }
-  msg_len += l;
-  msg_header_len = msg_len;
-
-  l = message_data_get(setting_data, &msg[msg_len], sizeof(msg) - msg_len);
-  if (l < 0) {
-    ctx->api_impl.log(log_err, "error building settings message");
-    return -1;
-  }
-  msg_len += l;
 
   return setting_perform_request_reply(ctx,
                                        SBP_MSG_SETTINGS_REGISTER,
@@ -1155,6 +1198,92 @@ int settings_register_watch(settings_t *ctx,
                               true);
 }
 
+int settings_write(settings_t *ctx,
+                   const char *section,
+                   const char *name,
+                   const void *value,
+                   size_t value_len,
+                   settings_type_t type)
+{
+  char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
+  uint8_t msg_header_len;
+
+  if (settings_register_write_resp_callback(ctx) != 0) {
+    ctx->api_impl.log(log_err, "error registering settings write response callback");
+  }
+
+  setting_data_t *setting_data = setting_create_setting(ctx,
+                                                        section,
+                                                        name,
+                                                        (void *)value,
+                                                        value_len,
+                                                        type,
+                                                        NULL,
+                                                        NULL,
+                                                        false,
+                                                        false);
+  if (setting_data == NULL) {
+    ctx->api_impl.log(log_err, "%s, error creating setting data", __FUNCTION__);
+    return -1;
+  }
+
+  printf("settings_write len: %lu str: %s\n", setting_data->var_len, (char *)setting_data->var);
+
+  int msg_len = setting_format_setting(setting_data, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
+
+  if (msg_len < 0) {
+    ctx->api_impl.log(log_err, "%s: Setting format failed", __FUNCTION__);
+    setting_data_members_destroy(setting_data);
+    return -1;
+  }
+
+  int ret = setting_perform_request_reply_from(ctx,
+                                               SBP_MSG_SETTINGS_WRITE,
+                                               msg,
+                                               msg_len,
+                                               msg_header_len,
+                                               REGISTER_TIMEOUT_MS,
+                                               REGISTER_TRIES,
+                                               SBP_SENDER_ID);
+
+  setting_data_members_destroy(setting_data);
+
+  return ret;
+}
+
+int settings_write_int(settings_t *ctx,
+                       const char *section,
+                       const char *name,
+                       int value)
+{
+  return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_INT);
+}
+
+int settings_write_float(settings_t *ctx,
+                         const char *section,
+                         const char *name,
+                         float value)
+{
+  return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_FLOAT);
+}
+
+int settings_write_str(settings_t *ctx,
+                       const char *section,
+                       const char *name,
+                       const char *str)
+{
+  printf("settings_write_str len: %lu str: %s\n", strlen(str), str);
+  return settings_write(ctx, section, name, str, strlen(str), SETTINGS_TYPE_STRING);
+}
+
+int settings_write_bool(settings_t *ctx,
+                        const char *section,
+                        const char *name,
+                        bool value)
+{
+  return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
+}
+
 static int float_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
 {
   (void)priv;
@@ -1297,6 +1426,10 @@ void settings_destroy(settings_t **ctx)
 {
   assert(ctx != NULL);
   assert(*ctx != NULL);
+  (*ctx)->api_impl.log(log_err, "Releasing settings framework");
+  settings_unregister_write_callback(*ctx);
+  settings_unregister_write_resp_callback(*ctx);
+  settings_unregister_read_resp_callback(*ctx);
 
   members_destroy(*ctx);
   free(*ctx);

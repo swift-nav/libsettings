@@ -26,6 +26,9 @@
  */
 void registration_state_init(registration_state_t *state, const char *data, size_t data_len)
 {
+  /* No multithreading */
+  assert(!state->pending);
+
   memset(state, 0, sizeof(registration_state_t));
 
   assert(data_len <= sizeof(state->compare_data));
