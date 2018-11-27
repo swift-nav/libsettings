@@ -86,6 +86,12 @@ cdef extern from "../include/libsettings/settings.h":
                            const char *name,
                            const char *str)
 
+    int settings_read_str(settings_t *ctx,
+                          const char *section,
+                          const char *name,
+                          char *str,
+                          size_t str_len)
+
 # See register()
 #cdef int my_int_notify(void *ctx):
 #    printf("%p\n", ctx)
@@ -132,11 +138,22 @@ cdef class Settings:
     #                                     my_int)
 
     def write(self, section, name, value):
-        print bytes(str(value))
-        settings_write_str(self.ctx,
-                           bytes(section),
-                           bytes(name),
-                           bytes(str(value)))
+        return settings_write_str(self.ctx,
+                                  bytes(section),
+                                  bytes(name),
+                                  bytes(str(value)))
+
+    def read(self, section, name):
+        cdef char value[256]
+        ret = settings_read_str(self.ctx,
+                                bytes(section),
+                                bytes(name),
+                                value,
+                                256)
+        if (ret):
+            return None
+        else:
+            return str(value)
 
     def _callback_broker(self, sbp_msg, **metadata):
         msg_type = sbp_msg.msg_type

@@ -261,6 +261,34 @@ int settings_write_bool(settings_t *ctx,
                         const char *name,
                         bool value);
 
+int settings_read(settings_t *ctx,
+                  const char *section,
+                  const char *name,
+                  void *value,
+                  size_t value_len,
+                  settings_type_t type);
+
+int settings_read_int(settings_t *ctx,
+                      const char *section,
+                      const char *name,
+                      int *value);
+
+int settings_read_float(settings_t *ctx,
+                        const char *section,
+                        const char *name,
+                        float *value);
+
+int settings_read_str(settings_t *ctx,
+                      const char *section,
+                      const char *name,
+                      char *str,
+                      size_t str_len);
+
+int settings_read_bool(settings_t *ctx,
+                       const char *section,
+                       const char *name,
+                       bool *value);
+
 #ifdef __cplusplus
 }
 #endif

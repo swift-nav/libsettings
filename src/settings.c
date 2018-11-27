@@ -153,9 +153,84 @@ typedef struct settings_s {
   sbp_msg_callbacks_node_t *read_resp_cb_node;
   settings_api_t api_impl;
   uint16_t sender_id;
+  char resp_value[SBP_PAYLOAD_SIZE_MAX];
+  char resp_type[SBP_PAYLOAD_SIZE_MAX];
 } settings_t;
 
 static const char *const bool_enum_names[] = {"False", "True", NULL};
+
+/* Parse SBP message payload into setting parameters */
+/* TODO: use this in piksi_buildroot sbp_settings_daemon to remove code duplication */
+static bool settings_parse_setting(const char *buf,
+                                   uint8_t blen,
+                                   const char **section,
+                                   const char **name,
+                                   const char **value,
+                                   const char **type)
+{
+  if (section) *section = NULL;
+  if (name) *name = NULL;
+  if (value) *value = NULL;
+  if (type) *type = NULL;
+
+  if (blen == 0) {
+    return false;
+  }
+
+  if (buf[blen - 1] != '\0') {
+    return false;
+  }
+
+  /* Extract parameters from message:
+   * 3 null terminated strings: section, name and value
+   * An optional fourth string is a description of the type.
+   */
+  if (section) *section = (const char *)buf;
+  for (int i = 0, tok = 0; i < blen; i++) {
+    if (buf[i] != '\0') {
+      continue;
+    }
+    tok++;
+    switch (tok) {
+    case 1:
+      if (name == NULL) {
+        continue;
+      }
+      *name = (const char *)&buf[i + 1];
+      break;
+
+    case 2:
+      if (value == NULL) {
+        continue;
+      }
+      if (i + 1 < blen) {
+        *value = (const char *)&buf[i + 1];
+      }
+      break;
+
+    case 3:
+      if (type == NULL) {
+        continue;
+      }
+      if (i + 1 < blen) {
+        *type = (const char *)&buf[i + 1];
+        break;
+      }
+
+    case 4:
+      /* Enum list sentinel NULL */
+      if (i == blen - 2) break;
+
+    case 5:
+      if (i == blen - 1) break;
+
+    default:
+      return false;
+    }
+  }
+
+  return true;
+}
 
 /**
  * @brief setting_send_write_response
@@ -230,20 +305,24 @@ static void setting_update_value(setting_data_t *setting_data,
  * @param blen: length of the destination buffer
  * @return bytes written to the buffer, -1 in case of failure
  */
-static int message_header_get(setting_data_t *setting_data, char *buf, int blen)
+static int message_header_get(const char *section, const char *name, char *buf, int blen)
 {
+  assert(section);
+  assert(name);
+  assert(buf);
+
   int n = 0;
   int l;
 
   /* Section */
-  l = snprintf(&buf[n], blen - n, "%s", setting_data->section);
+  l = snprintf(&buf[n], blen - n, "%s", section);
   if ((l < 0) || (l >= blen - n)) {
     return -1;
   }
   n += l + 1;
 
   /* Name */
-  l = snprintf(&buf[n], blen - n, "%s", setting_data->name);
+  l = snprintf(&buf[n], blen - n, "%s", name);
   if ((l < 0) || (l >= blen - n)) {
     return -1;
   }
@@ -301,7 +380,7 @@ static int setting_format_setting(setting_data_t *setting_data, char *buf, int l
   int result = 0;
   int written = 0;
 
-  result = message_header_get(setting_data, buf, len - written);
+  result = message_header_get(setting_data->section, setting_data->name, buf, len - written);
   if (result < 0) {
     return result;
   }
@@ -393,7 +472,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   setting_send_write_response(ctx, write_response, resp_len);
 }
 
-static int settings_update_watch_only(settings_t *ctx, char *msg, uint8_t len)
+static int settings_update_watch_only(settings_t *ctx, const char *msg, uint8_t len)
 {
   /* Extract parameters from message:
    * 4 null terminated strings: section, name, value and type
@@ -436,13 +515,28 @@ static void settings_read_resp_callback(uint16_t sender_id,
   assert(context);
 
   settings_t *ctx = (settings_t *)context;
-  msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
+  const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
   registration_state_check(&ctx->registration_state, &ctx->api_impl, read_response->setting, len);
 
   if (settings_update_watch_only(ctx, read_response->setting, len) != 0) {
     ctx->api_impl.log(log_warning, "error in settings read response message");
+  }
+
+  const char *value = NULL, *type = NULL;
+
+  if (settings_parse_setting(read_response->setting, len, NULL, NULL, &value, &type)) {
+    if (value) {
+      strncpy(ctx->resp_value, value, SBP_PAYLOAD_SIZE_MAX);
+    }
+    if (type) {
+      strncpy(ctx->resp_type, type, SBP_PAYLOAD_SIZE_MAX);
+    }
+  } else {
+    ctx->api_impl.log(log_warning, "%s: Parsing setting failed", __FUNCTION__);
+    ctx->resp_value[0] = '\0';
+    ctx->resp_type[0] = '\0';
   }
 }
 
@@ -995,7 +1089,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
     return -1;
   }
 
-  l = message_header_get(setting_data, &msg[msg_len], sizeof(msg) - msg_len);
+  l = message_header_get(setting_data->section, setting_data->name, msg, sizeof(msg) - msg_len);
   if (l < 0) {
     ctx->api_impl.log(log_err, "error building settings read req message");
     return -1;
@@ -1227,8 +1321,6 @@ int settings_write(settings_t *ctx,
     return -1;
   }
 
-  printf("settings_write len: %lu str: %s\n", setting_data->var_len, (char *)setting_data->var);
-
   int msg_len = setting_format_setting(setting_data, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
 
   if (msg_len < 0) {
@@ -1272,7 +1364,6 @@ int settings_write_str(settings_t *ctx,
                        const char *name,
                        const char *str)
 {
-  printf("settings_write_str len: %lu str: %s\n", strlen(str), str);
   return settings_write(ctx, section, name, str, strlen(str), SETTINGS_TYPE_STRING);
 }
 
@@ -1282,6 +1373,134 @@ int settings_write_bool(settings_t *ctx,
                         bool value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
+}
+
+// static int settings_read_enum(settings_t *ctx, char *value, size_t value_len)
+// {
+//   printf("%s: resp_value: %s resp_type: %s\n", __FUNCTION__, ctx->resp_value, ctx->resp_type);
+//   const char *cmp = "enum:";
+//   char *dup = strdup(ctx->resp_type + strlen(cmp));
+
+//   int enum_idx = atoi(ctx->resp_value);
+
+//   char *tok = strtok(dup, ",");
+//   for (uint8_t i = 0; i <= enum_idx; i++) {
+//     if (tok == NULL) {
+//       ctx->api_impl.log(log_err, "%s failed", __FUNCTION__);
+//       free(dup);
+//       return -1;
+//     }
+//     tok = strtok(NULL, ",");
+//   }
+
+//   strncpy(value, tok, value_len);
+
+//   free(dup);
+//   return 0;
+// }
+
+int settings_read(settings_t *ctx,
+                  const char *section,
+                  const char *name,
+                  void *value,
+                  size_t value_len,
+                  settings_type_t type)
+{
+  assert(ctx);
+  assert(section);
+  assert(name);
+  assert(value);
+  assert(value_len);
+
+  /* Build message */
+  char msg[SBP_PAYLOAD_SIZE_MAX];
+  uint8_t msg_len = message_header_get(section, name, msg, sizeof(msg));
+
+  if (msg_len < 0) {
+    ctx->api_impl.log(log_err, "error building settings read req message");
+    return -1;
+  }
+
+  if (settings_register_read_resp_callback(ctx) != 0) {
+    ctx->api_impl.log(log_err, "error registering settings read callback");
+    return -1;
+  }
+
+  int res = setting_perform_request_reply_from(ctx,
+                                               SBP_MSG_SETTINGS_READ_REQ,
+                                               msg,
+                                               msg_len,
+                                               msg_len,
+                                               WATCH_INIT_TIMEOUT_MS,
+                                               WATCH_INIT_TRIES,
+                                               SBP_SENDER_ID);
+
+  settings_unregister_read_resp_callback(ctx);
+
+  if (res != 0) {
+    return res;
+  }
+
+  settings_type_t parsed_type = SETTINGS_TYPE_STRING;
+
+  if (strlen(ctx->resp_type) != 0) {
+    const char *cmp = "enum:";
+    if (strncmp(ctx->resp_type, cmp, strlen(cmp)) != 0) {
+      parsed_type = atoi(ctx->resp_type);
+    }
+  } else {
+    parsed_type = type;
+  }
+
+  if (type != parsed_type) {
+    ctx->api_impl.log(log_err, "setting types don't match");
+    return -1;
+  }
+
+  const type_data_t *td = type_data_lookup(ctx, parsed_type);
+
+  if (td == NULL) {
+    return -1;
+  }
+
+  if (!td->from_string(td->priv, value, value_len, ctx->resp_value)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+int settings_read_int(settings_t *ctx,
+                      const char *section,
+                      const char *name,
+                      int *value)
+{
+  return settings_read(ctx, section, name, value, sizeof(int), SETTINGS_TYPE_INT);
+}
+
+int settings_read_float(settings_t *ctx,
+                        const char *section,
+                        const char *name,
+                        float *value)
+{
+  return settings_read(ctx, section, name, value, sizeof(float), SETTINGS_TYPE_FLOAT);
+}
+
+int settings_read_str(settings_t *ctx,
+                      const char *section,
+                      const char *name,
+                      char *str,
+                      size_t str_len)
+{
+  return settings_read(ctx, section, name, str, str_len, SETTINGS_TYPE_STRING);
+}
+
+int settings_read_bool(settings_t *ctx,
+                       const char *section,
+                       const char *name,
+                       bool *value)
+{
+  return settings_read(ctx, section, name, value, sizeof(bool), SETTINGS_TYPE_BOOL);
 }
 
 static int float_to_string(const void *priv, char *str, int slen, const void *blob, int blen)

@@ -90,9 +90,15 @@ def main():
 
             time.sleep(1)
 
-            value = raw_input('Enter solution.elevation_mask value: ')
+            print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
+            value = raw_input('Enter new frontend.antenna_selection value: ')
+            s.write("frontend", "antenna_selection", value)
+            print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
 
+            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            value = raw_input('Enter new solution.elevation_mask value: ')
             s.write("solution", "elevation_mask", value)
+            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
             raw_input('Press enter to exit..')
 
