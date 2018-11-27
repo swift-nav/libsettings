@@ -1375,30 +1375,6 @@ int settings_write_bool(settings_t *ctx,
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
 }
 
-// static int settings_read_enum(settings_t *ctx, char *value, size_t value_len)
-// {
-//   printf("%s: resp_value: %s resp_type: %s\n", __FUNCTION__, ctx->resp_value, ctx->resp_type);
-//   const char *cmp = "enum:";
-//   char *dup = strdup(ctx->resp_type + strlen(cmp));
-
-//   int enum_idx = atoi(ctx->resp_value);
-
-//   char *tok = strtok(dup, ",");
-//   for (uint8_t i = 0; i <= enum_idx; i++) {
-//     if (tok == NULL) {
-//       ctx->api_impl.log(log_err, "%s failed", __FUNCTION__);
-//       free(dup);
-//       return -1;
-//     }
-//     tok = strtok(NULL, ",");
-//   }
-
-//   strncpy(value, tok, value_len);
-
-//   free(dup);
-//   return 0;
-// }
-
 int settings_read(settings_t *ctx,
                   const char *section,
                   const char *name,
