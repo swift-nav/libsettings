@@ -163,6 +163,7 @@ typedef struct settings_s {
   char resp_value[SBP_PAYLOAD_SIZE_MAX];
   char resp_type[SBP_PAYLOAD_SIZE_MAX];
   bool read_by_idx_done;
+  u8 status;
 } settings_t;
 
 static const char *const bool_enum_names[] = {"False", "True", NULL};
@@ -561,6 +562,8 @@ static void settings_write_resp_callback(uint16_t sender_id,
   settings_t *ctx = (settings_t *)context;
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)msg;
 
+  ctx->status = write_response->status;
+
   /* Check for a response to a pending request */
   request_state_check(&ctx->request_state,
                       &ctx->api_impl,
@@ -794,7 +797,7 @@ static int settings_unregister_write_resp_callback(settings_t *ctx)
 }
 
 /**
- * @brief settings_register_read_by_id_resp_callback - register callback for
+ * @brief settings_register_read_by_idx_resp_callback - register callback for
  * SBP_MSG_SETTINGS_READ_BY_INDEX_RESP
  * @param ctx: settings context
  * @return zero on success, -1 if registration failed
@@ -1502,18 +1505,21 @@ int settings_write(settings_t *ctx,
     return -1;
   }
 
-  int ret = setting_perform_request_reply_from(ctx,
-                                               SBP_MSG_SETTINGS_WRITE,
-                                               msg,
-                                               msg_len,
-                                               msg_header_len,
-                                               REGISTER_TIMEOUT_MS,
-                                               REGISTER_TRIES,
-                                               SBP_SENDER_ID);
+  /* This will be updated in the settings_write_resp_callback */
+  ctx->status = SETTINGS_WR_SERVICE_FAILED;
+
+  setting_perform_request_reply_from(ctx,
+                                     SBP_MSG_SETTINGS_WRITE,
+                                     msg,
+                                     msg_len,
+                                     msg_header_len,
+                                     REGISTER_TIMEOUT_MS,
+                                     REGISTER_TRIES,
+                                     SBP_SENDER_ID);
 
   setting_data_members_destroy(setting_data);
 
-  return ret;
+  return ctx->status;
 }
 
 int settings_write_int(settings_t *ctx,
@@ -1574,6 +1580,11 @@ int settings_read(settings_t *ctx,
     ctx->api_impl.log(log_err, "error registering settings read resp callback");
     return -1;
   }
+
+  ctx->resp_section[0] = '\0';
+  ctx->resp_name[0] = '\0';
+  ctx->resp_value[0] = '\0';
+  ctx->resp_type[0] = '\0';
 
   int res = setting_perform_request_reply_from(ctx,
                                                SBP_MSG_SETTINGS_READ_REQ,
@@ -1665,6 +1676,11 @@ int settings_read_by_idx(settings_t *ctx,
                          char *type,
                          size_t type_len)
 {
+  assert(section_len > 0);
+  assert(name_len > 0);
+  assert(value_len > 0);
+  assert(type_len > 0);
+
   int res = -1;
 
   if (settings_register_read_by_idx_resp_callback(ctx) != 0) {
@@ -1697,21 +1713,10 @@ int settings_read_by_idx(settings_t *ctx,
     goto read_by_idx_cleanup;
   }
 
-  if (strlen(ctx->resp_section) > 0) {
-    strncpy(section, ctx->resp_section, section_len);
-  }
-
-  if (strlen(ctx->resp_name) > 0) {
-    strncpy(name, ctx->resp_name, name_len);
-  }
-
-  if (strlen(ctx->resp_value) > 0) {
-    strncpy(value, ctx->resp_value, value_len);
-  }
-
-  if (strlen(ctx->resp_type) > 0) {
-    strncpy(type, ctx->resp_type, type_len);
-  }
+  strncpy(section, ctx->resp_section, section_len);
+  strncpy(name, ctx->resp_name, name_len);
+  strncpy(value, ctx->resp_value, value_len);
+  strncpy(type, ctx->resp_type, type_len);
 
 read_by_idx_cleanup:
   settings_unregister_read_by_idx_resp_callback(ctx);
@@ -1817,10 +1822,14 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
 
   ctx->type_data_list = NULL;
   ctx->setting_data_list = NULL;
+
   ctx->request_state.pending = false;
+
   ctx->write_cb_registered = false;
   ctx->write_resp_cb_registered = false;
   ctx->read_resp_cb_registered = false;
+  ctx->read_by_idx_resp_cb_registered = false;
+  ctx->read_by_idx_done_cb_registered = false;
 
   /* Register standard types */
   settings_type_t type;
