@@ -289,6 +289,17 @@ int settings_read_bool(settings_t *ctx,
                        const char *name,
                        bool *value);
 
+int settings_read_by_idx(settings_t *ctx,
+                         uint16_t idx,
+                         char *section,
+                         size_t section_len,
+                         char *name,
+                         size_t name_len,
+                         char *value,
+                         size_t value_len,
+                         char *type,
+                         size_t type_len);
+
 #ifdef __cplusplus
 }
 #endif

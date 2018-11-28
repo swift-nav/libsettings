@@ -25,6 +25,7 @@
 typedef struct {
   bool pending;
   bool match;
+  uint16_t msg_id;
   uint8_t compare_data[SBP_PAYLOAD_SIZE_MAX];
   uint8_t compare_data_len;
 } registration_state_t;
@@ -33,10 +34,11 @@ typedef struct {
 extern "C" {
 #endif
 
-void registration_state_init(registration_state_t *state, const char *data, size_t data_len);
-bool registration_state_match(registration_state_t *state);
-int registration_state_check(registration_state_t *state, settings_api_t *api, const char *data, size_t data_len);
-void registration_state_deinit(registration_state_t *state);
+void request_state_init(request_state_t *state, uint16_t msg_id, const char *data, size_t data_len);
+int request_state_check(request_state_t *state, settings_api_t *api, const char *data, size_t data_len);
+bool request_state_match(const request_state_t *state);
+int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t msg_id);
+void request_state_deinit(request_state_t *state);
 
 #ifdef __cplusplus
 }

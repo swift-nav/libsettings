@@ -20,7 +20,7 @@ cdef extern from "../include/libsettings/settings.h":
         SETTINGS_TYPE_INT = 0
         SETTINGS_TYPE_FLOAT = 1
         SETTINGS_TYPE_STRING = 2
-        SETTINGS_TYPE_BOOL =3
+        SETTINGS_TYPE_BOOL = 3
 
     cdef struct settings_s:
         pass
@@ -92,6 +92,17 @@ cdef extern from "../include/libsettings/settings.h":
                           char *str,
                           size_t str_len)
 
+    int settings_read_by_idx(settings_t *ctx,
+                             uint16_t idx,
+                             char *section,
+                             size_t section_len,
+                             char *name,
+                             size_t name_len,
+                             char *value,
+                             size_t value_len,
+                             char *fmt_type,
+                             size_t type_len)
+
 # See register()
 #cdef int my_int_notify(void *ctx):
 #    printf("%p\n", ctx)
@@ -103,8 +114,9 @@ cdef class Settings:
     cdef readonly object _callbacks
     cdef public object _event
     cdef readonly object _link
+    cdef readonly object _debug
 
-    def __init__(self, sender_id, link):
+    def __init__(self, sender_id, link, debug=False):
         self.c_api.ctx = <void *>self
         self.c_api.send = &send_wrapper
         self.c_api.send_from = &send_from_wrapper
@@ -117,6 +129,8 @@ cdef class Settings:
         self.ctx = settings_create(sender_id, &self.c_api)
 
         self._link = link
+
+        self._debug = debug
 
         self._callbacks = {}
 
@@ -155,7 +169,49 @@ cdef class Settings:
         else:
             return str(value)
 
+    def read_all(self):
+        cdef char section[256]
+        cdef char name[256]
+        cdef char value[256]
+        cdef char fmt_type[256]
+        cdef uint16_t idx = 0
+
+        l = []
+
+        while (True):
+            ret = settings_read_by_idx(self.ctx,
+                                       idx,
+                                       section,
+                                       256,
+                                       name,
+                                       256,
+                                       value,
+                                       256,
+                                       fmt_type,
+                                       256)
+
+            if (ret > 0):
+                break
+            elif (ret < 0):
+                return []
+
+            s = {
+                    'section': str(section),
+                    'name': str(name),
+                    'value': str(value),
+                    'fmt_type': str(fmt_type),
+                }
+
+            l.append(s)
+            idx += 1
+
+        return l
+
     def _callback_broker(self, sbp_msg, **metadata):
+        if self._debug:
+            print '_callback_broker', sbp_msg.msg_type
+            print ":".join("{:02x}".format(ord(c)) for c in sbp_msg.payload)
+
         msg_type = sbp_msg.msg_type
 
         for k,v in self._callbacks.items():
@@ -167,6 +223,11 @@ cdef class Settings:
 
 cdef int send_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t *payload):
     settings = <object>ctx
+    
+    if settings._debug:
+        print 'send_wrapper', msg_type
+        print ":".join("{:02x}".format(ord(c)) for c in payload[:length])
+
     # https://cython.readthedocs.io/en/latest/src/tutorial/strings.html
     settings._link(SBP(msg_type=msg_type,
                        length=length,
@@ -175,6 +236,11 @@ cdef int send_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t *pay
 
 cdef int send_from_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t *payload, uint16_t sbp_sender_id):
     settings = <object>ctx
+
+    if settings._debug:
+        print 'send_from_wrapper', msg_type
+        print ":".join("{:02x}".format(ord(c)) for c in payload[:length])
+
     settings._link(SBP(msg_type=msg_type,
                        sender=sbp_sender_id,
                        length=length,
