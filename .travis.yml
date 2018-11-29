@@ -1,0 +1,20 @@
+dist: trusty
+sudo: required
+
+language: c
+
+git:
+  depth: 1
+
+cache:
+  apt: true
+  pip: true
+
+branches:
+  only:
+    - master
+      # Any tag starting with a version string: vX.Y.Z(-blahblahblah).
+    - /^v\d+.\d+.\d+(-\S+)?$/
+
+script:
+    - mkdir build; cd build; cmake ../; make
