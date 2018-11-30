@@ -1100,8 +1100,8 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
   }
 
   *setting_data = (setting_data_t){
-    .section = strdup(section),
-    .name = strdup(name),
+    .section = malloc(strlen(section) + 1),
+    .name = malloc(strlen(name) + 1),
     .var = var,
     .var_len = var_len,
     .var_copy = malloc(var_len),
@@ -1112,6 +1112,9 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
     .watchonly = watchonly,
     .next = NULL,
   };
+
+  strncpy(setting_data->section, section, strlen(section));
+  strncpy(setting_data->name, name, strlen(name));
 
   if ((setting_data->section == NULL) || (setting_data->name == NULL)
       || (setting_data->var_copy == NULL)) {
