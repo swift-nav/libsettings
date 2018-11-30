@@ -56,7 +56,7 @@ dkms.conf
 .vscode/
 
 # build
-.build/
+build/
 
 # Python
 python/setup.py
