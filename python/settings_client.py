@@ -95,10 +95,8 @@ def main():
             #s.write("frontend", "antenna_selection", value)
             #print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
 
-            #print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
-            #value = raw_input('Enter new solution.elevation_mask value: ')
-            value = 10
-            raw_input('Press enter to read all settings..')
+            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            value = raw_input('Enter new solution.elevation_mask value: ')
             s.write("solution", "elevation_mask", value)
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
