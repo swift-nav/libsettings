@@ -1825,6 +1825,8 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
   settings_type_t type;
 
   int ret = type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type);
+  /* To make cythonizer happy.. */
+  (void)ret;
 
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_INT);
