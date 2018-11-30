@@ -1821,13 +1821,17 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
   /* Register standard types */
   settings_type_t type;
 
-  assert(type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type) == 0);
+  int ret = type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type);
+
+  assert(ret == 0);
   assert(type == SETTINGS_TYPE_INT);
 
-  assert(type_register(ctx, float_to_string, float_from_string, NULL, NULL, &type) == 0);
+  ret = type_register(ctx, float_to_string, float_from_string, NULL, NULL, &type);
+  assert(ret == 0);
   assert(type == SETTINGS_TYPE_FLOAT);
 
-  assert(type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type) == 0);
+  ret = type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type);
+  assert(ret == 0);
   assert(type == SETTINGS_TYPE_STRING);
 
   ret =
