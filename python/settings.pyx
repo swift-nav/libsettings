@@ -22,6 +22,15 @@ cdef extern from "../include/libsettings/settings.h":
         SETTINGS_TYPE_STRING = 2
         SETTINGS_TYPE_BOOL = 3
 
+    cdef enum SettingsWriteResult:
+        SETTINGS_WR_OK = 0
+        SETTINGS_WR_VALUE_REJECTED = 1
+        SETTINGS_WR_SETTING_REJECTED = 2
+        SETTINGS_WR_PARSE_FAILED = 3
+        SETTINGS_WR_READ_ONLY = 4
+        SETTINGS_WR_MODIFY_DISABLED = 5
+        SETTINGS_WR_SERVICE_FAILED = 6
+
     cdef struct settings_s:
         pass
     ctypedef settings_s settings_t

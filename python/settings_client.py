@@ -21,7 +21,7 @@ from sbp.settings import SBP_MSG_SETTINGS_SAVE, SBP_MSG_SETTINGS_WRITE
 
 from piksi_tools import serial_link
 
-from settings import *
+from settings import Settings
 
 
 def send_setting(link, section, name, value):
@@ -90,17 +90,19 @@ def main():
 
             time.sleep(1)
 
-            print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
-            value = raw_input('Enter new frontend.antenna_selection value: ')
-            s.write("frontend", "antenna_selection", value)
-            print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
+            #print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
+            #value = raw_input('Enter new frontend.antenna_selection value: ')
+            #s.write("frontend", "antenna_selection", value)
+            #print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
 
-            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
-            value = raw_input('Enter new solution.elevation_mask value: ')
+            #print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            #value = raw_input('Enter new solution.elevation_mask value: ')
+            value = 10
+            raw_input('Press enter to read all settings..')
             s.write("solution", "elevation_mask", value)
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
-            raw_input('Press enter to read all settings..')
+            #raw_input('Press enter to read all settings..')
 
             l = s.read_all()
 

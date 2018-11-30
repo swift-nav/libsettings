@@ -233,8 +233,7 @@ static bool settings_parse_setting(const char *buf,
     case 5:
       if (i == blen - 1) break;
 
-    default:
-      return false;
+    default: return false;
     }
   }
 
@@ -384,7 +383,10 @@ static int message_data_get(setting_data_t *setting_data, char *buf, int blen)
  * @param msg_hdr_len: length of the msg header
  * @return bytes written to the buffer, -1 in case of failure
  */
-static int setting_format_setting(setting_data_t *setting_data, char *buf, int len, uint8_t *msg_hdr_len)
+static int setting_format_setting(setting_data_t *setting_data,
+                                  char *buf,
+                                  int len,
+                                  uint8_t *msg_hdr_len)
 {
   int result = 0;
   int written = 0;
@@ -471,8 +473,10 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
   write_response->status = write_result;
   resp_len += sizeof(write_response->status);
-  int l =
-    setting_format_setting(setting_data, write_response->setting, SBP_PAYLOAD_SIZE_MAX - resp_len, NULL);
+  int l = setting_format_setting(setting_data,
+                                 write_response->setting,
+                                 SBP_PAYLOAD_SIZE_MAX - resp_len,
+                                 NULL);
   if (l < 0) {
     return;
   }
@@ -597,10 +601,8 @@ static void settings_read_by_idx_resp_callback(uint16_t sender_id,
   msg_settings_read_by_index_resp_t *resp = (msg_settings_read_by_index_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  int res = request_state_check(&ctx->request_state,
-                                &ctx->api_impl,
-                                (char *)msg,
-                                sizeof(resp->index));
+  int res =
+    request_state_check(&ctx->request_state, &ctx->api_impl, (char *)msg, sizeof(resp->index));
 
   if (res != 0) {
     return;
@@ -608,7 +610,12 @@ static void settings_read_by_idx_resp_callback(uint16_t sender_id,
 
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
 
-  if (settings_parse_setting(resp->setting, len - sizeof(resp->index), &section, &name, &value, &type)) {
+  if (settings_parse_setting(resp->setting,
+                             len - sizeof(resp->index),
+                             &section,
+                             &name,
+                             &value,
+                             &type)) {
     if (section) {
       strncpy(ctx->resp_section, section, SBP_PAYLOAD_SIZE_MAX);
     }
@@ -645,7 +652,8 @@ static void settings_read_by_idx_done_callback(uint16_t sender_id,
   ctx->resp_type[0] = '\0';
   ctx->read_by_idx_done = true;
 
-  int ret = request_state_signal(&ctx->request_state, &ctx->api_impl, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
+  int ret =
+    request_state_signal(&ctx->request_state, &ctx->api_impl, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
 
   if (ret != 0) {
     ctx->api_impl.log(log_warning, "Signaling request state failed with code: %d", ret);
@@ -1522,34 +1530,22 @@ int settings_write(settings_t *ctx,
   return ctx->status;
 }
 
-int settings_write_int(settings_t *ctx,
-                       const char *section,
-                       const char *name,
-                       int value)
+int settings_write_int(settings_t *ctx, const char *section, const char *name, int value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_INT);
 }
 
-int settings_write_float(settings_t *ctx,
-                         const char *section,
-                         const char *name,
-                         float value)
+int settings_write_float(settings_t *ctx, const char *section, const char *name, float value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_FLOAT);
 }
 
-int settings_write_str(settings_t *ctx,
-                       const char *section,
-                       const char *name,
-                       const char *str)
+int settings_write_str(settings_t *ctx, const char *section, const char *name, const char *str)
 {
   return settings_write(ctx, section, name, str, strlen(str), SETTINGS_TYPE_STRING);
 }
 
-int settings_write_bool(settings_t *ctx,
-                        const char *section,
-                        const char *name,
-                        bool value)
+int settings_write_bool(settings_t *ctx, const char *section, const char *name, bool value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
 }
@@ -1632,18 +1628,12 @@ int settings_read(settings_t *ctx,
   return 0;
 }
 
-int settings_read_int(settings_t *ctx,
-                      const char *section,
-                      const char *name,
-                      int *value)
+int settings_read_int(settings_t *ctx, const char *section, const char *name, int *value)
 {
   return settings_read(ctx, section, name, value, sizeof(int), SETTINGS_TYPE_INT);
 }
 
-int settings_read_float(settings_t *ctx,
-                        const char *section,
-                        const char *name,
-                        float *value)
+int settings_read_float(settings_t *ctx, const char *section, const char *name, float *value)
 {
   return settings_read(ctx, section, name, value, sizeof(float), SETTINGS_TYPE_FLOAT);
 }
@@ -1657,10 +1647,7 @@ int settings_read_str(settings_t *ctx,
   return settings_read(ctx, section, name, str, str_len, SETTINGS_TYPE_STRING);
 }
 
-int settings_read_bool(settings_t *ctx,
-                       const char *section,
-                       const char *name,
-                       bool *value)
+int settings_read_bool(settings_t *ctx, const char *section, const char *name, bool *value)
 {
   return settings_read(ctx, section, name, value, sizeof(bool), SETTINGS_TYPE_BOOL);
 }
@@ -1843,9 +1830,9 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
   assert(type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type) == 0);
   assert(type == SETTINGS_TYPE_STRING);
 
-  assert(
-    type_register(ctx, enum_to_string, enum_from_string, enum_format_type, bool_enum_names, &type)
-    == 0);
+  ret =
+    type_register(ctx, enum_to_string, enum_from_string, enum_format_type, bool_enum_names, &type);
+  assert(ret == 0);
   assert(type == SETTINGS_TYPE_BOOL);
 
   return ctx;
