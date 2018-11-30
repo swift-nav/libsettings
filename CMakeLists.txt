@@ -40,6 +40,7 @@ option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 # Compilation Settings
 ################################################################################
 # Build-type dependent flags.
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 set(CMAKE_C_FLAGS_MINSIZEREL "-Os -s")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")

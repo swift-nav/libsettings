@@ -15,7 +15,7 @@ setup(
                 "${CMAKE_CURRENT_SOURCE_DIR}/../libsbp/c/include/",
                 "${CMAKE_CURRENT_SOURCE_DIR}/../include/",
               ],
-              extra_compile_args=["-Wno-unused-label"],
+              extra_compile_args=["-Wno-unused-label", "-std=c99"],
         )
     ],
     cmdclass = {'build_ext': build_ext},
