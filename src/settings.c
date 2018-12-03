@@ -1517,7 +1517,7 @@ int settings_write(settings_t *ctx,
   }
 
   /* This will be updated in the settings_write_resp_callback */
-  ctx->status = SETTINGS_WR_SERVICE_FAILED;
+  ctx->status = SETTINGS_WR_TIMEOUT;
 
   setting_perform_request_reply_from(ctx,
                                      SBP_MSG_SETTINGS_WRITE,

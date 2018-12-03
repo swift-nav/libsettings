@@ -65,6 +65,7 @@ typedef enum settings_write_res_e {
   SETTINGS_WR_READ_ONLY = 4,       /**< Setting is read only          */
   SETTINGS_WR_MODIFY_DISABLED = 5, /**< Setting is not modifiable     */
   SETTINGS_WR_SERVICE_FAILED = 6,  /**< System failure during setting */
+  SETTINGS_WR_TIMEOUT = 7,         /**< Request wasn't replied in time */
 } settings_write_res_t;
 
 typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload);

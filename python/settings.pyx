@@ -43,6 +43,7 @@ cdef extern from "../include/libsettings/settings.h":
         SETTINGS_WR_READ_ONLY = 4
         SETTINGS_WR_MODIFY_DISABLED = 5
         SETTINGS_WR_SERVICE_FAILED = 6
+        SETTINGS_WR_TIMEOUT = 7
 
     cdef struct settings_s:
         pass
