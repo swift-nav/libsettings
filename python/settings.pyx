@@ -33,7 +33,9 @@ cdef extern from "../include/libsettings/settings.h":
         SETTINGS_TYPE_STRING = 2
         SETTINGS_TYPE_BOOL = 3
 
-    cdef enum SettingsWriteResult:
+    # https://github.com/cython/cython/issues/1529
+    # Would like to expose more Pythonic name for the enum..
+    cpdef enum settings_write_res_e:
         SETTINGS_WR_OK = 0
         SETTINGS_WR_VALUE_REJECTED = 1
         SETTINGS_WR_SETTING_REJECTED = 2
