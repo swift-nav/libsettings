@@ -531,7 +531,11 @@ static void settings_read_resp_callback(uint16_t sender_id,
   const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  request_state_check(&ctx->request_state, &ctx->api_impl, read_response->setting, len);
+  int res = request_state_check(&ctx->request_state, &ctx->api_impl, read_response->setting, len);
+
+  if (res != 0) {
+    return;
+  }
 
   if (settings_update_watch_only(ctx, read_response->setting, len) != 0) {
     ctx->api_impl.log(log_warning, "error in settings read response message");
@@ -569,10 +573,14 @@ static void settings_write_resp_callback(uint16_t sender_id,
   ctx->status = write_response->status;
 
   /* Check for a response to a pending request */
-  request_state_check(&ctx->request_state,
-                      &ctx->api_impl,
-                      write_response->setting,
-                      len - sizeof(write_response->status));
+  int res = request_state_check(&ctx->request_state,
+                                &ctx->api_impl,
+                                write_response->setting,
+                                len - sizeof(write_response->status));
+
+  if (res != 0) {
+    return;
+  }
 
   if (write_response->status != SETTINGS_WR_OK) {
     ctx->api_impl.log(log_warning,
