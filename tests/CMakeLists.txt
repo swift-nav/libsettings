@@ -29,9 +29,9 @@ else (CMAKE_CROSSCOMPILING)
   # Define a test
   package_add_test(
     test_libsettings
-    src/test_registration_state.cpp
+    src/test_request_state.cpp
     src/test_settings_util.cpp
-    ${PROJECT_SOURCE_DIR}/src/registration_state.c
+    ${PROJECT_SOURCE_DIR}/src/request_state.c
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
   add_dependencies(test_libsettings gtest)
   include_directories(${PROJECT_SOURCE_DIR}/include)

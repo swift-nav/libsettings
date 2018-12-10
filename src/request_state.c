@@ -15,11 +15,10 @@
 
 #include <libsettings/settings.h>
 
-#include <internal/registration_state.h>
+#include <internal/request_state.h>
 
 /**
- * @brief registration_state_init - set up compare structure for synchronous
- * req/reply
+ * @brief request_state_init - set up compare structure for synchronous req/reply
  * @param ctx: settings context
  * @param msg_id: pending request type
  * @param data: formatted settings header string to match with incoming messages
@@ -30,7 +29,7 @@ void request_state_init(request_state_t *state, uint16_t msg_id, const char *dat
   /* No multithreading */
   assert(!state->pending);
 
-  memset(state, 0, sizeof(registration_state_t));
+  memset(state, 0, sizeof(request_state_t));
 
   assert(data_len <= sizeof(state->compare_data));
 
@@ -108,7 +107,7 @@ int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t m
  * @brief request_state_deinit - clean up compare structure after transaction
  * @param ctx: settings context
  */
-void registration_state_deinit(registration_state_t *state)
+void request_state_deinit(request_state_t *state)
 {
   state->pending = false;
 }

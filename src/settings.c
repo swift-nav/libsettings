@@ -81,7 +81,7 @@
 #include <libsettings/settings.h>
 #include <libsettings/settings_util.h>
 
-#include <internal/registration_state.h>
+#include <internal/request_state.h>
 
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
@@ -443,7 +443,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   }
 
   /* Check for a response to a pending registration request */
-  registration_state_check(&ctx->registration_state, &ctx->api_impl, (char *)msg, len);
+  request_state_check(&ctx->request_state, &ctx->api_impl, (char *)msg, len);
 
   /* Extract parameters from message:
    * 4 null terminated strings: section, name, value and type.
@@ -531,7 +531,7 @@ static void settings_read_resp_callback(uint16_t sender_id,
   const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  registration_state_check(&ctx->registration_state, &ctx->api_impl, read_response->setting, len);
+  request_state_check(&ctx->request_state, &ctx->api_impl, read_response->setting, len);
 
   if (settings_update_watch_only(ctx, read_response->setting, len) != 0) {
     ctx->api_impl.log(log_warning, "error in settings read response message");
@@ -1176,7 +1176,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                         message,
                         message + len1);
     } else {
-      success = registration_state_match(&ctx->registration_state);
+      success = request_state_match(&ctx->request_state);
     }
 
   } while (!success && (++tries < retries));
@@ -1186,7 +1186,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
     ctx->api_impl.wait_deinit(ctx->api_impl.ctx);
   }
 
-  registration_state_deinit(&ctx->registration_state);
+  request_state_deinit(&ctx->request_state);
 
   if (!success) {
     ctx->api_impl.log(log_warning,
@@ -1240,7 +1240,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
   uint8_t msg_header_len;
 
-  uint8_t msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
+  int msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
     ctx->api_impl.log(log_err, "%s: Setting format failed", __FUNCTION__);
@@ -1568,7 +1568,7 @@ int settings_read(settings_t *ctx,
 
   /* Build message */
   char msg[SBP_PAYLOAD_SIZE_MAX];
-  uint8_t msg_len = message_header_get(section, name, msg, sizeof(msg));
+  int msg_len = message_header_get(section, name, msg, sizeof(msg));
 
   if (msg_len < 0) {
     ctx->api_impl.log(log_err, "error building settings read req message");
