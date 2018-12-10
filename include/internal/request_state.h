@@ -28,7 +28,7 @@ typedef struct {
   uint16_t msg_id;
   uint8_t compare_data[SBP_PAYLOAD_SIZE_MAX];
   uint8_t compare_data_len;
-} registration_state_t;
+} request_state_t;
 
 #ifdef __cplusplus
 extern "C" {
