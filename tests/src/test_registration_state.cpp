@@ -4,7 +4,7 @@
 
 #include <internal/registration_state.h>
 
-TEST(test_registration_state_init_deinit, init) {
+TEST(test_registration_state, init_deinit) {
   registration_state_t state = {0};
   std::string test_str = "testing";
   const char *test_data = test_str.c_str();
@@ -21,13 +21,13 @@ TEST(test_registration_state_init_deinit, init) {
   EXPECT_EQ(false, state.pending);
 }
 
-TEST(test_registration_state_match, init) {
+TEST(test_registration_state, match) {
   registration_state_t state = {0};
 
   EXPECT_EQ(false, registration_state_match(&state));
 }
 
-TEST(test_registration_state_check, init) {
+TEST(test_registration_state, check) {
   registration_state_t state = {0};
   settings_api_t api = {0};
   std::string test_str = "testing";

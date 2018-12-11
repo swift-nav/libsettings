@@ -79,6 +79,7 @@
 #include <libsbp/settings.h>
 
 #include <libsettings/settings.h>
+#include <libsettings/settings_util.h>
 
 #include <internal/registration_state.h>
 
@@ -333,38 +334,6 @@ static setting_data_t *setting_data_lookup(settings_t *ctx, const char *section,
   return setting_data;
 }
 
-static int settings_parse(const char *msg,
-                          uint8_t msg_n,
-                          const char **section,
-                          const char **name,
-                          const char **value)
-{
-  const char **result_holders[] = {section, name, value};
-  uint8_t start = 0;
-  uint8_t end = 0;
-  for (uint8_t i = 0; i < sizeof(result_holders) / sizeof(*result_holders); i++) {
-    bool found = false;
-    *(result_holders[i]) = NULL;
-    while (end < msg_n) {
-      if (msg[end] == '\0') {
-        // don't allow empty strings before the third term
-        if (end == start && i < 2) {
-          return -1;
-        } else {
-          *(result_holders[i]) = (const char *)msg + start;
-          start = (uint8_t)(end + 1);
-          found = true;
-        }
-      }
-      end++;
-      if (found) {
-        break;
-      }
-    }
-  }
-  return 0;
-}
-
 /**
  * @brief settings_write_callback - callback for SBP_MSG_SETTINGS_WRITE
  */
@@ -384,11 +353,10 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   /* Extract parameters from message:
    * 3 null terminated strings: section, setting and value
    */
-  const char *section = NULL;
-  const char *name = NULL;
-  const char *value = NULL;
-  if (settings_parse((char *)msg, len, &section, &name, &value) != 0) {
-    ctx->api_impl.log(log_warning, "settings write message failed");
+  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
+  int res = settings_parse((char *)msg, len, &section, &name, &value, &type);
+  if (res < 3) {
+    ctx->api_impl.log(log_warning, "settings write cb parsing failed (%d)", res);
     return;
   }
 
@@ -425,10 +393,8 @@ static int settings_update_watch_only(settings_t *ctx, char *msg, uint8_t len)
   /* Extract parameters from message:
    * 3 null terminated strings: section, setting and value
    */
-  const char *section = NULL;
-  const char *name = NULL;
-  const char *value = NULL;
-  if (settings_parse(msg, len, &section, &name, &value) != 0) {
+  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
+  if (settings_parse(msg, len, &section, &name, &value, &type) < 3) {
     ctx->api_impl.log(log_warning, "error parsing setting");
     return -1;
   }

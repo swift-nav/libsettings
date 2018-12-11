@@ -30,7 +30,9 @@ else (CMAKE_CROSSCOMPILING)
   package_add_test(
     test_libsettings
     src/test_registration_state.cpp
-    ${PROJECT_SOURCE_DIR}/src/registration_state.c)
+    src/test_settings_util.cpp
+    ${PROJECT_SOURCE_DIR}/src/registration_state.c
+    ${PROJECT_SOURCE_DIR}/src/settings_util.c)
   add_dependencies(test_libsettings gtest)
   include_directories(${PROJECT_SOURCE_DIR}/include)
 
