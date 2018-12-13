@@ -887,7 +887,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
   registration_state_deinit(&ctx->registration_state);
 
   if (!success) {
-    ctx->api_impl.log(log_err, "setting req/reply failed for msg id %d", message_type);
+    ctx->api_impl.log(log_warning, "setting req/reply failed after %d retries (msg id: %d)", tries, message_type);
     return -1;
   }
 
@@ -1106,7 +1106,7 @@ static int settings_add_setting(settings_t *ctx,
       ctx->api_impl.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
-      ctx->api_impl.log(log_err, "error reading watched %s.%s to initial value", section, name);
+      ctx->api_impl.log(log_warning, "Unable to read watched setting to initial value (%s.%s)", section, name);
     }
   } else {
     if (settings_register_write_callback(ctx) != 0) {
