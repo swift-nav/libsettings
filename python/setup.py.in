@@ -14,9 +14,9 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
 setup(
-  name = 'settings',
+  name = 'libsettings',
   ext_modules=[
-    Extension("settings",
+    Extension("libsettings",
               sources=["${CMAKE_CURRENT_SOURCE_DIR}/settings.pyx",
                        "${CMAKE_CURRENT_SOURCE_DIR}/../src/settings.c",
                        "${CMAKE_CURRENT_SOURCE_DIR}/../src/request_state.c"],
