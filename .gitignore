@@ -58,5 +58,4 @@ dkms.conf
 build*/
 
 # Python
-python/setup.py
-python/settings.c
+libsettings.egg-info
