@@ -9,23 +9,34 @@
 # EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
 
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
+from glob import glob
+from setuptools import setup, Extension
+
+import os
+
+include_dirs = ["include", "libsbp/c/include"]
+sources = glob("python/*.pyx") + glob("src/*.c")
+
+cflags = ["-Wno-unused-label", "-std=c99"]
+ldflags = []
+
+if os.name == 'nt':
+    ldflags.append("-static-libgcc")
 
 setup(
-  name = 'libsettings',
-  ext_modules=[
-    Extension("libsettings",
-              sources=["${CMAKE_CURRENT_SOURCE_DIR}/settings.pyx",
-                       "${CMAKE_CURRENT_SOURCE_DIR}/../src/settings.c",
-                       "${CMAKE_CURRENT_SOURCE_DIR}/../src/request_state.c"],
-              include_dirs=[
-                "${CMAKE_CURRENT_SOURCE_DIR}/../libsbp/c/include/",
-                "${CMAKE_CURRENT_SOURCE_DIR}/../include/",
-              ],
-              extra_compile_args=["-Wno-unused-label", "-std=c99"],
+    name = 'libsettings',
+    version="0.1.0",
+    author="Swift Navigation",
+    author_email="dev@swift-nav.com",
+    description="Open source SwiftNav settings API library.",
+    url = "https://github.com/swift-nav/libsettings",
+    ext_modules=[
+        Extension(
+            'libsettings',
+            sources,
+            include_dirs=include_dirs,
+            extra_compile_args=cflags,
+            extra_link_args=ldflags,
         )
     ],
-    cmdclass = {'build_ext': build_ext},
 )
