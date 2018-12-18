@@ -51,7 +51,9 @@ settings_tokens_t settings_parse(const char *buf,
       if (name == NULL) {
         continue;
       }
-      *name = (const char *)&buf[i + 1];
+      if (i + 1 < blen) {
+        *name = (const char *)&buf[i + 1];
+      }
       break;
 
     case 2:
