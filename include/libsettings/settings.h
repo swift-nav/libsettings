@@ -61,7 +61,7 @@ typedef enum settings_write_res_e {
   SETTINGS_WR_VALUE_REJECTED = 1,   /**< Setting value invalid   */
   SETTINGS_WR_SETTING_REJECTED = 2, /**< Setting does not exist */
   SETTINGS_WR_PARSE_FAILED = 3,     /**< Could not parse setting value */
-  // READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary
+  /* READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary */
   SETTINGS_WR_READ_ONLY = 4,       /**< Setting is read only          */
   SETTINGS_WR_MODIFY_DISABLED = 5, /**< Setting is not modifiable     */
   SETTINGS_WR_SERVICE_FAILED = 6,  /**< System failure during setting */
