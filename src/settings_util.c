@@ -15,12 +15,12 @@
 #include <libsettings/settings_util.h>
 
 /* Parse SBP message payload into setting parameters */
-int settings_parse(const char *buf,
-                   uint8_t blen,
-                   const char **section,
-                   const char **name,
-                   const char **value,
-                   const char **type)
+settings_tokens_t settings_parse(const char *buf,
+                                 uint8_t blen,
+                                 const char **section,
+                                 const char **name,
+                                 const char **value,
+                                 const char **type)
 {
   if (section) *section = NULL;
   if (name) *name = NULL;
@@ -28,11 +28,11 @@ int settings_parse(const char *buf,
   if (type) *type = NULL;
 
   if (blen == 0) {
-    return -1;
+    return SETTINGS_TOKENS_INVALID;
   }
 
   if (buf[blen - 1] != '\0') {
-    return -1;
+    return SETTINGS_TOKENS_INVALID;
   }
 
   /* Extract parameters from message:
