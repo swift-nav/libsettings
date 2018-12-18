@@ -8,11 +8,10 @@ set(PY_OUTPUT   "${PROJECT_SOURCE_DIR}/python/libsettings.so")
 
 configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
-configure_file(${SETUP_PY_IN} ${SETUP_PY})
-
 add_custom_command(OUTPUT "${PY_OUTPUT}"
                    COMMAND chmod u+x ${SETUP_PY}
-                   COMMAND ${PYTHON} ${SETUP_PY} build_ext --inplace --force
+                   COMMAND ${PYTHON} ${SETUP_PY} build_ext --force
+                   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
                   )
 
 add_custom_target(libsettings.so ALL DEPENDS ${PY_OUTPUT})
