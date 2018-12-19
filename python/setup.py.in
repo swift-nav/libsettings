@@ -12,6 +12,8 @@
 from glob import glob
 from setuptools import setup, Extension
 
+import os
+
 include_dirs = ["include", "libsbp/c/include"]
 sources = glob("python/*.pyx") + glob("src/*.c")
 
