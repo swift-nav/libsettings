@@ -572,14 +572,10 @@ static void settings_write_resp_callback(uint16_t sender_id,
   ctx->status = write_response->status;
 
   /* Check for a response to a pending request */
-  int res = request_state_check(&ctx->request_state,
-                                &ctx->api_impl,
-                                write_response->setting,
-                                len - sizeof(write_response->status));
-
-  if (res != 0) {
-    return;
-  }
+  request_state_check(&ctx->request_state,
+                      &ctx->api_impl,
+                      write_response->setting,
+                      len - sizeof(write_response->status));
 
   if (write_response->status != SETTINGS_WR_OK) {
     ctx->api_impl.log(log_warning,
