@@ -48,28 +48,19 @@ settings_tokens_t settings_parse(const char *buf,
     tok++;
     switch (tok) {
     case 1:
-      if (name == NULL) {
-        continue;
-      }
-      if (i + 1 < blen) {
+      if (name && (i + 1 < blen)) {
         *name = (const char *)&buf[i + 1];
       }
       break;
 
     case 2:
-      if (value == NULL) {
-        continue;
-      }
-      if (i + 1 < blen) {
+      if (value && (i + 1 < blen)) {
         *value = (const char *)&buf[i + 1];
       }
       break;
 
     case 3:
-      if (type == NULL) {
-        continue;
-      }
-      if (i + 1 < blen) {
+      if (type && (i + 1 < blen)) {
         *type = (const char *)&buf[i + 1];
         break;
       }
@@ -81,7 +72,7 @@ settings_tokens_t settings_parse(const char *buf,
     case 5:
       if (i == blen - 1) break;
 
-    default: return -1;
+    default: return SETTINGS_TOKENS_INVALID;
     }
   }
 

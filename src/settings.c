@@ -351,12 +351,12 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   registration_state_check(&ctx->registration_state, &ctx->api_impl, (char *)msg, len);
 
   /* Extract parameters from message:
-   * 3 null terminated strings: section, setting and value
+   * 4 null terminated strings: section, name, value and type.
+   * Expect to find at least section, name and value.
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-  int res = settings_parse((char *)msg, len, &section, &name, &value, &type);
-  if (res < 3) {
-    ctx->api_impl.log(log_warning, "settings write cb parsing failed (%d)", res);
+  if (settings_parse((char *)msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
+    ctx->api_impl.log(log_warning, "settings write cb, error parsing setting");
     return;
   }
 
@@ -391,11 +391,12 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
 static int settings_update_watch_only(settings_t *ctx, char *msg, uint8_t len)
 {
   /* Extract parameters from message:
-   * 3 null terminated strings: section, setting and value
+   * 4 null terminated strings: section, name, value and type
+   * Expect to find at least section, name and value.
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-  if (settings_parse(msg, len, &section, &name, &value, &type) < 3) {
-    ctx->api_impl.log(log_warning, "error parsing setting");
+  if (settings_parse(msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
+    ctx->api_impl.log(log_warning, "updating watched values failed, error parsing setting");
     return -1;
   }
 
