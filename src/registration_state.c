@@ -18,7 +18,8 @@
 #include <internal/registration_state.h>
 
 /**
- * @brief registration_state_init - set up compare structure for synchronous req/reply
+ * @brief registration_state_init - set up compare structure for synchronous
+ * req/reply
  * @param ctx: settings context
  * @param data: formatted settings header string to match with incoming messages
  * @param data_len: length of match string
@@ -48,9 +49,9 @@ bool registration_state_match(registration_state_t *state)
   return state->match;
 }
 
-
 /**
- * @brief registration_state_check - used by message callbacks to perform comparison
+ * @brief registration_state_check - used by message callbacks to perform
+ * comparison
  * @param ctx: settings context
  * @param data: settings message payload string to match with header string
  * @param data_len: length of payload string
@@ -81,7 +82,8 @@ int registration_state_check(registration_state_t *state,
 }
 
 /**
- * @brief registration_state_deinit - clean up compare structure after transaction
+ * @brief registration_state_deinit - clean up compare structure after
+ * transaction
  * @param ctx: settings context
  */
 void registration_state_deinit(registration_state_t *state)

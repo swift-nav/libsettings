@@ -79,6 +79,7 @@
 #include <libsbp/settings.h>
 
 #include <libsettings/settings.h>
+#include <libsettings/settings_util.h>
 
 #include <internal/registration_state.h>
 
@@ -333,38 +334,6 @@ static setting_data_t *setting_data_lookup(settings_t *ctx, const char *section,
   return setting_data;
 }
 
-static int settings_parse(const char *msg,
-                          uint8_t msg_n,
-                          const char **section,
-                          const char **name,
-                          const char **value)
-{
-  const char **result_holders[] = {section, name, value};
-  uint8_t start = 0;
-  uint8_t end = 0;
-  for (uint8_t i = 0; i < sizeof(result_holders) / sizeof(*result_holders); i++) {
-    bool found = false;
-    *(result_holders[i]) = NULL;
-    while (end < msg_n) {
-      if (msg[end] == '\0') {
-        // don't allow empty strings before the third term
-        if (end == start && i < 2) {
-          return -1;
-        } else {
-          *(result_holders[i]) = (const char *)msg + start;
-          start = (uint8_t)(end + 1);
-          found = true;
-        }
-      }
-      end++;
-      if (found) {
-        break;
-      }
-    }
-  }
-  return 0;
-}
-
 /**
  * @brief settings_write_callback - callback for SBP_MSG_SETTINGS_WRITE
  */
@@ -382,13 +351,12 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   registration_state_check(&ctx->registration_state, &ctx->api_impl, (char *)msg, len);
 
   /* Extract parameters from message:
-   * 3 null terminated strings: section, setting and value
+   * 4 null terminated strings: section, name, value and type.
+   * Expect to find at least section, name and value.
    */
-  const char *section = NULL;
-  const char *name = NULL;
-  const char *value = NULL;
-  if (settings_parse((char *)msg, len, &section, &name, &value) != 0) {
-    ctx->api_impl.log(log_warning, "settings write message failed");
+  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
+  if (settings_parse((char *)msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
+    ctx->api_impl.log(log_warning, "settings write cb, error parsing setting");
     return;
   }
 
@@ -423,13 +391,12 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
 static int settings_update_watch_only(settings_t *ctx, char *msg, uint8_t len)
 {
   /* Extract parameters from message:
-   * 3 null terminated strings: section, setting and value
+   * 4 null terminated strings: section, name, value and type
+   * Expect to find at least section, name and value.
    */
-  const char *section = NULL;
-  const char *name = NULL;
-  const char *value = NULL;
-  if (settings_parse(msg, len, &section, &name, &value) != 0) {
-    ctx->api_impl.log(log_warning, "error parsing setting");
+  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
+  if (settings_parse(msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
+    ctx->api_impl.log(log_warning, "updating watched values failed, error parsing setting");
     return -1;
   }
 
@@ -887,7 +854,10 @@ static int setting_perform_request_reply_from(settings_t *ctx,
   registration_state_deinit(&ctx->registration_state);
 
   if (!success) {
-    ctx->api_impl.log(log_warning, "setting req/reply failed after %d retries (msg id: %d)", tries, message_type);
+    ctx->api_impl.log(log_warning,
+                      "setting req/reply failed after %d retries (msg id: %d)",
+                      tries,
+                      message_type);
     return -1;
   }
 
@@ -1106,7 +1076,10 @@ static int settings_add_setting(settings_t *ctx,
       ctx->api_impl.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
-      ctx->api_impl.log(log_warning, "Unable to read watched setting to initial value (%s.%s)", section, name);
+      ctx->api_impl.log(log_warning,
+                        "Unable to read watched setting to initial value (%s.%s)",
+                        section,
+                        name);
     }
   } else {
     if (settings_register_write_callback(ctx) != 0) {
