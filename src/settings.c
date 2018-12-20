@@ -1679,7 +1679,11 @@ static int int_to_string(const void *priv, char *str, int slen, const void *blob
   (void)priv;
 
   switch (blen) {
-  case 1: return snprintf(str, slen, "%hhd", *(s8 *)blob);
+  case 1: {
+    s16 tmp = *(s8 *)blob;
+    /* mingw's crappy snprintf doesn't understand %hhd */
+    return snprintf(str, slen, "%hd", tmp);
+  }
   case 2: return snprintf(str, slen, "%hd", *(s16 *)blob);
   case 4: return snprintf(str, slen, "%" PRId32, *(s32 *)blob);
   default: return -1;
