@@ -21,7 +21,7 @@ from sbp.settings import SBP_MSG_SETTINGS_SAVE, SBP_MSG_SETTINGS_WRITE
 
 from piksi_tools import serial_link
 
-from settings import Settings
+from libsettings import Settings
 
 
 def send_setting(link, section, name, value):
