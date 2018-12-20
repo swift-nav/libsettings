@@ -167,78 +167,6 @@ typedef struct settings_s {
 
 static const char *const bool_enum_names[] = {"False", "True", NULL};
 
-/* Parse SBP message payload into setting parameters */
-/* TODO: use this in piksi_buildroot sbp_settings_daemon to remove code duplication */
-static bool settings_parse_setting(const char *buf,
-                                   uint8_t blen,
-                                   const char **section,
-                                   const char **name,
-                                   const char **value,
-                                   const char **type)
-{
-  if (section) *section = NULL;
-  if (name) *name = NULL;
-  if (value) *value = NULL;
-  if (type) *type = NULL;
-
-  if (blen == 0) {
-    return false;
-  }
-
-  if (buf[blen - 1] != '\0') {
-    return false;
-  }
-
-  /* Extract parameters from message:
-   * 3 null terminated strings: section, name and value
-   * An optional fourth string is a description of the type.
-   */
-  if (section) *section = (const char *)buf;
-  for (int i = 0, tok = 0; i < blen; i++) {
-    if (buf[i] != '\0') {
-      continue;
-    }
-    tok++;
-    switch (tok) {
-    case 1:
-      if (name == NULL) {
-        continue;
-      }
-      *name = (const char *)&buf[i + 1];
-      break;
-
-    case 2:
-      if (value == NULL) {
-        continue;
-      }
-      if (i + 1 < blen) {
-        *value = (const char *)&buf[i + 1];
-      }
-      break;
-
-    case 3:
-      if (type == NULL) {
-        continue;
-      }
-      if (i + 1 < blen) {
-        *type = (const char *)&buf[i + 1];
-        break;
-      }
-
-    case 4:
-      /* Enum list sentinel NULL */
-      if (i == blen - 2) break;
-
-    case 5:
-      if (i == blen - 1) break;
-
-    default: return false;
-    }
-  }
-
-  return true;
-}
-
 /**
  * @brief setting_send_write_response
  * @param write_response: pre-formatted write response sbp message
@@ -542,7 +470,7 @@ static void settings_read_resp_callback(uint16_t sender_id,
 
   const char *value = NULL, *type = NULL;
 
-  if (settings_parse_setting(read_response->setting, len, NULL, NULL, &value, &type)) {
+  if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type) >= SETTINGS_TOKENS_VALUE) {
     if (value) {
       strncpy(ctx->resp_value, value, SBP_PAYLOAD_SIZE_MAX);
     }
@@ -613,12 +541,12 @@ static void settings_read_by_idx_resp_callback(uint16_t sender_id,
 
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
 
-  if (settings_parse_setting(resp->setting,
-                             len - sizeof(resp->index),
-                             &section,
-                             &name,
-                             &value,
-                             &type)) {
+  if (settings_parse(resp->setting,
+                     len - sizeof(resp->index),
+                     &section,
+                     &name,
+                     &value,
+                     &type) > 0) {
     if (section) {
       strncpy(ctx->resp_section, section, SBP_PAYLOAD_SIZE_MAX);
     }
