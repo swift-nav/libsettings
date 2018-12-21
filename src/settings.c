@@ -162,7 +162,7 @@ typedef struct settings_s {
   char resp_value[SBP_PAYLOAD_SIZE_MAX];
   char resp_type[SBP_PAYLOAD_SIZE_MAX];
   bool read_by_idx_done;
-  u8 status;
+  settings_write_res_t status;
 } settings_t;
 
 static const char *const bool_enum_names[] = {"False", "True", NULL};
@@ -469,7 +469,8 @@ static void settings_read_resp_callback(uint16_t sender_id,
   }
 
   const char *value = NULL, *type = NULL;
-  if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type) >= SETTINGS_TOKENS_VALUE) {
+  if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type)
+      >= SETTINGS_TOKENS_VALUE) {
     if (value) {
       strncpy(ctx->resp_value, value, SBP_PAYLOAD_SIZE_MAX);
     }
@@ -540,12 +541,8 @@ static void settings_read_by_idx_resp_callback(uint16_t sender_id,
 
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
 
-  if (settings_parse(resp->setting,
-                     len - sizeof(resp->index),
-                     &section,
-                     &name,
-                     &value,
-                     &type) > 0) {
+  if (settings_parse(resp->setting, len - sizeof(resp->index), &section, &name, &value, &type)
+      > 0) {
     if (section) {
       strncpy(ctx->resp_section, section, SBP_PAYLOAD_SIZE_MAX);
     }
@@ -1409,12 +1406,12 @@ int settings_register_watch(settings_t *ctx,
                               true);
 }
 
-int settings_write(settings_t *ctx,
-                   const char *section,
-                   const char *name,
-                   const void *value,
-                   size_t value_len,
-                   settings_type_t type)
+settings_write_res_t settings_write(settings_t *ctx,
+                                    const char *section,
+                                    const char *name,
+                                    const void *value,
+                                    size_t value_len,
+                                    settings_type_t type)
 {
   char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
   uint8_t msg_header_len;
@@ -1463,22 +1460,34 @@ int settings_write(settings_t *ctx,
   return ctx->status;
 }
 
-int settings_write_int(settings_t *ctx, const char *section, const char *name, int value)
+settings_write_res_t settings_write_int(settings_t *ctx,
+                                        const char *section,
+                                        const char *name,
+                                        int value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_INT);
 }
 
-int settings_write_float(settings_t *ctx, const char *section, const char *name, float value)
+settings_write_res_t settings_write_float(settings_t *ctx,
+                                          const char *section,
+                                          const char *name,
+                                          float value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_FLOAT);
 }
 
-int settings_write_str(settings_t *ctx, const char *section, const char *name, const char *str)
+settings_write_res_t settings_write_str(settings_t *ctx,
+                                        const char *section,
+                                        const char *name,
+                                        const char *str)
 {
   return settings_write(ctx, section, name, str, strlen(str), SETTINGS_TYPE_STRING);
 }
 
-int settings_write_bool(settings_t *ctx, const char *section, const char *name, bool value)
+settings_write_res_t settings_write_bool(settings_t *ctx,
+                                         const char *section,
+                                         const char *name,
+                                         bool value)
 {
   return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
 }
