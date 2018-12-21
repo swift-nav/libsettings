@@ -469,7 +469,6 @@ static void settings_read_resp_callback(uint16_t sender_id,
   }
 
   const char *value = NULL, *type = NULL;
-
   if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type) >= SETTINGS_TOKENS_VALUE) {
     if (value) {
       strncpy(ctx->resp_value, value, SBP_PAYLOAD_SIZE_MAX);
@@ -478,7 +477,7 @@ static void settings_read_resp_callback(uint16_t sender_id,
       strncpy(ctx->resp_type, type, SBP_PAYLOAD_SIZE_MAX);
     }
   } else {
-    ctx->api_impl.log(log_warning, "%s: Parsing setting failed", __FUNCTION__);
+    ctx->api_impl.log(log_warning, "read response parsing failed");
     ctx->resp_value[0] = '\0';
     ctx->resp_type[0] = '\0';
   }
@@ -1044,15 +1043,15 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
     .next = NULL,
   };
 
-  strncpy(setting_data->section, section, strlen(section) + 1);
-  strncpy(setting_data->name, name, strlen(name) + 1);
-
   if ((setting_data->section == NULL) || (setting_data->name == NULL)
       || (setting_data->var_copy == NULL)) {
     ctx->api_impl.log(log_err, "error allocating setting data members");
     setting_data_members_destroy(setting_data);
     free(setting_data);
     setting_data = NULL;
+  } else {
+    strncpy(setting_data->section, section, strlen(section) + 1);
+    strncpy(setting_data->name, name, strlen(name) + 1);
   }
 
   return setting_data;
@@ -1174,7 +1173,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   int msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
-    ctx->api_impl.log(log_err, "%s: Setting format failed", __FUNCTION__);
+    ctx->api_impl.log(log_err, "setting register message format failed");
     return -1;
   }
 
@@ -1435,14 +1434,14 @@ int settings_write(settings_t *ctx,
                                                         false,
                                                         false);
   if (setting_data == NULL) {
-    ctx->api_impl.log(log_err, "%s, error creating setting data", __FUNCTION__);
+    ctx->api_impl.log(log_err, "settings write error while creating setting data");
     return -1;
   }
 
   int msg_len = setting_format_setting(setting_data, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
 
   if (msg_len < 0) {
-    ctx->api_impl.log(log_err, "%s: Setting format failed", __FUNCTION__);
+    ctx->api_impl.log(log_err, "setting write error format failed");
     setting_data_members_destroy(setting_data);
     return -1;
   }
@@ -1536,7 +1535,7 @@ int settings_read(settings_t *ctx,
   if (strlen(ctx->resp_type) != 0) {
     const char *cmp = "enum:";
     if (strncmp(ctx->resp_type, cmp, strlen(cmp)) != 0) {
-      parsed_type = atoi(ctx->resp_type);
+      parsed_type = strtol(ctx->resp_type, NULL, 10);
     }
   } else {
     parsed_type = type;
@@ -1630,7 +1629,7 @@ int settings_read_by_idx(settings_t *ctx,
                                            SBP_SENDER_ID);
 
   if (res != 0) {
-    ctx->api_impl.log(log_err, "%s: request failed", __FUNCTION__);
+    ctx->api_impl.log(log_err, "read by idx request failed");
     goto read_by_idx_cleanup;
   }
 
@@ -1643,12 +1642,17 @@ read_by_idx_cleanup:
   settings_unregister_read_by_idx_resp_callback(ctx);
   settings_unregister_read_by_idx_done_callback(ctx);
 
+  /* Error */
   if (res != 0) {
     return res;
-  } else if (ctx->read_by_idx_done) {
+  }
+
+  /* Last index was read */
+  if (ctx->read_by_idx_done) {
     return 1;
   }
 
+  /* No errors, next index to be read */
   return 0;
 }
 
