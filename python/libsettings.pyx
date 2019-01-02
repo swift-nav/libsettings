@@ -24,26 +24,17 @@ from sbp.msg import SBP
 
 from threading import Event
 
+cpdef enum SettingsWriteResponseCodes:
+    SETTINGS_WR_OK = 0
+    SETTINGS_WR_VALUE_REJECTED = 1
+    SETTINGS_WR_SETTING_REJECTED = 2
+    SETTINGS_WR_PARSE_FAILED = 3
+    SETTINGS_WR_READ_ONLY = 4
+    SETTINGS_WR_MODIFY_DISABLED = 5
+    SETTINGS_WR_SERVICE_FAILED = 6
+    SETTINGS_WR_TIMEOUT = 7
 
 cdef extern from "../include/libsettings/settings.h":
-
-    cdef enum SettingsType:
-        SETTINGS_TYPE_INT = 0
-        SETTINGS_TYPE_FLOAT = 1
-        SETTINGS_TYPE_STRING = 2
-        SETTINGS_TYPE_BOOL = 3
-
-    # https://github.com/cython/cython/issues/1529
-    # Would like to expose more Pythonic name for the enum..
-    cpdef enum settings_write_res_e:
-        SETTINGS_WR_OK = 0
-        SETTINGS_WR_VALUE_REJECTED = 1
-        SETTINGS_WR_SETTING_REJECTED = 2
-        SETTINGS_WR_PARSE_FAILED = 3
-        SETTINGS_WR_READ_ONLY = 4
-        SETTINGS_WR_MODIFY_DISABLED = 5
-        SETTINGS_WR_SERVICE_FAILED = 6
-        SETTINGS_WR_TIMEOUT = 7
 
     cdef struct settings_s:
         pass
