@@ -24,12 +24,12 @@ if os.name == 'nt':
     ldflags.append("-static-libgcc")
 
 setup(
-    name = 'libsettings',
+    name='libsettings',
     version="0.1.0",
     author="Swift Navigation",
     author_email="dev@swift-nav.com",
     description="Open source SwiftNav settings API library.",
-    url = "https://github.com/swift-nav/libsettings",
+    url="https://github.com/swift-nav/libsettings",
     ext_modules=[
         Extension(
             'libsettings',
