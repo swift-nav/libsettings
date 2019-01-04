@@ -235,10 +235,11 @@ static void setting_update_value(setting_data_t *setting_data,
 
 /**
  * @brief message_header_get - to allow formatting of identity only
- * @param setting_data: the setting to format
+ * @param section: the setting section as string
+ * @param name: the setting name as string
  * @param buf: buffer to hold formatted header string
  * @param blen: length of the destination buffer
- * @return bytes written to the buffer, -1 in case of failure
+ * @return number of bytes written to the buffer, -1 in case of failure
  */
 static int message_header_get(const char *section, const char *name, char *buf, int blen)
 {
