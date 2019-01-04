@@ -154,7 +154,7 @@ typedef struct settings_s {
   sbp_msg_callbacks_node_t *read_resp_cb_node;
   sbp_msg_callbacks_node_t *read_by_idx_resp_cb_node;
   sbp_msg_callbacks_node_t *read_by_idx_done_cb_node;
-  settings_api_t api_impl;
+  settings_api_t client_iface;
   uint16_t sender_id;
   /* TODO: make independent structure of these */
   char resp_section[SBP_PAYLOAD_SIZE_MAX];
@@ -177,7 +177,7 @@ static int setting_send_write_response(settings_t *ctx,
                                        msg_settings_write_resp_t *write_response,
                                        uint8_t len)
 {
-  settings_api_t *api = &ctx->api_impl;
+  settings_api_t *api = &ctx->client_iface;
   if (api->send(api->ctx, SBP_MSG_SETTINGS_WRITE_RESP, len, (uint8_t *)write_response) != 0) {
     api->log(log_err, "sending settings write response failed");
     return -1;
@@ -366,12 +366,12 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   (void)sender_id;
 
   if (sender_id != SBP_SENDER_ID) {
-    ctx->api_impl.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
+    ctx->client_iface.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
     return;
   }
 
   /* Check for a response to a pending registration request */
-  request_state_check(&ctx->request_state, &ctx->api_impl, (char *)msg, len);
+  request_state_check(&ctx->request_state, &ctx->client_iface, (char *)msg, len);
 
   /* Extract parameters from message:
    * 4 null terminated strings: section, name, value and type.
@@ -379,7 +379,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   if (settings_parse((char *)msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->api_impl.log(log_warning, "settings write cb, error parsing setting");
+    ctx->client_iface.log(log_warning, "settings write cb, error parsing setting");
     return;
   }
 
@@ -421,7 +421,7 @@ static int settings_update_watch_only(settings_t *ctx, const char *msg, uint8_t 
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   if (settings_parse(msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->api_impl.log(log_warning, "updating watched values failed, error parsing setting");
+    ctx->client_iface.log(log_warning, "updating watched values failed, error parsing setting");
     return -1;
   }
 
@@ -459,14 +459,14 @@ static void settings_read_resp_callback(uint16_t sender_id,
   const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  int res = request_state_check(&ctx->request_state, &ctx->api_impl, read_response->setting, len);
+  int res = request_state_check(&ctx->request_state, &ctx->client_iface, read_response->setting, len);
 
   if (res != 0) {
     return;
   }
 
   if (settings_update_watch_only(ctx, read_response->setting, len) != 0) {
-    ctx->api_impl.log(log_warning, "error in settings read response message");
+    ctx->client_iface.log(log_warning, "error in settings read response message");
   }
 
   const char *value = NULL, *type = NULL;
@@ -479,7 +479,7 @@ static void settings_read_resp_callback(uint16_t sender_id,
       strncpy(ctx->resp_type, type, SBP_PAYLOAD_SIZE_MAX);
     }
   } else {
-    ctx->api_impl.log(log_warning, "read response parsing failed");
+    ctx->client_iface.log(log_warning, "read response parsing failed");
     ctx->resp_value[0] = '\0';
     ctx->resp_type[0] = '\0';
   }
@@ -502,12 +502,12 @@ static void settings_write_resp_callback(uint16_t sender_id,
 
   /* Check for a response to a pending request */
   request_state_check(&ctx->request_state,
-                      &ctx->api_impl,
+                      &ctx->client_iface,
                       write_response->setting,
                       len - sizeof(write_response->status));
 
   if (write_response->status != SETTINGS_WR_OK) {
-    ctx->api_impl.log(log_warning,
+    ctx->client_iface.log(log_warning,
                       "setting write rejected (code: %d), not updating watched values",
                       write_response->status);
     return;
@@ -515,7 +515,7 @@ static void settings_write_resp_callback(uint16_t sender_id,
 
   if (settings_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
       != 0) {
-    ctx->api_impl.log(log_warning, "error in settings read response message");
+    ctx->client_iface.log(log_warning, "error in settings read response message");
   }
 }
 
@@ -534,7 +534,7 @@ static void settings_read_by_idx_resp_callback(uint16_t sender_id,
 
   /* Check for a response to a pending request */
   int res =
-    request_state_check(&ctx->request_state, &ctx->api_impl, (char *)msg, sizeof(resp->index));
+    request_state_check(&ctx->request_state, &ctx->client_iface, (char *)msg, sizeof(resp->index));
 
   if (res != 0) {
     return;
@@ -581,10 +581,10 @@ static void settings_read_by_idx_done_callback(uint16_t sender_id,
   ctx->read_by_idx_done = true;
 
   int ret =
-    request_state_signal(&ctx->request_state, &ctx->api_impl, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
+    request_state_signal(&ctx->request_state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
 
   if (ret != 0) {
-    ctx->api_impl.log(log_warning, "Signaling request state failed with code: %d", ret);
+    ctx->client_iface.log(log_warning, "Signaling request state failed with code: %d", ret);
   }
 }
 
@@ -601,13 +601,13 @@ static int settings_register_write_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.register_cb(ctx->api_impl.ctx,
+  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
                                 SBP_MSG_SETTINGS_WRITE,
                                 settings_write_callback,
                                 ctx,
                                 &ctx->write_cb_node)
       != 0) {
-    ctx->api_impl.log(log_err, "error registering settings write callback");
+    ctx->client_iface.log(log_err, "error registering settings write callback");
     return -1;
   }
 
@@ -627,8 +627,8 @@ static int settings_unregister_write_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->write_cb_node) != 0) {
-    ctx->api_impl.log(log_err, "error unregistering settings write callback");
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->write_cb_node) != 0) {
+    ctx->client_iface.log(log_err, "error unregistering settings write callback");
     return -1;
   }
 
@@ -649,13 +649,13 @@ static int settings_register_read_resp_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.register_cb(ctx->api_impl.ctx,
+  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
                                 SBP_MSG_SETTINGS_READ_RESP,
                                 settings_read_resp_callback,
                                 ctx,
                                 &ctx->read_resp_cb_node)
       != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read resp callback");
+    ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
   }
 
@@ -675,8 +675,8 @@ static int settings_unregister_read_resp_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->read_resp_cb_node) != 0) {
-    ctx->api_impl.log(log_err, "error unregistering settings read resp callback");
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->read_resp_cb_node) != 0) {
+    ctx->client_iface.log(log_err, "error unregistering settings read resp callback");
     return -1;
   }
 
@@ -697,13 +697,13 @@ static int settings_register_write_resp_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.register_cb(ctx->api_impl.ctx,
+  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
                                 SBP_MSG_SETTINGS_WRITE_RESP,
                                 settings_write_resp_callback,
                                 ctx,
                                 &ctx->write_resp_cb_node)
       != 0) {
-    ctx->api_impl.log(log_err, "error registering settings write resp callback");
+    ctx->client_iface.log(log_err, "error registering settings write resp callback");
     return -1;
   }
 
@@ -723,8 +723,8 @@ static int settings_unregister_write_resp_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->write_resp_cb_node) != 0) {
-    ctx->api_impl.log(log_err, "error unregistering settings write resp callback");
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->write_resp_cb_node) != 0) {
+    ctx->client_iface.log(log_err, "error unregistering settings write resp callback");
     return -1;
   }
 
@@ -745,13 +745,13 @@ static int settings_register_read_by_idx_resp_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.register_cb(ctx->api_impl.ctx,
+  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
                                 SBP_MSG_SETTINGS_READ_BY_INDEX_RESP,
                                 settings_read_by_idx_resp_callback,
                                 ctx,
                                 &ctx->read_by_idx_resp_cb_node)
       != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read by idx resp callback");
+    ctx->client_iface.log(log_err, "error registering settings read by idx resp callback");
     return -1;
   }
 
@@ -771,8 +771,8 @@ static int settings_unregister_read_by_idx_resp_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->read_by_idx_resp_cb_node) != 0) {
-    ctx->api_impl.log(log_err, "error unregistering settings read by idx resp callback");
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->read_by_idx_resp_cb_node) != 0) {
+    ctx->client_iface.log(log_err, "error unregistering settings read by idx resp callback");
     return -1;
   }
 
@@ -793,13 +793,13 @@ static int settings_register_read_by_idx_done_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.register_cb(ctx->api_impl.ctx,
+  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
                                 SBP_MSG_SETTINGS_READ_BY_INDEX_DONE,
                                 settings_read_by_idx_done_callback,
                                 ctx,
                                 &ctx->read_by_idx_done_cb_node)
       != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read by idx done callback");
+    ctx->client_iface.log(log_err, "error registering settings read by idx done callback");
     return -1;
   }
 
@@ -819,8 +819,8 @@ static int settings_unregister_read_by_idx_done_callback(settings_t *ctx)
     return 0;
   }
 
-  if (ctx->api_impl.unregister_cb(ctx->api_impl.ctx, &ctx->read_by_idx_done_cb_node) != 0) {
-    ctx->api_impl.log(log_err, "error unregistering settings read by idx done callback");
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->read_by_idx_done_cb_node) != 0) {
+    ctx->client_iface.log(log_err, "error unregistering settings read by idx done callback");
     return -1;
   }
 
@@ -943,7 +943,7 @@ static int type_register(settings_t *ctx,
 {
   type_data_t *type_data = (type_data_t *)malloc(sizeof(*type_data));
   if (type_data == NULL) {
-    ctx->api_impl.log(log_err, "error allocating type data");
+    ctx->client_iface.log(log_err, "error allocating type data");
     return -1;
   }
 
@@ -1016,14 +1016,14 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
   /* Look up type data */
   type_data_t *type_data = type_data_lookup(ctx, type);
   if (type_data == NULL) {
-    ctx->api_impl.log(log_err, "invalid type");
+    ctx->client_iface.log(log_err, "invalid type");
     return NULL;
   }
 
   /* Set up setting data */
   setting_data_t *setting_data = (setting_data_t *)malloc(sizeof(*setting_data));
   if (setting_data == NULL) {
-    ctx->api_impl.log(log_err, "error allocating setting data");
+    ctx->client_iface.log(log_err, "error allocating setting data");
     return NULL;
   }
 
@@ -1043,7 +1043,7 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
 
   if ((setting_data->section == NULL) || (setting_data->name == NULL)
       || (setting_data->var_copy == NULL)) {
-    ctx->api_impl.log(log_err, "error allocating setting data members");
+    ctx->client_iface.log(log_err, "error allocating setting data members");
     setting_data_members_destroy(setting_data);
     free(setting_data);
     setting_data = NULL;
@@ -1086,20 +1086,20 @@ static int setting_perform_request_reply_from(settings_t *ctx,
   bool success = false;
 
   /* Prime semaphores etc if applicable */
-  if (ctx->api_impl.wait_init) {
-    ctx->api_impl.wait_init(ctx->api_impl.ctx);
+  if (ctx->client_iface.wait_init) {
+    ctx->client_iface.wait_init(ctx->client_iface.ctx);
   }
 
   do {
-    ctx->api_impl.send_from(ctx->api_impl.ctx,
+    ctx->client_iface.send_from(ctx->client_iface.ctx,
                             message_type,
                             message_length,
                             (uint8_t *)message,
                             sender_id);
 
-    if (ctx->api_impl.wait(ctx->api_impl.ctx, timeout_ms)) {
+    if (ctx->client_iface.wait(ctx->client_iface.ctx, timeout_ms)) {
       size_t len1 = strlen(message) + 1;
-      ctx->api_impl.log(log_err,
+      ctx->client_iface.log(log_err,
                         "Waiting reply for msg id %d with %s.%s timed out",
                         message_type,
                         message,
@@ -1111,14 +1111,14 @@ static int setting_perform_request_reply_from(settings_t *ctx,
   } while (!success && (++tries < retries));
 
   /* Defuse semaphores etc if applicable */
-  if (ctx->api_impl.wait_deinit) {
-    ctx->api_impl.wait_deinit(ctx->api_impl.ctx);
+  if (ctx->client_iface.wait_deinit) {
+    ctx->client_iface.wait_deinit(ctx->client_iface.ctx);
   }
 
   request_state_deinit(&ctx->request_state);
 
   if (!success) {
-    ctx->api_impl.log(log_warning,
+    ctx->client_iface.log(log_warning,
                       "setting req/reply failed after %d retries (msg id: %d)",
                       tries,
                       message_type);
@@ -1172,7 +1172,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   int msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
-    ctx->api_impl.log(log_err, "setting register message format failed");
+    ctx->client_iface.log(log_err, "setting register message format failed");
     return -1;
   }
 
@@ -1201,19 +1201,19 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
   int l;
 
   if (!setting_data->watchonly) {
-    ctx->api_impl.log(log_err, "cannot update non-watchonly setting manually");
+    ctx->client_iface.log(log_err, "cannot update non-watchonly setting manually");
     return -1;
   }
 
   l = message_header_get(setting_data->section, setting_data->name, msg, sizeof(msg) - msg_len);
   if (l < 0) {
-    ctx->api_impl.log(log_err, "error building settings read req message");
+    ctx->client_iface.log(log_err, "error building settings read req message");
     return -1;
   }
   msg_len += l;
 
   if (settings_register_read_resp_callback(ctx) != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read callback");
+    ctx->client_iface.log(log_err, "error registering settings read callback");
     return -1;
   }
 
@@ -1302,7 +1302,7 @@ static int settings_add_setting(settings_t *ctx,
   assert(var != NULL);
 
   if (setting_data_lookup(ctx, section, name) != NULL) {
-    ctx->api_impl.log(log_err, "setting add failed - duplicate setting");
+    ctx->client_iface.log(log_err, "setting add failed - duplicate setting");
     return -1;
   }
 
@@ -1317,7 +1317,7 @@ static int settings_add_setting(settings_t *ctx,
                                                         readonly,
                                                         watchonly);
   if (setting_data == NULL) {
-    ctx->api_impl.log(log_err, "error creating setting data");
+    ctx->client_iface.log(log_err, "error creating setting data");
     return -1;
   }
 
@@ -1326,20 +1326,20 @@ static int settings_add_setting(settings_t *ctx,
 
   if (watchonly) {
     if (settings_register_write_resp_callback(ctx) != 0) {
-      ctx->api_impl.log(log_err, "error registering settings write resp callback");
+      ctx->client_iface.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
-      ctx->api_impl.log(log_warning,
+      ctx->client_iface.log(log_warning,
                         "Unable to read watched setting to initial value (%s.%s)",
                         section,
                         name);
     }
   } else {
     if (settings_register_write_callback(ctx) != 0) {
-      ctx->api_impl.log(log_err, "error registering settings write callback");
+      ctx->client_iface.log(log_err, "error registering settings write callback");
     }
     if (setting_register(ctx, setting_data) != 0) {
-      ctx->api_impl.log(log_err, "error registering %s.%s with settings manager", section, name);
+      ctx->client_iface.log(log_err, "error registering %s.%s with settings manager", section, name);
       setting_data_list_remove(ctx, &setting_data);
       return -1;
     }
@@ -1419,7 +1419,7 @@ settings_write_res_t settings_write(settings_t *ctx,
   uint8_t msg_header_len;
 
   if (settings_register_write_resp_callback(ctx) != 0) {
-    ctx->api_impl.log(log_err, "error registering settings write response callback");
+    ctx->client_iface.log(log_err, "error registering settings write response callback");
   }
 
   setting_data_t *setting_data = setting_create_setting(ctx,
@@ -1433,14 +1433,14 @@ settings_write_res_t settings_write(settings_t *ctx,
                                                         false,
                                                         false);
   if (setting_data == NULL) {
-    ctx->api_impl.log(log_err, "settings write error while creating setting data");
+    ctx->client_iface.log(log_err, "settings write error while creating setting data");
     return -1;
   }
 
   int msg_len = setting_format_setting(setting_data, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
 
   if (msg_len < 0) {
-    ctx->api_impl.log(log_err, "setting write error format failed");
+    ctx->client_iface.log(log_err, "setting write error format failed");
     setting_data_members_destroy(setting_data);
     return -1;
   }
@@ -1512,12 +1512,12 @@ int settings_read(settings_t *ctx,
   int msg_len = message_header_get(section, name, msg, sizeof(msg));
 
   if (msg_len < 0) {
-    ctx->api_impl.log(log_err, "error building settings read req message");
+    ctx->client_iface.log(log_err, "error building settings read req message");
     return -1;
   }
 
   if (settings_register_read_resp_callback(ctx) != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read resp callback");
+    ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
   }
 
@@ -1553,19 +1553,19 @@ int settings_read(settings_t *ctx,
   }
 
   if (type != parsed_type) {
-    ctx->api_impl.log(log_err, "setting types don't match");
+    ctx->client_iface.log(log_err, "setting types don't match");
     return -1;
   }
 
   const type_data_t *td = type_data_lookup(ctx, parsed_type);
 
   if (td == NULL) {
-    ctx->api_impl.log(log_err, "unknown setting type");
+    ctx->client_iface.log(log_err, "unknown setting type");
     return -1;
   }
 
   if (!td->from_string(td->priv, value, value_len, ctx->resp_value)) {
-    ctx->api_impl.log(log_err, "value parsing failed");
+    ctx->client_iface.log(log_err, "value parsing failed");
     return -1;
   }
 
@@ -1615,12 +1615,12 @@ int settings_read_by_idx(settings_t *ctx,
   int res = -1;
 
   if (settings_register_read_by_idx_resp_callback(ctx) != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read by idx resp callback");
+    ctx->client_iface.log(log_err, "error registering settings read by idx resp callback");
     goto read_by_idx_cleanup;
   }
 
   if (settings_register_read_by_idx_done_callback(ctx) != 0) {
-    ctx->api_impl.log(log_err, "error registering settings read by idx done callback");
+    ctx->client_iface.log(log_err, "error registering settings read by idx done callback");
     goto read_by_idx_cleanup;
   }
 
@@ -1640,7 +1640,7 @@ int settings_read_by_idx(settings_t *ctx,
                                            SBP_SENDER_ID);
 
   if (res != 0) {
-    ctx->api_impl.log(log_err, "read by idx request failed");
+    ctx->client_iface.log(log_err, "read by idx request failed");
     goto read_by_idx_cleanup;
   }
 
@@ -1745,20 +1745,20 @@ static bool str_from_string(const void *priv, void *blob, int blen, const char *
   return true;
 }
 
-settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
+settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
 {
-  assert(api_impl != NULL);
-  assert(api_impl->log != NULL);
+  assert(client_iface != NULL);
+  assert(client_iface->log != NULL);
 
   settings_t *ctx = (settings_t *)malloc(sizeof(*ctx));
   if (ctx == NULL) {
-    api_impl->log(log_err, "error allocating context");
+    client_iface->log(log_err, "error allocating context");
     return ctx;
   }
 
   ctx->sender_id = sender_id;
 
-  ctx->api_impl = *api_impl;
+  ctx->client_iface = *client_iface;
 
   ctx->type_data_list = NULL;
   ctx->setting_data_list = NULL;
@@ -1823,7 +1823,7 @@ void settings_destroy(settings_t **ctx)
 {
   assert(ctx != NULL);
   assert(*ctx != NULL);
-  (*ctx)->api_impl.log(log_err, "Releasing settings framework");
+  (*ctx)->client_iface.log(log_err, "Releasing settings framework");
   settings_unregister_write_callback(*ctx);
   settings_unregister_write_resp_callback(*ctx);
   settings_unregister_read_resp_callback(*ctx);
