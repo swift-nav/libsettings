@@ -545,16 +545,16 @@ static void settings_read_by_idx_resp_callback(uint16_t sender_id,
   if (settings_parse(resp->setting, len - sizeof(resp->index), &section, &name, &value, &type)
       > 0) {
     if (section) {
-      strncpy(ctx->resp_section, section, SBP_PAYLOAD_SIZE_MAX);
+      strncpy(ctx->resp_section, section, sizeof(ctx->resp_section));
     }
     if (name) {
-      strncpy(ctx->resp_name, name, SBP_PAYLOAD_SIZE_MAX);
+      strncpy(ctx->resp_name, name, sizeof(ctx->resp_name));
     }
     if (value) {
-      strncpy(ctx->resp_value, value, SBP_PAYLOAD_SIZE_MAX);
+      strncpy(ctx->resp_value, value, sizeof(ctx->resp_value));
     }
     if (type) {
-      strncpy(ctx->resp_type, type, SBP_PAYLOAD_SIZE_MAX);
+      strncpy(ctx->resp_type, type, sizeof(ctx->resp_type));
     }
   }
 }
