@@ -14,7 +14,7 @@ cimport cython
 from libc.stdint cimport uint8_t, uint16_t
 from libc.stdint cimport uintptr_t
 
-from sbp.msg import SBP
+from sbp.msg import SBP, SENDER_ID
 
 from threading import Event
 
@@ -121,7 +121,7 @@ cdef class Settings:
     cdef readonly object _link
     cdef readonly object _debug
 
-    def __init__(self, sender_id, link, debug=False):
+    def __init__(self, link, sender_id=SENDER_ID, debug=False):
         self.c_api.ctx = <void *>self
         self.c_api.send = &send_wrapper
         self.c_api.send_from = &send_from_wrapper
