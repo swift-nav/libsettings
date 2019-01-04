@@ -155,10 +155,10 @@ cdef class Settings:
                                 bytes(name),
                                 value,
                                 sizeof(value))
-        if (ret):
-            return None
-        else:
+        if (ret == 0):
             return str(value)
+        else:
+            return None
 
     def read_all(self):
         cdef char section[256]
