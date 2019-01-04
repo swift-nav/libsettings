@@ -154,7 +154,7 @@ cdef class Settings:
                                 bytes(section),
                                 bytes(name),
                                 value,
-                                256)
+                                sizeof(value))
         if (ret):
             return None
         else:
@@ -167,36 +167,36 @@ cdef class Settings:
         cdef char fmt_type[256]
         cdef uint16_t idx = 0
 
-        l = []
+        settings = []
 
         while (True):
             ret = settings_read_by_idx(self.ctx,
                                        idx,
                                        section,
-                                       256,
+                                       sizeof(section),
                                        name,
-                                       256,
+                                       sizeof(name),
                                        value,
-                                       256,
+                                       sizeof(value),
                                        fmt_type,
-                                       256)
+                                       sizeof(fmt_type))
 
             if (ret > 0):
                 break
             elif (ret < 0):
                 return []
 
-            s = {
-                    'section': str(section),
-                    'name': str(name),
-                    'value': str(value),
-                    'fmt_type': str(fmt_type),
-                }
+            setting = {
+                           'section': str(section),
+                           'name': str(name),
+                           'value': str(value),
+                           'fmt_type': str(fmt_type),
+                      }
 
-            l.append(s)
+            settings.append(setting)
             idx += 1
 
-        return l
+        return settings
 
     def _callback_broker(self, sbp_msg, **metadata):
         if self._debug:
