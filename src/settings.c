@@ -508,7 +508,7 @@ static void settings_write_resp_callback(uint16_t sender_id,
 
   if (write_response->status != SETTINGS_WR_OK) {
     ctx->api_impl.log(log_warning,
-                      "Setting write rejected (code: %d), not updating watched values",
+                      "setting write rejected (code: %d), not updating watched values",
                       write_response->status);
     return;
   }
