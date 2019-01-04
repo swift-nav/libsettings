@@ -14,12 +14,6 @@ cimport cython
 from libc.stdint cimport uint8_t, uint16_t
 from libc.stdint cimport uintptr_t
 
-from libc.stdio cimport printf
-
-from libc.stdlib cimport calloc, malloc, free
-
-from libc.string cimport memset
-
 from sbp.msg import SBP
 
 from threading import Event
@@ -117,9 +111,6 @@ cdef extern from "../include/libsettings/settings.h":
                              char *fmt_type,
                              size_t type_len)
 
-# See register()
-#cdef int my_int_notify(void *ctx):
-#    printf("%p\n", ctx)
 
 cdef class Settings:
     cdef settings_t *ctx
@@ -150,20 +141,6 @@ cdef class Settings:
 
     def destroy(self):
         settings_destroy(&self.ctx)
-
-    # Only for debugging purposes/example,
-    # Lifetime and owner of the variable should be figured out properly
-    #def register(self, section, name, var, stype, notify):
-    #    cdef int *my_int = <int *>malloc(cython.sizeof(int))
-    #    memset(my_int, 99, cython.sizeof(int))
-    #    return settings_register_setting(self.ctx,
-    #                                     bytes(section),
-    #                                     bytes(name),
-    #                                     my_int,
-    #                                     cython.sizeof(int),
-    #                                     stype,
-    #                                     my_int_notify,
-    #                                     my_int)
 
     def write(self, section, name, value):
         return settings_write_str(self.ctx,
