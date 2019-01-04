@@ -248,7 +248,7 @@ int settings_register_watch(settings_t *ctx,
  *
  * @return                  The operation result.
  * @retval 0                The setting was written successfully. Error otherwise,
- *                          see @ settings_write_res_t
+ *                          @see settings_write_res_t
  */
 settings_write_res_t settings_write(settings_t *ctx,
                                     const char *section,
@@ -268,7 +268,7 @@ settings_write_res_t settings_write(settings_t *ctx,
  *
  * @return                  The operation result.
  * @retval 0                The setting was written successfully. Error otherwise,
- *                          see @ settings_write_res_t
+ *                          @see settings_write_res_t
  */
 settings_write_res_t settings_write_int(settings_t *ctx,
                                         const char *section,
@@ -286,7 +286,7 @@ settings_write_res_t settings_write_int(settings_t *ctx,
  *
  * @return                  The operation result.
  * @retval 0                The setting was written successfully. Error otherwise,
- *                          see @ settings_write_res_t
+ *                          @see settings_write_res_t
  */
 settings_write_res_t settings_write_float(settings_t *ctx,
                                           const char *section,
@@ -304,7 +304,7 @@ settings_write_res_t settings_write_float(settings_t *ctx,
  *
  * @return                  The operation result.
  * @retval 0                The setting was written successfully. Error otherwise,
- *                          see @ settings_write_res_t
+ *                          @see settings_write_res_t
  */
 settings_write_res_t settings_write_str(settings_t *ctx,
                                         const char *section,
@@ -322,7 +322,7 @@ settings_write_res_t settings_write_str(settings_t *ctx,
  *
  * @return                  The operation result.
  * @retval 0                The setting was written successfully. Error otherwise,
- *                          see @ settings_write_res_t
+ *                          @see settings_write_res_t
  */
 settings_write_res_t settings_write_bool(settings_t *ctx,
                                          const char *section,
