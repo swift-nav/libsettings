@@ -427,9 +427,9 @@ int settings_read_bool(settings_t *ctx, const char *section, const char *name, b
  * @param[in] type_len      Type str buffer size.
  *
  * @return                  The operation result.
- * @retval 0                The setting was read successfully. Next index ready to be read
+ * @retval 0                The setting was read successfully. Next index is ready to be read.
  * @retval <0               Error.
- * @retval >0               Last index was read successfully.
+ * @retval >0               Last index was read successfully. There are no more indexes to read.
  */
 int settings_read_by_idx(settings_t *ctx,
                          uint16_t idx,
