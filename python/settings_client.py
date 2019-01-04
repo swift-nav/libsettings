@@ -83,24 +83,14 @@ def main():
         # Handler with context
         with Handler(Framer(driver.read, driver.write)) as link:
             print("Creating Settings")
-            s = Settings(1234, link)
-
-            #print("Registering libsettings.test")
-            #s.register("libsettings", "test", None, 0, None)
+            s = Settings(link)
 
             time.sleep(1)
-
-            #print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
-            #value = raw_input('Enter new frontend.antenna_selection value: ')
-            #s.write("frontend", "antenna_selection", value)
-            #print("frontend.antenna_selection =", s.read("frontend", "antenna_selection"))
 
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
             value = raw_input('Enter new solution.elevation_mask value: ')
             s.write("solution", "elevation_mask", value)
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
-
-            #raw_input('Press enter to read all settings..')
 
             l = s.read_all()
 
