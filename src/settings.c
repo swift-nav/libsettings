@@ -1048,8 +1048,9 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
     free(setting_data);
     setting_data = NULL;
   } else {
-    strncpy(setting_data->section, section, strlen(section) + 1);
-    strncpy(setting_data->name, name, strlen(name) + 1);
+    /* See setting_data initialization, section and name are guaranteed to fit */
+    strcpy(setting_data->section, section);
+    strcpy(setting_data->name, name);
   }
 
   return setting_data;
