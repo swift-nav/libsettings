@@ -205,12 +205,19 @@ cdef class Settings:
 
         msg_type = sbp_msg.msg_type
 
+        cb_data = None
+
         for k,v in self._callbacks.items():
+            # Only one callback per msg type
             if v[0] == msg_type:
                 cb_data = self._callbacks[k]
+                break
 
-        cdef sbp_msg_callback_t f = <sbp_msg_callback_t><uintptr_t>cb_data[1]
-        f(sbp_msg.sender, sbp_msg.length, bytes(sbp_msg.payload), <void*><uintptr_t>cb_data[2])
+        if cb_data is None:
+            raise Exception("Callback not registered for message type {}".format(msg_type))
+
+        cdef sbp_msg_callback_t cb = <sbp_msg_callback_t><uintptr_t>cb_data[1]
+        cb(sbp_msg.sender, sbp_msg.length, bytes(sbp_msg.payload), <void*><uintptr_t>cb_data[2])
 
 cdef int send_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t *payload):
     settings = <object>ctx
@@ -259,18 +266,17 @@ cdef int register_cb_wrapper(void *ctx,
                              void *cb_context,
                              sbp_msg_callbacks_node_t **node):
     settings = <object>ctx
-
     settings._callbacks[<uintptr_t>node] = (msg_type, <uintptr_t>cb, <uintptr_t>cb_context)
-
     settings._link.add_callback(settings._callback_broker, msg_type)
+
     return 0
 
 cdef int unregister_cb_wrapper(void *ctx, sbp_msg_callbacks_node_t **node):
     settings = <object>ctx
     cb_data = settings._callbacks[<uintptr_t>node]
     settings._link.remove_callback(settings._callback_broker, cb_data[0])
-
     del settings._callbacks[<uintptr_t>node]
+
     return 0
 
 cdef void log_wrapper(int priority, const char *fmt, ...):
