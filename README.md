@@ -23,6 +23,9 @@ mkdir build
 cd build
 cmake ../
 make # output can be found in build/src/libsettings.so
+# If you want to update python bindings:
+cd ..
+python setup.py sdist --dist-dir python
 ```
 
 ## Example usage
