@@ -45,7 +45,6 @@
 # Kernel Module Compile Results
 *.mod*
 *.cmd
-build*/
 .tmp_versions/
 modules.order
 Module.symvers
@@ -56,4 +55,9 @@ dkms.conf
 .vscode/
 
 # build
-.build/
+build*/
+
+# Python
+libsettings.egg-info
+python/*.c
+setup.py

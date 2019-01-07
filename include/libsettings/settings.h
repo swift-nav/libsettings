@@ -61,10 +61,11 @@ typedef enum settings_write_res_e {
   SETTINGS_WR_VALUE_REJECTED = 1,   /**< Setting value invalid   */
   SETTINGS_WR_SETTING_REJECTED = 2, /**< Setting does not exist */
   SETTINGS_WR_PARSE_FAILED = 3,     /**< Could not parse setting value */
-  // READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary
+  /* READ_ONLY:MODIFY_DISABLED ~= Permanent:Temporary */
   SETTINGS_WR_READ_ONLY = 4,       /**< Setting is read only          */
   SETTINGS_WR_MODIFY_DISABLED = 5, /**< Setting is not modifiable     */
   SETTINGS_WR_SERVICE_FAILED = 6,  /**< System failure during setting */
+  SETTINGS_WR_TIMEOUT = 7,         /**< Request wasn't replied in time */
 } settings_write_res_t;
 
 typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload);
@@ -233,6 +234,213 @@ int settings_register_watch(settings_t *ctx,
                             settings_type_t type,
                             settings_notify_fn notify,
                             void *notify_context);
+
+/**
+ * @brief   Write a new value for registered setting.
+ * @details Call will block until write response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[in] value         Address of the value variable.
+ * @param[in] value_len     Size of the value variable.
+ * @param[in] type          Type of the setting.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was written successfully. Error otherwise,
+ *                          @see settings_write_res_t
+ */
+settings_write_res_t settings_write(settings_t *ctx,
+                                    const char *section,
+                                    const char *name,
+                                    const void *value,
+                                    size_t value_len,
+                                    settings_type_t type);
+
+/**
+ * @brief   Write a new value for registered setting of type int.
+ * @details Call will block until write response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[in] value         Value to be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was written successfully. Error otherwise,
+ *                          @see settings_write_res_t
+ */
+settings_write_res_t settings_write_int(settings_t *ctx,
+                                        const char *section,
+                                        const char *name,
+                                        int value);
+
+/**
+ * @brief   Write a new value for registered setting of type float.
+ * @details Call will block until write response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[in] value         Value to be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was written successfully. Error otherwise,
+ *                          @see settings_write_res_t
+ */
+settings_write_res_t settings_write_float(settings_t *ctx,
+                                          const char *section,
+                                          const char *name,
+                                          float value);
+
+/**
+ * @brief   Write a new value for registered setting of type str.
+ * @details Call will block until write response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[in] str           Value to be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was written successfully. Error otherwise,
+ *                          @see settings_write_res_t
+ */
+settings_write_res_t settings_write_str(settings_t *ctx,
+                                        const char *section,
+                                        const char *name,
+                                        const char *str);
+
+/**
+ * @brief   Write a new value for registered setting of type bool.
+ * @details Call will block until write response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[in] value         Value to be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was written successfully. Error otherwise,
+ *                          @see settings_write_res_t
+ */
+settings_write_res_t settings_write_bool(settings_t *ctx,
+                                         const char *section,
+                                         const char *name,
+                                         bool value);
+
+/**
+ * @brief   Read value of registered setting.
+ * @details Call will block until read response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[in] value         Address of the variable where the read value shall be written.
+ * @param[in] value_len     Size of the value variable.
+ * @param[in] type          Type of the setting.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was read successfully. Error otherwise.
+ */
+int settings_read(settings_t *ctx,
+                  const char *section,
+                  const char *name,
+                  void *value,
+                  size_t value_len,
+                  settings_type_t type);
+
+/**
+ * @brief   Read value of registered setting of type int.
+ * @details Call will block until read response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[out] value        Address of the variable where the read value shall be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was read successfully. Error otherwise.
+ */
+int settings_read_int(settings_t *ctx, const char *section, const char *name, int *value);
+
+/**
+ * @brief   Read value of registered setting of type float.
+ * @details Call will block until read response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[out] value        Address of the variable where the read value shall be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was read successfully. Error otherwise.
+ */
+int settings_read_float(settings_t *ctx, const char *section, const char *name, float *value);
+
+/**
+ * @brief   Read value of registered setting of type str.
+ * @details Call will block until read response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[out] str          Address of the variable where the read value shall be written.
+ * @param[in] str_len       Size of the str buffer.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was read successfully. Error otherwise.
+ */
+int settings_read_str(settings_t *ctx,
+                      const char *section,
+                      const char *name,
+                      char *str,
+                      size_t str_len);
+
+/**
+ * @brief   Read value of registered setting of type bool.
+ * @details Call will block until read response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] section       String describing the setting section.
+ * @param[in] name          String describing the setting name.
+ * @param[out] value        Address of the variable where the read value shall be written.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was read successfully. Error otherwise.
+ */
+int settings_read_bool(settings_t *ctx, const char *section, const char *name, bool *value);
+
+/**
+ * @brief   Read value of registered setting based on index.
+ * @details Call will block until read_by_idx response or internal timeout.
+ *
+ * @param[in] ctx           Pointer to the context to use.
+ * @param[in] idx           Index to read.
+ * @param[out] section      String describing the setting section.
+ * @param[in] section_len   Section str buffer size.
+ * @param[out] name         String describing the setting name.
+ * @param[in] name_len      Name str buffer size.
+ * @param[out] value        String describing the setting value.
+ * @param[in] value_len     Value str buffer size.
+ * @param[out] type         String describing the setting type.
+ * @param[in] type_len      Type str buffer size.
+ *
+ * @return                  The operation result.
+ * @retval 0                The setting was read successfully. Next index is ready to be read.
+ * @retval <0               Error.
+ * @retval >0               Last index was read successfully. There are no more indexes to read.
+ */
+int settings_read_by_idx(settings_t *ctx,
+                         uint16_t idx,
+                         char *section,
+                         size_t section_len,
+                         char *name,
+                         size_t name_len,
+                         char *value,
+                         size_t value_len,
+                         char *type,
+                         size_t type_len);
 
 #ifdef __cplusplus
 }

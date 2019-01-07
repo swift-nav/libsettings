@@ -16,5 +16,8 @@ branches:
       # Any tag starting with a version string: vX.Y.Z(-blahblahblah).
     - /^v\d+.\d+.\d+(-\S+)?$/
 
+install:
+    - pip install --user cython
+
 script:
     - mkdir build; cd build; cmake ../; make
