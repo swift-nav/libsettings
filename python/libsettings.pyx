@@ -227,7 +227,8 @@ cdef int send_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t *pay
         print ":".join("{:02x}".format(ord(c)) for c in payload[:length])
 
     # https://cython.readthedocs.io/en/latest/src/tutorial/strings.html
-    # See section "Passing byte strings"
+    # See section "Passing byte strings".
+    # Copying is needed to work around NULL bytes in settings.
     settings._link(SBP(msg_type=msg_type,
                        length=length,
                        payload=payload[:length])) # Performs a copy of the data
