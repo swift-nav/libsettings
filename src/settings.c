@@ -234,26 +234,23 @@ static void setting_update_value(setting_data_t *setting_data,
 }
 
 /**
- * @brief setting_format_setting - formats a fully formed setting message
+ * @brief setting_data_format - formats a fully formed setting message
  * payload
  * @param setting_data: the setting to format
- * @param tok: number of fields to fill
+ * @param type: flag to indicate if type data shall be formatted
  * @param buf: buffer to hold formatted setting string
  * @param len: length of the destination buffer
  * @param msg_hdr_len: length of the msg header
  * @return number of bytes written to the buffer, -1 in case of failure
  */
-static int setting_format_setting(setting_data_t *setting_data,
-                                  settings_tokens_t tok,
-                                  char *buf,
-                                  int blen,
-                                  uint8_t *msg_hdr_len)
+static int setting_data_format(setting_data_t *setting_data,
+                               bool type,
+                               char *buf,
+                               int blen,
+                               uint8_t *msg_hdr_len)
 {
   int res = 0;
   int bytes = 0;
-
-  /* There's always section and name */
-  assert(tok >= SETTINGS_TOKENS_NAME);
 
   res = settings_format(setting_data->section, setting_data->name, NULL, NULL, buf, blen);
 
@@ -264,10 +261,6 @@ static int setting_format_setting(setting_data_t *setting_data,
 
   if (msg_hdr_len != NULL) {
     *msg_hdr_len = res;
-  }
-
-  if (tok < SETTINGS_TOKENS_VALUE) {
-    return bytes;
   }
 
   /* Value */
@@ -282,7 +275,7 @@ static int setting_format_setting(setting_data_t *setting_data,
   /* Add terminating null (+ 1) */
   bytes += res + 1;
 
-  if (tok < SETTINGS_TOKENS_TYPE) {
+  if (!type) {
     return bytes;
   }
 
@@ -362,11 +355,11 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
   write_response->status = write_result;
   resp_len += sizeof(write_response->status);
-  int l = setting_format_setting(setting_data,
-                                 SETTINGS_TOKENS_VALUE,
-                                 write_response->setting,
-                                 SBP_PAYLOAD_SIZE_MAX - resp_len,
-                                 NULL);
+  int l = setting_data_format(setting_data,
+                              false,
+                              write_response->setting,
+                              SBP_PAYLOAD_SIZE_MAX - resp_len,
+                              NULL);
   if (l < 0) {
     return;
   }
@@ -1131,7 +1124,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
   uint8_t msg_header_len;
 
-  int msg_len = setting_format_setting(setting_data, SETTINGS_TOKENS_TYPE, msg, sizeof(msg), &msg_header_len);
+  int msg_len = setting_data_format(setting_data, true, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting register message format failed");
@@ -1399,7 +1392,7 @@ settings_write_res_t settings_write(settings_t *ctx,
     return -1;
   }
 
-  int msg_len = setting_format_setting(setting_data, SETTINGS_TOKENS_VALUE, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
+  int msg_len = setting_data_format(setting_data, false, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting write error format failed");
