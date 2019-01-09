@@ -176,14 +176,14 @@ int setting_data_format(setting_data_t *setting_data,
   return bytes;
 }
 
-void setting_data_append(setting_data_t *data_list, setting_data_t *setting_data)
+void setting_data_append(setting_data_t **data_list, setting_data_t *setting_data)
 {
-  if (data_list == NULL) {
-    data_list = setting_data;
+  if (*data_list == NULL) {
+    *data_list = setting_data;
   } else {
     setting_data_t *s;
     /* Find last element in the same section */
-    for (s = data_list; s->next != NULL; s = s->next) {
+    for (s = *data_list; s->next != NULL; s = s->next) {
       if ((strcmp(s->section, setting_data->section) == 0)
           && (strcmp(s->next->section, setting_data->section) != 0)) {
         break;

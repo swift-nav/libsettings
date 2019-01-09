@@ -22,7 +22,7 @@ type_data_t *type_data_lookup(type_data_t *data_list, settings_type_t type)
   return data_list;
 }
 
-int type_register(type_data_t *data_list,
+int type_register(type_data_t **data_list,
                   to_string_fn to_string,
                   from_string_fn from_string,
                   format_type_fn format_type,
@@ -42,13 +42,12 @@ int type_register(type_data_t *data_list,
 
   /* Add to list */
   settings_type_t next_type = 0;
-  type_data_t **p_next = &data_list;
-  while (*p_next != NULL) {
-    p_next = &(*p_next)->next;
+  while (*data_list != NULL) {
+    data_list = &(*data_list)->next;
     next_type++;
   }
 
-  *p_next = type_data;
+  *data_list = type_data;
   *type = next_type;
   return 0;
 }

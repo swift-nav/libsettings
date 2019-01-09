@@ -50,7 +50,7 @@ type_data_t *type_data_lookup(type_data_t *data_list, settings_type_t type);
 
 /**
  * @brief type_register - register type data for reference when adding settings
- * @param data_list: type data list
+ * @param data_list: pointer to type data list
  * @param to_string: serialization method
  * @param from_string: deserialization method
  * @param format_type: ?
@@ -58,7 +58,7 @@ type_data_t *type_data_lookup(type_data_t *data_list, settings_type_t type);
  * @param type: type enum that is used to identify this type
  * @return
  */
-int type_register(type_data_t *data_list,
+int type_register(type_data_t **data_list,
                   to_string_fn to_string,
                   from_string_fn from_string,
                   format_type_fn format_type,

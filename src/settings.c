@@ -863,7 +863,7 @@ int settings_register_enum(settings_t *ctx, const char *const enum_names[], sett
   assert(enum_names != NULL);
   assert(type != NULL);
 
-  return type_register(ctx->type_data_list,
+  return type_register(&ctx->type_data_list,
                        enum_to_string,
                        enum_from_string,
                        enum_format_type,
@@ -926,7 +926,7 @@ static int settings_add_setting(settings_t *ctx,
   }
 
   /* Add to list */
-  setting_data_append(ctx->setting_data_list, setting_data);
+  setting_data_append(&ctx->setting_data_list, setting_data);
 
   if (watchonly) {
     if (settings_register_write_resp_callback(ctx) != 0) {
@@ -1382,22 +1382,22 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
   /* Register standard types */
   settings_type_t type;
 
-  int ret = type_register(ctx->type_data_list, int_to_string, int_from_string, NULL, NULL, &type);
+  int ret = type_register(&ctx->type_data_list, int_to_string, int_from_string, NULL, NULL, &type);
   /* To make cythonizer happy.. */
   (void)ret;
 
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_INT);
 
-  ret = type_register(ctx->type_data_list, float_to_string, float_from_string, NULL, NULL, &type);
+  ret = type_register(&ctx->type_data_list, float_to_string, float_from_string, NULL, NULL, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_FLOAT);
 
-  ret = type_register(ctx->type_data_list, str_to_string, str_from_string, NULL, NULL, &type);
+  ret = type_register(&ctx->type_data_list, str_to_string, str_from_string, NULL, NULL, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_STRING);
 
-  ret = type_register(ctx->type_data_list,
+  ret = type_register(&ctx->type_data_list,
                       enum_to_string,
                       enum_from_string,
                       enum_format_type,

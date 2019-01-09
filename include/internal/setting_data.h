@@ -43,7 +43,7 @@ extern "C" {
 
 /**
  * @brief setting_data_create - setting data constructor
- * @param type_list: type data list
+ * @param type_list: pointer to type data list
  * @param section: section identifier
  * @param name: setting name
  * @param var: non-owning reference to location the data is stored
@@ -105,7 +105,7 @@ int setting_data_format(setting_data_t *setting_data,
  * @param setting_data: data to append
  * @return
  */
-void setting_data_append(setting_data_t *data_list, setting_data_t *setting_data);
+void setting_data_append(setting_data_t **data_list, setting_data_t *setting_data);
 
 /**
  * @brief setting_data_list_remove - remove a setting from the setting data list
