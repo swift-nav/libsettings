@@ -165,7 +165,8 @@ int setting_data_format(setting_data_t *setting_data,
   /* Type information */
   assert(setting_data->type_data->format_type != NULL);
 
-  res = setting_data->type_data->format_type(setting_data->type_data->priv, &buf[bytes], blen - bytes);
+  res =
+    setting_data->type_data->format_type(setting_data->type_data->priv, &buf[bytes], blen - bytes);
   if ((res < 0) || (res >= blen - bytes)) {
     return -1;
   }
@@ -216,7 +217,9 @@ void setting_data_remove(setting_data_t *data_list, setting_data_t **setting_dat
   }
 }
 
-setting_data_t *setting_data_lookup(setting_data_t *data_list, const char *section, const char *name)
+setting_data_t *setting_data_lookup(setting_data_t *data_list,
+                                    const char *section,
+                                    const char *name)
 {
   while (data_list != NULL) {
     if ((strcmp(data_list->section, section) == 0) && (strcmp(data_list->name, name) == 0)) {
