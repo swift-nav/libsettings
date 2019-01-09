@@ -52,3 +52,13 @@ int type_register(type_data_t *data_list,
   *type = next_type;
   return 0;
 }
+
+void type_data_free(type_data_t *data_list)
+{
+  /* Free type data list elements */
+  while (data_list != NULL) {
+    type_data_t *t = data_list;
+    data_list = data_list->next;
+    free(t);
+  }
+}

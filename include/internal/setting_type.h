@@ -65,6 +65,12 @@ int type_register(type_data_t *data_list,
                   const void *priv,
                   settings_type_t *type);
 
+/**
+ * @brief type_data_free - free type data list
+ * @param data_list: type data list to free
+ */
+void type_data_free(type_data_t *data_list);
+
 #ifdef __cplusplus
 }
 #endif

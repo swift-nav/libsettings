@@ -1400,13 +1400,7 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
  */
 static void members_destroy(settings_t *ctx)
 {
-  /* Free type data list elements */
-  while (ctx->type_data_list != NULL) {
-    type_data_t *t = ctx->type_data_list;
-    ctx->type_data_list = ctx->type_data_list->next;
-    free(t);
-  }
-
+  type_data_free(ctx->type_data_list);
   setting_data_free(ctx->setting_data_list);
 }
 

@@ -124,7 +124,7 @@ void setting_data_remove(setting_data_t *data_list, setting_data_t **setting_dat
 setting_data_t *setting_data_lookup(setting_data_t *data_list, const char *section, const char *name);
 
 /**
- * @brief setting_data_list_remove - remove a setting from the setting data list
+ * @brief setting_data_free - free the setting data list
  * @param data_list: setting data list to free
  */
 void setting_data_free(setting_data_t *data_list);
