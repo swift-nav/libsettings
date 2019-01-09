@@ -234,108 +234,69 @@ static void setting_update_value(setting_data_t *setting_data,
 }
 
 /**
- * @brief message_header_get - to allow formatting of identity only
- * @param section: the setting section as string
- * @param name: the setting name as string
- * @param buf: buffer to hold formatted header string
- * @param blen: length of the destination buffer
- * @return number of bytes written to the buffer, -1 in case of failure
- */
-static int message_header_get(const char *section, const char *name, char *buf, int blen)
-{
-  assert(section);
-  assert(name);
-  assert(buf);
-
-  int n = 0;
-  int l;
-
-  /* Section */
-  l = snprintf(&buf[n], blen - n, "%s", section);
-  if ((l < 0) || (l >= blen - n)) {
-    return -1;
-  }
-  n += l + 1;
-
-  /* Name */
-  l = snprintf(&buf[n], blen - n, "%s", name);
-  if ((l < 0) || (l >= blen - n)) {
-    return -1;
-  }
-  n += l + 1;
-
-  return n;
-}
-
-/**
- * @brief message_data_get - formatting of value and type
- * @param setting_data: the setting to format
- * @param buf: buffer to hold formatted data string
- * @param blen: length of the destination buffer
- * @return bytes written to the buffer, -1 in case of failure
- */
-static int message_data_get(setting_data_t *setting_data, char *buf, int blen)
-{
-  int n = 0;
-  int l;
-
-  /* Value */
-  l = setting_data->type_data->to_string(setting_data->type_data->priv,
-                                         &buf[n],
-                                         blen - n,
-                                         setting_data->var,
-                                         setting_data->var_len);
-  if ((l < 0) || (l >= blen - n)) {
-    return -1;
-  }
-  n += l + 1;
-
-  /* Type information */
-  if (setting_data->type_data->format_type != NULL) {
-    l = setting_data->type_data->format_type(setting_data->type_data->priv, &buf[n], blen - n);
-    if ((l < 0) || (l >= blen - n)) {
-      return -1;
-    }
-    n += l + 1;
-  }
-
-  return n;
-}
-
-/**
  * @brief setting_format_setting - formats a fully formed setting message
  * payload
  * @param setting_data: the setting to format
+ * @param tok: number of fields to fill
  * @param buf: buffer to hold formatted setting string
  * @param len: length of the destination buffer
  * @param msg_hdr_len: length of the msg header
- * @return bytes written to the buffer, -1 in case of failure
+ * @return number of bytes written to the buffer, -1 in case of failure
  */
 static int setting_format_setting(setting_data_t *setting_data,
+                                  settings_tokens_t tok,
                                   char *buf,
-                                  int len,
+                                  int blen,
                                   uint8_t *msg_hdr_len)
 {
-  int result = 0;
-  int written = 0;
+  int res = 0;
+  int bytes = 0;
 
-  result = message_header_get(setting_data->section, setting_data->name, buf, len - written);
-  if (result < 0) {
-    return result;
+  /* There's always section and name */
+  assert(tok >= SETTINGS_TOKENS_NAME);
+
+  res = settings_format(setting_data->section, setting_data->name, NULL, NULL, buf, blen);
+
+  if (res <= 0) {
+    return -1;
   }
-  written += result;
+  bytes += res;
 
   if (msg_hdr_len != NULL) {
-    *msg_hdr_len = result;
+    *msg_hdr_len = res;
   }
 
-  result = message_data_get(setting_data, buf + written, len - written);
-  if (result < 0) {
-    return result;
+  if (tok < SETTINGS_TOKENS_VALUE) {
+    return bytes;
   }
-  written += result;
 
-  return written;
+  /* Value */
+  res = setting_data->type_data->to_string(setting_data->type_data->priv,
+                                           &buf[bytes],
+                                           blen - bytes,
+                                           setting_data->var,
+                                           setting_data->var_len);
+  if ((res < 0) || (res >= blen - bytes)) {
+    return -1;
+  }
+  /* Add terminating null (+ 1) */
+  bytes += res + 1;
+
+  if (tok < SETTINGS_TOKENS_TYPE) {
+    return bytes;
+  }
+
+  /* Type information */
+  assert(setting_data->type_data->format_type != NULL);
+
+  res = setting_data->type_data->format_type(setting_data->type_data->priv, &buf[bytes], blen - bytes);
+  if ((res < 0) || (res >= blen - bytes)) {
+    return -1;
+  }
+  /* Add terminating null (+ 1) */
+  bytes += res + 1;
+
+  return bytes;
 }
 
 /**
@@ -402,6 +363,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   write_response->status = write_result;
   resp_len += sizeof(write_response->status);
   int l = setting_format_setting(setting_data,
+                                 SETTINGS_TOKENS_VALUE,
                                  write_response->setting,
                                  SBP_PAYLOAD_SIZE_MAX - resp_len,
                                  NULL);
@@ -1169,7 +1131,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
   uint8_t msg_header_len;
 
-  int msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
+  int msg_len = setting_format_setting(setting_data, SETTINGS_TOKENS_TYPE, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting register message format failed");
@@ -1205,7 +1167,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
     return -1;
   }
 
-  l = message_header_get(setting_data->section, setting_data->name, msg, sizeof(msg) - msg_len);
+  l = settings_format(setting_data->section, setting_data->name, NULL, NULL, msg, sizeof(msg));
   if (l < 0) {
     ctx->client_iface.log(log_err, "error building settings read req message");
     return -1;
@@ -1437,7 +1399,7 @@ settings_write_res_t settings_write(settings_t *ctx,
     return -1;
   }
 
-  int msg_len = setting_format_setting(setting_data, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
+  int msg_len = setting_format_setting(setting_data, SETTINGS_TOKENS_VALUE, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting write error format failed");
@@ -1509,7 +1471,7 @@ int settings_read(settings_t *ctx,
 
   /* Build message */
   char msg[SBP_PAYLOAD_SIZE_MAX];
-  int msg_len = message_header_get(section, name, msg, sizeof(msg));
+  int msg_len = settings_format(section, name, NULL, NULL, msg, sizeof(msg));
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "error building settings read req message");

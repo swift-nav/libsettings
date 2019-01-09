@@ -11,8 +11,40 @@
  */
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include <libsettings/settings_util.h>
+
+int settings_format(const char *section,
+                    const char *name,
+                    const char *value,
+                    const char *type,
+                    char *buf,
+                    uint8_t blen)
+{
+  int n = 0;
+  int l = 0;
+
+  const char *tokens[SETTINGS_TOKENS_TYPE] = {section, name, value, type};
+
+  for (int i = 0; i < SETTINGS_TOKENS_TYPE; ++i) {
+    const char *token = tokens[i];
+
+    if (token == NULL) {
+      break;
+    }
+
+    l = snprintf(&buf[n], blen - n, "%s", token);
+
+    if ((l < 0) || (l >= blen - n)) {
+      return -1;
+    }
+
+    n += l + 1;
+  }
+
+  return n;
+}
 
 /* Parse SBP message payload into setting parameters */
 settings_tokens_t settings_parse(const char *buf,

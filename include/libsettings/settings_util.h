@@ -29,6 +29,13 @@ typedef enum settings_tokens_e {
 extern "C" {
 #endif
 
+int settings_format(const char *section,
+                    const char *name,
+                    const char *value,
+                    const char *type,
+                    char *buf,
+                    uint8_t blen);
+
 /**
  * @brief   Parse setting strings from SBP message buffer
  * @details Points the string pointers to corresponding message indexes.
