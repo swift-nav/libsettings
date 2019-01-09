@@ -163,7 +163,9 @@ int setting_data_format(setting_data_t *setting_data,
   }
 
   /* Type information */
-  assert(setting_data->type_data->format_type != NULL);
+  if (setting_data->type_data->format_type == NULL) {
+    return bytes;
+  }
 
   res =
     setting_data->type_data->format_type(setting_data->type_data->priv, &buf[bytes], blen - bytes);
