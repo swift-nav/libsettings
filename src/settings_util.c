@@ -20,7 +20,7 @@ int settings_format(const char *section,
                     const char *value,
                     const char *type,
                     char *buf,
-                    uint8_t blen)
+                    uint16_t blen)
 {
   int n = 0;
   int l = 0;
@@ -48,7 +48,7 @@ int settings_format(const char *section,
 
 /* Parse SBP message payload into setting parameters */
 settings_tokens_t settings_parse(const char *buf,
-                                 uint8_t blen,
+                                 uint16_t blen,
                                  const char **section,
                                  const char **name,
                                  const char **value,
