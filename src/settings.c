@@ -81,6 +81,7 @@
 #include <libsettings/settings_util.h>
 
 #include <internal/request_state.h>
+#include <internal/setting_type.h>
 
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
@@ -90,25 +91,6 @@
 
 static int log_err = 3;
 static int log_warning = 4;
-
-typedef int (*to_string_fn)(const void *priv, char *str, int slen, const void *blob, int blen);
-typedef bool (*from_string_fn)(const void *priv, void *blob, int blen, const char *str);
-typedef int (*format_type_fn)(const void *priv, char *str, int slen);
-
-/**
- * @brief Type Data
- *
- * This structure encapsulates the codec for values of a given type
- * which the settings context uses to build a list of known types
- * that it can support when settings are added to the settings list.
- */
-typedef struct type_data_s {
-  to_string_fn to_string;
-  from_string_fn from_string;
-  format_type_fn format_type;
-  const void *priv;
-  struct type_data_s *next;
-} type_data_t;
 
 /**
  * @brief Setting Data
@@ -846,21 +828,6 @@ static int enum_format_type(const void *priv, char *str, int slen)
   return n;
 }
 
-/**
- * @brief type_data_lookup - retrieves type node from settings context
- * @param ctx: settings context
- * @param type: type struct to be matched
- * @return the setting type entry if a match is found, otherwise NULL
- */
-static type_data_t *type_data_lookup(settings_t *ctx, settings_type_t type)
-{
-  type_data_t *type_data = ctx->type_data_list;
-  for (int i = 0; i < type && type_data != NULL; i++) {
-    type_data = type_data->next;
-  }
-  return type_data;
-}
-
 static void setting_data_list_insert(settings_t *ctx, setting_data_t *setting_data)
 {
   if (ctx->setting_data_list == NULL) {
@@ -877,48 +844,6 @@ static void setting_data_list_insert(settings_t *ctx, setting_data_t *setting_da
     setting_data->next = s->next;
     s->next = setting_data;
   }
-}
-
-/**
- * @brief type_register - register type data for reference when adding settings
- * @param ctx: settings context
- * @param to_string: serialization method
- * @param from_string: deserialization method
- * @param format_type: ?
- * @param priv: private data used in ser/des methods
- * @param type: type enum that is used to identify this type
- * @return
- */
-static int type_register(settings_t *ctx,
-                         to_string_fn to_string,
-                         from_string_fn from_string,
-                         format_type_fn format_type,
-                         const void *priv,
-                         settings_type_t *type)
-{
-  type_data_t *type_data = (type_data_t *)malloc(sizeof(*type_data));
-  if (type_data == NULL) {
-    ctx->client_iface.log(log_err, "error allocating type data");
-    return -1;
-  }
-
-  *type_data = (type_data_t){.to_string = to_string,
-                             .from_string = from_string,
-                             .format_type = format_type,
-                             .priv = priv,
-                             .next = NULL};
-
-  /* Add to list */
-  settings_type_t next_type = 0;
-  type_data_t **p_next = &ctx->type_data_list;
-  while (*p_next != NULL) {
-    p_next = &(*p_next)->next;
-    next_type++;
-  }
-
-  *p_next = type_data;
-  *type = next_type;
-  return 0;
 }
 
 /**
@@ -969,7 +894,7 @@ static setting_data_t *setting_create_setting(settings_t *ctx,
                                               bool watchonly)
 {
   /* Look up type data */
-  type_data_t *type_data = type_data_lookup(ctx, type);
+  type_data_t *type_data = type_data_lookup(ctx->type_data_list, type);
   if (type_data == NULL) {
     ctx->client_iface.log(log_err, "invalid type");
     return NULL;
@@ -1191,7 +1116,7 @@ int settings_register_enum(settings_t *ctx, const char *const enum_names[], sett
   assert(enum_names != NULL);
   assert(type != NULL);
 
-  return type_register(ctx, enum_to_string, enum_from_string, enum_format_type, enum_names, type);
+  return type_register(ctx->type_data_list, enum_to_string, enum_from_string, enum_format_type, enum_names, type);
 }
 
 /**
@@ -1512,7 +1437,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-  const type_data_t *td = type_data_lookup(ctx, parsed_type);
+  const type_data_t *td = type_data_lookup(ctx->type_data_list, parsed_type);
 
   if (td == NULL) {
     ctx->client_iface.log(log_err, "unknown setting type");
@@ -1729,23 +1654,23 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
   /* Register standard types */
   settings_type_t type;
 
-  int ret = type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type);
+  int ret = type_register(ctx->type_data_list, int_to_string, int_from_string, NULL, NULL, &type);
   /* To make cythonizer happy.. */
   (void)ret;
 
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_INT);
 
-  ret = type_register(ctx, float_to_string, float_from_string, NULL, NULL, &type);
+  ret = type_register(ctx->type_data_list, float_to_string, float_from_string, NULL, NULL, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_FLOAT);
 
-  ret = type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type);
+  ret = type_register(ctx->type_data_list, str_to_string, str_from_string, NULL, NULL, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_STRING);
 
   ret =
-    type_register(ctx, enum_to_string, enum_from_string, enum_format_type, bool_enum_names, &type);
+    type_register(ctx->type_data_list, enum_to_string, enum_from_string, enum_format_type, bool_enum_names, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_BOOL);
 
