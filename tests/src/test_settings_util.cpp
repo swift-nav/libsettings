@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2019 Swift Navigation Inc.
+ * Contact: Swift Navigation <dev@swiftnav.com>
+ *
+ * This source is subject to the license found in the file 'LICENSE' which must
+ * be distributed together with this source. All other rights reserved.
+ *
+ * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+ * EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
 #include "gtest/gtest.h"
 
 #include <libsettings/settings_util.h>
@@ -30,6 +42,13 @@ TEST(test_settings_util, parse) {
 
   char msg6[6] = {'\0', '\0', '\0', '\0', '\0', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_INVALID, settings_parse(msg6, sizeof(msg6), &section, &name, &value, &type));
+
+  char sect[5] = {'s', 'e', 'c', 't', '\0'};
+  EXPECT_EQ(SETTINGS_TOKENS_SECTION, settings_parse(sect, sizeof(sect), &section, &name, &value, &type));
+  EXPECT_STREQ("sect", section);
+  EXPECT_EQ(NULL, name);
+  EXPECT_EQ(NULL, value);
+  EXPECT_EQ(NULL, type);
 
   char sect_name[10] = {'s', 'e', 'c', 't', '\0', 'n', 'a', 'm', 'e', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_NAME, settings_parse(sect_name, sizeof(sect_name), &section, &name, &value, &type));
