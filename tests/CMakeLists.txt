@@ -30,8 +30,19 @@ else (CMAKE_CROSSCOMPILING)
   package_add_test(
     test_libsettings
     src/test_request_state.cpp
+    src/test_setting_data.cpp
+    src/test_setting_type_enum.cpp
+    src/test_setting_type_float.cpp
+    src/test_setting_type_int.cpp
+    src/test_setting_type_str.cpp
     src/test_settings_util.cpp
     ${PROJECT_SOURCE_DIR}/src/request_state.c
+    ${PROJECT_SOURCE_DIR}/src/setting_data.c
+    ${PROJECT_SOURCE_DIR}/src/setting_type.c
+    ${PROJECT_SOURCE_DIR}/src/setting_type_enum.c
+    ${PROJECT_SOURCE_DIR}/src/setting_type_float.c
+    ${PROJECT_SOURCE_DIR}/src/setting_type_int.c
+    ${PROJECT_SOURCE_DIR}/src/setting_type_str.c
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
   add_dependencies(test_libsettings gtest)
   include_directories(${PROJECT_SOURCE_DIR}/include)

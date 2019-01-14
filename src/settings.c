@@ -83,6 +83,10 @@
 #include <internal/request_state.h>
 #include <internal/setting_data.h>
 #include <internal/setting_type.h>
+#include <internal/setting_type_enum.h>
+#include <internal/setting_type_float.h>
+#include <internal/setting_type_int.h>
+#include <internal/setting_type_str.h>
 
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
@@ -620,69 +624,6 @@ static int settings_unregister_read_by_idx_done_callback(settings_t *ctx)
 
   ctx->read_by_idx_done_cb_registered = false;
   return 0;
-}
-
-static int enum_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
-{
-  (void)blen;
-
-  const char *const *enum_names = priv;
-  int index = *(uint8_t *)blob;
-  return snprintf(str, slen, "%s", enum_names[index]);
-}
-
-static bool enum_from_string(const void *priv, void *blob, int blen, const char *str)
-{
-  (void)blen;
-
-  const char *const *enum_names = priv;
-  int i;
-
-  for (i = 0; enum_names[i] && (strcmp(str, enum_names[i]) != 0); i++) {
-    ;
-  }
-
-  if (!enum_names[i]) {
-    return false;
-  }
-
-  *(uint8_t *)blob = i;
-
-  return true;
-}
-
-static int enum_format_type(const void *priv, char *str, int slen)
-{
-  int n = 0;
-  int l;
-
-  /* Print "enum:" header */
-  l = snprintf(&str[n], slen - n, "enum:");
-  if (l < 0) {
-    return l;
-  }
-  n += l;
-
-  /* Print enum names separated by commas */
-  for (const char *const *enum_names = priv; *enum_names; enum_names++) {
-    if (n < slen) {
-      l = snprintf(&str[n], slen - n, "%s,", *enum_names);
-      if (l < 0) {
-        return l;
-      }
-      n += l;
-    } else {
-      n += strlen(*enum_names) + 1;
-    }
-  }
-
-  /* Replace last comma with NULL */
-  if ((n > 0) && (n - 1 < slen)) {
-    str[n - 1] = '\0';
-    n--;
-  }
-
-  return n;
 }
 
 /**
@@ -1275,84 +1216,6 @@ read_by_idx_cleanup:
 
   /* No errors, next index to be read */
   return 0;
-}
-
-static int float_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
-{
-  (void)priv;
-
-  switch (blen) {
-  case 4: return snprintf(str, slen, "%.12g", (double)*(float *)blob);
-  case 8: return snprintf(str, slen, "%.12g", *(double *)blob);
-  default: return -1;
-  }
-}
-
-static bool float_from_string(const void *priv, void *blob, int blen, const char *str)
-{
-  (void)priv;
-
-  switch (blen) {
-  case 4: return sscanf(str, "%g", (float *)blob) == 1;
-  case 8: return sscanf(str, "%lg", (double *)blob) == 1;
-  default: return false;
-  }
-}
-
-static int int_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
-{
-  (void)priv;
-
-  switch (blen) {
-  case 1: {
-    s16 tmp = *(s8 *)blob;
-    /* mingw's crappy snprintf doesn't understand %hhd */
-    return snprintf(str, slen, "%hd", tmp);
-  }
-  case 2: return snprintf(str, slen, "%hd", *(s16 *)blob);
-  case 4: return snprintf(str, slen, "%" PRId32, *(s32 *)blob);
-  default: return -1;
-  }
-}
-
-static bool int_from_string(const void *priv, void *blob, int blen, const char *str)
-{
-  (void)priv;
-
-  switch (blen) {
-  case 1: {
-    s16 tmp;
-    /* Newlib's crappy sscanf doesn't understand %hhd */
-    if (sscanf(str, "%hd", &tmp) == 1) {
-      *(s8 *)blob = tmp;
-      return true;
-    }
-    return false;
-  }
-  case 2: return sscanf(str, "%hd", (s16 *)blob) == 1;
-  case 4: return sscanf(str, "%" PRId32, (s32 *)blob) == 1;
-  default: return false;
-  }
-}
-
-static int str_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
-{
-  (void)priv;
-  (void)blen;
-
-  return snprintf(str, slen, "%s", (char *)blob);
-}
-
-static bool str_from_string(const void *priv, void *blob, int blen, const char *str)
-{
-  (void)priv;
-
-  int l = snprintf(blob, blen, "%s", str);
-  if ((l < 0) || (l >= blen)) {
-    return false;
-  }
-
-  return true;
 }
 
 settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
