@@ -7,7 +7,7 @@ TEST(test_settings_util, parse) {
 
   char msg[1] = {1};
   EXPECT_EQ(SETTINGS_TOKENS_INVALID, settings_parse(msg, sizeof(msg), &section, &name, &value, &type));
-  EXPECT_EQ(SETTINGS_TOKENS_INVALID, settings_parse(msg, 0, &section, &name, &value, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_EMPTY, settings_parse(msg, 0, &section, &name, &value, &type));
 
   char msg1[1] = {'\0'};
   EXPECT_EQ(SETTINGS_TOKENS_SECTION, settings_parse(msg1, sizeof(msg1), &section, &name, &value, &type));
@@ -26,7 +26,7 @@ TEST(test_settings_util, parse) {
   EXPECT_EQ(SETTINGS_TOKENS_TYPE, settings_parse(msg4, sizeof(msg4), NULL, NULL, NULL, NULL));
 
   char msg5[5] = {'\0', '\0', '\0', '\0', '\0'};
-  EXPECT_EQ(SETTINGS_TOKENS_TYPE_CUSTOM, settings_parse(msg5, sizeof(msg5), &section, &name, &value, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_EXTRA_NULL, settings_parse(msg5, sizeof(msg5), &section, &name, &value, &type));
 
   char msg6[6] = {'\0', '\0', '\0', '\0', '\0', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_INVALID, settings_parse(msg6, sizeof(msg6), &section, &name, &value, &type));
@@ -52,10 +52,18 @@ TEST(test_settings_util, parse) {
   EXPECT_STREQ("value", value);
   EXPECT_STREQ("type", type);
 
+  /* Backwards compatibility */
   char sect_name_val_enumtype[27] = {'s', 'e', 'c', 't', '\0', 'n', 'a', 'm', 'e', '\0', 'v', 'a', 'l', 'u', 'e', '\0', 'e', 'n', 'u', 'm', ',', 't', 'y', 'p', 'e', '\0', '\0'};
-  EXPECT_EQ(SETTINGS_TOKENS_TYPE_CUSTOM, settings_parse(sect_name_val_enumtype, sizeof(sect_name_val_enumtype), &section, &name, &value, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_EXTRA_NULL, settings_parse(sect_name_val_enumtype, sizeof(sect_name_val_enumtype), &section, &name, &value, &type));
   EXPECT_STREQ("sect", section);
   EXPECT_STREQ("name", name);
   EXPECT_STREQ("value", value);
   EXPECT_STREQ("enum,type", type);
+
+  char sect_name_val_type_noterm[] = {'s', 'e', 'c', 't', '\0', 'n', 'a', 'm', 'e', '\0', 'v', 'a', 'l', 'u', 'e', '\0', 'e', 'n', 'u', 'm', ',', 't', 'y', 'p', 'e'};
+  EXPECT_EQ(SETTINGS_TOKENS_INVALID, settings_parse(sect_name_val_type_noterm, sizeof(sect_name_val_type_noterm), &section, &name, &value, &type));
+  EXPECT_EQ(NULL, section);
+  EXPECT_EQ(NULL, name);
+  EXPECT_EQ(NULL, value);
+  EXPECT_EQ(NULL, type);
 }
