@@ -22,7 +22,9 @@ typedef enum settings_tokens_e {
   SETTINGS_TOKENS_NAME = 2,        /** Section and name tokens found */
   SETTINGS_TOKENS_VALUE = 3,       /** Section, name and value tokens found */
   SETTINGS_TOKENS_TYPE = 4,        /** Section, name, value and type tokens found */
-  SETTINGS_TOKENS_TYPE_CUSTOM = 5, /** Section, name, value and custom (enum) type tokens found */
+  SETTINGS_TOKENS_EXTRA_NULL = 5,  /** Section, name, value and type tokens found,
+                                       this is for backwards compatibility for FW
+                                       versions 2.2 and older */
 } settings_tokens_t;
 
 #ifdef __cplusplus
