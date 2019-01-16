@@ -81,6 +81,8 @@
 #include <libsettings/settings_util.h>
 
 #include <internal/request_state.h>
+#include <internal/setting_data.h>
+#include <internal/setting_type.h>
 
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
@@ -90,47 +92,6 @@
 
 static int log_err = 3;
 static int log_warning = 4;
-
-typedef int (*to_string_fn)(const void *priv, char *str, int slen, const void *blob, int blen);
-typedef bool (*from_string_fn)(const void *priv, void *blob, int blen, const char *str);
-typedef int (*format_type_fn)(const void *priv, char *str, int slen);
-
-/**
- * @brief Type Data
- *
- * This structure encapsulates the codec for values of a given type
- * which the settings context uses to build a list of known types
- * that it can support when settings are added to the settings list.
- */
-typedef struct type_data_s {
-  to_string_fn to_string;
-  from_string_fn from_string;
-  format_type_fn format_type;
-  const void *priv;
-  struct type_data_s *next;
-} type_data_t;
-
-/**
- * @brief Setting Data
- *
- * This structure holds the information use to serialize settings
- * information into sbp messages, as well as internal flags used
- * to evaluate sbp settings callback behavior managed within the
- * settings context.
- */
-typedef struct setting_data_s {
-  char *section;
-  char *name;
-  void *var;
-  size_t var_len;
-  void *var_copy;
-  type_data_t *type_data;
-  settings_notify_fn notify;
-  void *notify_context;
-  bool readonly;
-  bool watchonly;
-  struct setting_data_s *next;
-} setting_data_t;
 
 /**
  * @brief Settings Context
@@ -186,178 +147,6 @@ static int setting_send_write_response(settings_t *ctx,
 }
 
 /**
- * @brief setting_update_value - process value string and update internal data
- * on success
- * @param setting_data: setting to update
- * @param value: value string to evaluate
- * @param write_result: result to pass to write response
- */
-static void setting_update_value(setting_data_t *setting_data,
-                                 const char *value,
-                                 uint8_t *write_result)
-{
-  if (setting_data->readonly) {
-    *write_result = SETTINGS_WR_READ_ONLY;
-    return;
-  }
-
-  *write_result = SETTINGS_WR_OK;
-  /* Store copy and update value */
-  memcpy(setting_data->var_copy, setting_data->var, setting_data->var_len);
-  if (!setting_data->type_data->from_string(setting_data->type_data->priv,
-                                            setting_data->var,
-                                            setting_data->var_len,
-                                            value)) {
-    /* Revert value if conversion fails */
-    memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
-    *write_result = SETTINGS_WR_PARSE_FAILED;
-    return;
-  }
-
-  if (NULL == setting_data->notify) {
-    return;
-  }
-
-  /* Call notify function */
-  int notify_response = setting_data->notify(setting_data->notify_context);
-
-  if (setting_data->watchonly) {
-    /* No need for actions */
-    return;
-  }
-
-  if (notify_response != SETTINGS_WR_OK) {
-    /* Revert value if notify returns error */
-    memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
-    *write_result = notify_response;
-  }
-}
-
-/**
- * @brief message_header_get - to allow formatting of identity only
- * @param section: the setting section as string
- * @param name: the setting name as string
- * @param buf: buffer to hold formatted header string
- * @param blen: length of the destination buffer
- * @return number of bytes written to the buffer, -1 in case of failure
- */
-static int message_header_get(const char *section, const char *name, char *buf, int blen)
-{
-  assert(section);
-  assert(name);
-  assert(buf);
-
-  int n = 0;
-  int l;
-
-  /* Section */
-  l = snprintf(&buf[n], blen - n, "%s", section);
-  if ((l < 0) || (l >= blen - n)) {
-    return -1;
-  }
-  n += l + 1;
-
-  /* Name */
-  l = snprintf(&buf[n], blen - n, "%s", name);
-  if ((l < 0) || (l >= blen - n)) {
-    return -1;
-  }
-  n += l + 1;
-
-  return n;
-}
-
-/**
- * @brief message_data_get - formatting of value and type
- * @param setting_data: the setting to format
- * @param buf: buffer to hold formatted data string
- * @param blen: length of the destination buffer
- * @return bytes written to the buffer, -1 in case of failure
- */
-static int message_data_get(setting_data_t *setting_data, char *buf, int blen)
-{
-  int n = 0;
-  int l;
-
-  /* Value */
-  l = setting_data->type_data->to_string(setting_data->type_data->priv,
-                                         &buf[n],
-                                         blen - n,
-                                         setting_data->var,
-                                         setting_data->var_len);
-  if ((l < 0) || (l >= blen - n)) {
-    return -1;
-  }
-  n += l + 1;
-
-  /* Type information */
-  if (setting_data->type_data->format_type != NULL) {
-    l = setting_data->type_data->format_type(setting_data->type_data->priv, &buf[n], blen - n);
-    if ((l < 0) || (l >= blen - n)) {
-      return -1;
-    }
-    n += l + 1;
-  }
-
-  return n;
-}
-
-/**
- * @brief setting_format_setting - formats a fully formed setting message
- * payload
- * @param setting_data: the setting to format
- * @param buf: buffer to hold formatted setting string
- * @param len: length of the destination buffer
- * @param msg_hdr_len: length of the msg header
- * @return bytes written to the buffer, -1 in case of failure
- */
-static int setting_format_setting(setting_data_t *setting_data,
-                                  char *buf,
-                                  int len,
-                                  uint8_t *msg_hdr_len)
-{
-  int result = 0;
-  int written = 0;
-
-  result = message_header_get(setting_data->section, setting_data->name, buf, len - written);
-  if (result < 0) {
-    return result;
-  }
-  written += result;
-
-  if (msg_hdr_len != NULL) {
-    *msg_hdr_len = result;
-  }
-
-  result = message_data_get(setting_data, buf + written, len - written);
-  if (result < 0) {
-    return result;
-  }
-  written += result;
-
-  return written;
-}
-
-/**
- * @brief setting_data_lookup - retrieves setting node from settings context
- * @param ctx: settings context
- * @param section: setting section string to match
- * @param name: setting name string to match
- * @return the setting type entry if a match is found, otherwise NULL
- */
-static setting_data_t *setting_data_lookup(settings_t *ctx, const char *section, const char *name)
-{
-  setting_data_t *setting_data = ctx->setting_data_list;
-  while (setting_data != NULL) {
-    if ((strcmp(setting_data->section, section) == 0) && (strcmp(setting_data->name, name) == 0)) {
-      break;
-    }
-    setting_data = setting_data->next;
-  }
-  return setting_data;
-}
-
-/**
  * @brief settings_write_callback - callback for SBP_MSG_SETTINGS_WRITE
  */
 static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
@@ -384,7 +173,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   }
 
   /* Look up setting data */
-  setting_data_t *setting_data = setting_data_lookup(ctx, section, name);
+  setting_data_t *setting_data = setting_data_lookup(ctx->setting_data_list, section, name);
   if (setting_data == NULL) {
     return;
   }
@@ -394,17 +183,18 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   }
 
   uint8_t write_result = SETTINGS_WR_OK;
-  setting_update_value(setting_data, value, &write_result);
+  setting_data_update_value(setting_data, value, &write_result);
 
   uint8_t resp[SBP_PAYLOAD_SIZE_MAX];
   uint8_t resp_len = 0;
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
   write_response->status = write_result;
   resp_len += sizeof(write_response->status);
-  int l = setting_format_setting(setting_data,
-                                 write_response->setting,
-                                 SBP_PAYLOAD_SIZE_MAX - resp_len,
-                                 NULL);
+  int l = setting_data_format(setting_data,
+                              false,
+                              write_response->setting,
+                              SBP_PAYLOAD_SIZE_MAX - resp_len,
+                              NULL);
   if (l < 0) {
     return;
   }
@@ -426,7 +216,7 @@ static int settings_update_watch_only(settings_t *ctx, const char *msg, uint8_t 
   }
 
   /* Look up setting data */
-  setting_data_t *setting_data = setting_data_lookup(ctx, section, name);
+  setting_data_t *setting_data = setting_data_lookup(ctx->setting_data_list, section, name);
   if (setting_data == NULL) {
     return 0;
   }
@@ -436,7 +226,7 @@ static int settings_update_watch_only(settings_t *ctx, const char *msg, uint8_t 
   }
 
   uint8_t write_result = SETTINGS_WR_OK;
-  setting_update_value(setting_data, value, &write_result);
+  setting_data_update_value(setting_data, value, &write_result);
   if (write_result != SETTINGS_WR_OK) {
     return -1;
   }
@@ -459,7 +249,8 @@ static void settings_read_resp_callback(uint16_t sender_id,
   const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  int res = request_state_check(&ctx->request_state, &ctx->client_iface, read_response->setting, len);
+  int res =
+    request_state_check(&ctx->request_state, &ctx->client_iface, read_response->setting, len);
 
   if (res != 0) {
     return;
@@ -507,9 +298,11 @@ static void settings_write_resp_callback(uint16_t sender_id,
                       len - sizeof(write_response->status));
 
   if (write_response->status != SETTINGS_WR_OK) {
-    ctx->client_iface.log(log_warning,
-                      "setting write rejected (code: %d), not updating watched values",
-                      write_response->status);
+    /* Enable this warning back after ESD-1022 is fixed
+     * ctx->client_iface.log(log_warning,
+     *                       "setting write rejected (code: %d), not updating watched values",
+     *                        write_response->status);
+     */
     return;
   }
 
@@ -580,8 +373,9 @@ static void settings_read_by_idx_done_callback(uint16_t sender_id,
   ctx->resp_type[0] = '\0';
   ctx->read_by_idx_done = true;
 
-  int ret =
-    request_state_signal(&ctx->request_state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
+  int ret = request_state_signal(&ctx->request_state,
+                                 &ctx->client_iface,
+                                 SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
 
   if (ret != 0) {
     ctx->client_iface.log(log_warning, "Signaling request state failed with code: %d", ret);
@@ -602,10 +396,10 @@ static int settings_register_write_callback(settings_t *ctx)
   }
 
   if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                SBP_MSG_SETTINGS_WRITE,
-                                settings_write_callback,
-                                ctx,
-                                &ctx->write_cb_node)
+                                    SBP_MSG_SETTINGS_WRITE,
+                                    settings_write_callback,
+                                    ctx,
+                                    &ctx->write_cb_node)
       != 0) {
     ctx->client_iface.log(log_err, "error registering settings write callback");
     return -1;
@@ -650,10 +444,10 @@ static int settings_register_read_resp_callback(settings_t *ctx)
   }
 
   if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                SBP_MSG_SETTINGS_READ_RESP,
-                                settings_read_resp_callback,
-                                ctx,
-                                &ctx->read_resp_cb_node)
+                                    SBP_MSG_SETTINGS_READ_RESP,
+                                    settings_read_resp_callback,
+                                    ctx,
+                                    &ctx->read_resp_cb_node)
       != 0) {
     ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
@@ -698,10 +492,10 @@ static int settings_register_write_resp_callback(settings_t *ctx)
   }
 
   if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                SBP_MSG_SETTINGS_WRITE_RESP,
-                                settings_write_resp_callback,
-                                ctx,
-                                &ctx->write_resp_cb_node)
+                                    SBP_MSG_SETTINGS_WRITE_RESP,
+                                    settings_write_resp_callback,
+                                    ctx,
+                                    &ctx->write_resp_cb_node)
       != 0) {
     ctx->client_iface.log(log_err, "error registering settings write resp callback");
     return -1;
@@ -746,10 +540,10 @@ static int settings_register_read_by_idx_resp_callback(settings_t *ctx)
   }
 
   if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                SBP_MSG_SETTINGS_READ_BY_INDEX_RESP,
-                                settings_read_by_idx_resp_callback,
-                                ctx,
-                                &ctx->read_by_idx_resp_cb_node)
+                                    SBP_MSG_SETTINGS_READ_BY_INDEX_RESP,
+                                    settings_read_by_idx_resp_callback,
+                                    ctx,
+                                    &ctx->read_by_idx_resp_cb_node)
       != 0) {
     ctx->client_iface.log(log_err, "error registering settings read by idx resp callback");
     return -1;
@@ -794,10 +588,10 @@ static int settings_register_read_by_idx_done_callback(settings_t *ctx)
   }
 
   if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                SBP_MSG_SETTINGS_READ_BY_INDEX_DONE,
-                                settings_read_by_idx_done_callback,
-                                ctx,
-                                &ctx->read_by_idx_done_cb_node)
+                                    SBP_MSG_SETTINGS_READ_BY_INDEX_DONE,
+                                    settings_read_by_idx_done_callback,
+                                    ctx,
+                                    &ctx->read_by_idx_done_cb_node)
       != 0) {
     ctx->client_iface.log(log_err, "error registering settings read by idx done callback");
     return -1;
@@ -892,171 +686,6 @@ static int enum_format_type(const void *priv, char *str, int slen)
 }
 
 /**
- * @brief type_data_lookup - retrieves type node from settings context
- * @param ctx: settings context
- * @param type: type struct to be matched
- * @return the setting type entry if a match is found, otherwise NULL
- */
-static type_data_t *type_data_lookup(settings_t *ctx, settings_type_t type)
-{
-  type_data_t *type_data = ctx->type_data_list;
-  for (int i = 0; i < type && type_data != NULL; i++) {
-    type_data = type_data->next;
-  }
-  return type_data;
-}
-
-static void setting_data_list_insert(settings_t *ctx, setting_data_t *setting_data)
-{
-  if (ctx->setting_data_list == NULL) {
-    ctx->setting_data_list = setting_data;
-  } else {
-    setting_data_t *s;
-    /* Find last element in the same section */
-    for (s = ctx->setting_data_list; s->next != NULL; s = s->next) {
-      if ((strcmp(s->section, setting_data->section) == 0)
-          && (strcmp(s->next->section, setting_data->section) != 0)) {
-        break;
-      }
-    }
-    setting_data->next = s->next;
-    s->next = setting_data;
-  }
-}
-
-/**
- * @brief type_register - register type data for reference when adding settings
- * @param ctx: settings context
- * @param to_string: serialization method
- * @param from_string: deserialization method
- * @param format_type: ?
- * @param priv: private data used in ser/des methods
- * @param type: type enum that is used to identify this type
- * @return
- */
-static int type_register(settings_t *ctx,
-                         to_string_fn to_string,
-                         from_string_fn from_string,
-                         format_type_fn format_type,
-                         const void *priv,
-                         settings_type_t *type)
-{
-  type_data_t *type_data = (type_data_t *)malloc(sizeof(*type_data));
-  if (type_data == NULL) {
-    ctx->client_iface.log(log_err, "error allocating type data");
-    return -1;
-  }
-
-  *type_data = (type_data_t){.to_string = to_string,
-                             .from_string = from_string,
-                             .format_type = format_type,
-                             .priv = priv,
-                             .next = NULL};
-
-  /* Add to list */
-  settings_type_t next_type = 0;
-  type_data_t **p_next = &ctx->type_data_list;
-  while (*p_next != NULL) {
-    p_next = &(*p_next)->next;
-    next_type++;
-  }
-
-  *p_next = type_data;
-  *type = next_type;
-  return 0;
-}
-
-/**
- * @brief setting_data_members_destroy - deinit for settings data
- * @param setting_data: setting to deinit
- */
-static void setting_data_members_destroy(setting_data_t *setting_data)
-{
-  if (setting_data->section) {
-    free(setting_data->section);
-    setting_data->section = NULL;
-  }
-
-  if (setting_data->name) {
-    free(setting_data->name);
-    setting_data->name = NULL;
-  }
-
-  if (setting_data->var_copy) {
-    free(setting_data->var_copy);
-    setting_data->var_copy = NULL;
-  }
-}
-
-/**
- * @brief setting_create_setting - factory for new settings
- * @param ctx: settings context
- * @param section: section identifier
- * @param name: setting name
- * @param var: non-owning reference to location the data is stored
- * @param var_len: length of data storage
- * @param type: type identifier
- * @param notify: optional notification callback
- * @param notify_context: optional data reference to pass during notification
- * @param readonly: set to true to disable value updates
- * @param watchonly: set to true to indicate a non-owned setting watch
- * @return the newly created setting, NULL if failed
- */
-static setting_data_t *setting_create_setting(settings_t *ctx,
-                                              const char *section,
-                                              const char *name,
-                                              void *var,
-                                              size_t var_len,
-                                              settings_type_t type,
-                                              settings_notify_fn notify,
-                                              void *notify_context,
-                                              bool readonly,
-                                              bool watchonly)
-{
-  /* Look up type data */
-  type_data_t *type_data = type_data_lookup(ctx, type);
-  if (type_data == NULL) {
-    ctx->client_iface.log(log_err, "invalid type");
-    return NULL;
-  }
-
-  /* Set up setting data */
-  setting_data_t *setting_data = (setting_data_t *)malloc(sizeof(*setting_data));
-  if (setting_data == NULL) {
-    ctx->client_iface.log(log_err, "error allocating setting data");
-    return NULL;
-  }
-
-  *setting_data = (setting_data_t){
-    .section = malloc(strlen(section) + 1),
-    .name = malloc(strlen(name) + 1),
-    .var = var,
-    .var_len = var_len,
-    .var_copy = malloc(var_len),
-    .type_data = type_data,
-    .notify = notify,
-    .notify_context = notify_context,
-    .readonly = readonly,
-    .watchonly = watchonly,
-    .next = NULL,
-  };
-
-  if ((setting_data->section == NULL) || (setting_data->name == NULL)
-      || (setting_data->var_copy == NULL)) {
-    ctx->client_iface.log(log_err, "error allocating setting data members");
-    setting_data_members_destroy(setting_data);
-    free(setting_data);
-    setting_data = NULL;
-  } else {
-    /* See setting_data initialization, section and name are guaranteed to fit */
-    strcpy(setting_data->section, section);
-    strcpy(setting_data->name, name);
-  }
-
-  return setting_data;
-}
-
-/**
  * @brief setting_perform_request_reply_from
  * Performs a synchronous req/reply transation for the provided
  * message using the compare structure to match the header in callbacks.
@@ -1092,18 +721,18 @@ static int setting_perform_request_reply_from(settings_t *ctx,
 
   do {
     ctx->client_iface.send_from(ctx->client_iface.ctx,
-                            message_type,
-                            message_length,
-                            (uint8_t *)message,
-                            sender_id);
+                                message_type,
+                                message_length,
+                                (uint8_t *)message,
+                                sender_id);
 
     if (ctx->client_iface.wait(ctx->client_iface.ctx, timeout_ms)) {
       size_t len1 = strlen(message) + 1;
       ctx->client_iface.log(log_err,
-                        "Waiting reply for msg id %d with %s.%s timed out",
-                        message_type,
-                        message,
-                        message + len1);
+                            "Waiting reply for msg id %d with %s.%s timed out",
+                            message_type,
+                            message,
+                            message + len1);
     } else {
       success = request_state_match(&ctx->request_state);
     }
@@ -1119,9 +748,9 @@ static int setting_perform_request_reply_from(settings_t *ctx,
 
   if (!success) {
     ctx->client_iface.log(log_warning,
-                      "setting req/reply failed after %d retries (msg id: %d)",
-                      tries,
-                      message_type);
+                          "setting req/reply failed after %d retries (msg id: %d)",
+                          tries,
+                          message_type);
     return -1;
   }
 
@@ -1169,7 +798,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
   uint8_t msg_header_len;
 
-  int msg_len = setting_format_setting(setting_data, msg, sizeof(msg), &msg_header_len);
+  int msg_len = setting_data_format(setting_data, true, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting register message format failed");
@@ -1205,7 +834,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
     return -1;
   }
 
-  l = message_header_get(setting_data->section, setting_data->name, msg, sizeof(msg) - msg_len);
+  l = settings_format(setting_data->section, setting_data->name, NULL, NULL, msg, sizeof(msg));
   if (l < 0) {
     ctx->client_iface.log(log_err, "error building settings read req message");
     return -1;
@@ -1236,35 +865,12 @@ int settings_register_enum(settings_t *ctx, const char *const enum_names[], sett
   assert(enum_names != NULL);
   assert(type != NULL);
 
-  return type_register(ctx, enum_to_string, enum_from_string, enum_format_type, enum_names, type);
-}
-
-/**
- * @brief setting_data_list_remove - remove a setting from the settings context
- * @param ctx: settings context
- * @param setting_data: setting to remove
- */
-static void setting_data_list_remove(settings_t *ctx, setting_data_t **setting_data)
-{
-  if (ctx->setting_data_list == NULL) {
-    return;
-  }
-
-  setting_data_t *s;
-  /* Find element before the one to remove */
-  for (s = ctx->setting_data_list; s->next != NULL; s = s->next) {
-    if (s->next != *setting_data) {
-      continue;
-    }
-
-    struct setting_data_s *to_be_freed = s->next;
-
-    *setting_data = NULL;
-    s->next = s->next->next;
-
-    setting_data_members_destroy(to_be_freed);
-    free(to_be_freed);
-  }
+  return type_register(&ctx->type_data_list,
+                       enum_to_string,
+                       enum_from_string,
+                       enum_format_type,
+                       enum_names,
+                       type);
 }
 
 /**
@@ -1301,28 +907,28 @@ static int settings_add_setting(settings_t *ctx,
   assert(name != NULL);
   assert(var != NULL);
 
-  if (setting_data_lookup(ctx, section, name) != NULL) {
+  if (setting_data_lookup(ctx->setting_data_list, section, name) != NULL) {
     ctx->client_iface.log(log_err, "setting add failed - duplicate setting");
     return -1;
   }
 
-  setting_data_t *setting_data = setting_create_setting(ctx,
-                                                        section,
-                                                        name,
-                                                        var,
-                                                        var_len,
-                                                        type,
-                                                        notify,
-                                                        notify_context,
-                                                        readonly,
-                                                        watchonly);
+  setting_data_t *setting_data = setting_data_create(ctx->type_data_list,
+                                                     section,
+                                                     name,
+                                                     var,
+                                                     var_len,
+                                                     type,
+                                                     notify,
+                                                     notify_context,
+                                                     readonly,
+                                                     watchonly);
   if (setting_data == NULL) {
     ctx->client_iface.log(log_err, "error creating setting data");
     return -1;
   }
 
   /* Add to list */
-  setting_data_list_insert(ctx, setting_data);
+  setting_data_append(&ctx->setting_data_list, setting_data);
 
   if (watchonly) {
     if (settings_register_write_resp_callback(ctx) != 0) {
@@ -1330,17 +936,20 @@ static int settings_add_setting(settings_t *ctx,
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
       ctx->client_iface.log(log_warning,
-                        "Unable to read watched setting to initial value (%s.%s)",
-                        section,
-                        name);
+                            "Unable to read watched setting to initial value (%s.%s)",
+                            section,
+                            name);
     }
   } else {
     if (settings_register_write_callback(ctx) != 0) {
       ctx->client_iface.log(log_err, "error registering settings write callback");
     }
     if (setting_register(ctx, setting_data) != 0) {
-      ctx->client_iface.log(log_err, "error registering %s.%s with settings manager", section, name);
-      setting_data_list_remove(ctx, &setting_data);
+      ctx->client_iface.log(log_err,
+                            "error registering %s.%s with settings manager",
+                            section,
+                            name);
+      setting_data_remove(ctx->setting_data_list, &setting_data);
       return -1;
     }
   }
@@ -1422,26 +1031,27 @@ settings_write_res_t settings_write(settings_t *ctx,
     ctx->client_iface.log(log_err, "error registering settings write response callback");
   }
 
-  setting_data_t *setting_data = setting_create_setting(ctx,
-                                                        section,
-                                                        name,
-                                                        (void *)value,
-                                                        value_len,
-                                                        type,
-                                                        NULL,
-                                                        NULL,
-                                                        false,
-                                                        false);
+  setting_data_t *setting_data = setting_data_create(ctx->type_data_list,
+                                                     section,
+                                                     name,
+                                                     (void *)value,
+                                                     value_len,
+                                                     type,
+                                                     NULL,
+                                                     NULL,
+                                                     false,
+                                                     false);
   if (setting_data == NULL) {
     ctx->client_iface.log(log_err, "settings write error while creating setting data");
     return -1;
   }
 
-  int msg_len = setting_format_setting(setting_data, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
+  int msg_len =
+    setting_data_format(setting_data, false, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting write error format failed");
-    setting_data_members_destroy(setting_data);
+    setting_data_destroy(setting_data);
     return -1;
   }
 
@@ -1457,7 +1067,7 @@ settings_write_res_t settings_write(settings_t *ctx,
                                      REGISTER_TRIES,
                                      SBP_SENDER_ID);
 
-  setting_data_members_destroy(setting_data);
+  setting_data_destroy(setting_data);
 
   return ctx->status;
 }
@@ -1509,7 +1119,7 @@ int settings_read(settings_t *ctx,
 
   /* Build message */
   char msg[SBP_PAYLOAD_SIZE_MAX];
-  int msg_len = message_header_get(section, name, msg, sizeof(msg));
+  int msg_len = settings_format(section, name, NULL, NULL, msg, sizeof(msg));
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "error building settings read req message");
@@ -1557,7 +1167,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-  const type_data_t *td = type_data_lookup(ctx, parsed_type);
+  const type_data_t *td = type_data_lookup(ctx->type_data_list, parsed_type);
 
   if (td == NULL) {
     ctx->client_iface.log(log_err, "unknown setting type");
@@ -1774,23 +1384,27 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
   /* Register standard types */
   settings_type_t type;
 
-  int ret = type_register(ctx, int_to_string, int_from_string, NULL, NULL, &type);
+  int ret = type_register(&ctx->type_data_list, int_to_string, int_from_string, NULL, NULL, &type);
   /* To make cythonizer happy.. */
   (void)ret;
 
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_INT);
 
-  ret = type_register(ctx, float_to_string, float_from_string, NULL, NULL, &type);
+  ret = type_register(&ctx->type_data_list, float_to_string, float_from_string, NULL, NULL, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_FLOAT);
 
-  ret = type_register(ctx, str_to_string, str_from_string, NULL, NULL, &type);
+  ret = type_register(&ctx->type_data_list, str_to_string, str_from_string, NULL, NULL, &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_STRING);
 
-  ret =
-    type_register(ctx, enum_to_string, enum_from_string, enum_format_type, bool_enum_names, &type);
+  ret = type_register(&ctx->type_data_list,
+                      enum_to_string,
+                      enum_from_string,
+                      enum_format_type,
+                      bool_enum_names,
+                      &type);
   assert(ret == 0);
   assert(type == SETTINGS_TYPE_BOOL);
 
@@ -1803,20 +1417,8 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
  */
 static void members_destroy(settings_t *ctx)
 {
-  /* Free type data list elements */
-  while (ctx->type_data_list != NULL) {
-    type_data_t *t = ctx->type_data_list;
-    ctx->type_data_list = ctx->type_data_list->next;
-    free(t);
-  }
-
-  /* Free setting data list elements */
-  while (ctx->setting_data_list != NULL) {
-    setting_data_t *s = ctx->setting_data_list;
-    ctx->setting_data_list = ctx->setting_data_list->next;
-    setting_data_members_destroy(s);
-    free(s);
-  }
+  type_data_free(ctx->type_data_list);
+  setting_data_free(ctx->setting_data_list);
 }
 
 void settings_destroy(settings_t **ctx)
