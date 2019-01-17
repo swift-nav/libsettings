@@ -30,6 +30,9 @@ cpdef enum SettingsWriteResponseCodes:
 
 cdef extern from "../include/libsettings/settings.h":
 
+    cdef enum:
+        SETTINGS_BUFLEN = 255
+
     cdef struct settings_s:
         pass
     ctypedef settings_s settings_t
@@ -149,7 +152,7 @@ cdef class Settings:
                                   bytes(str(value)))
 
     def read(self, section, name):
-        cdef char value[256]
+        cdef char value[SETTINGS_BUFLEN]
         ret = settings_read_str(self.ctx,
                                 bytes(section),
                                 bytes(name),
@@ -161,10 +164,10 @@ cdef class Settings:
             return None
 
     def read_all(self):
-        cdef char section[256]
-        cdef char name[256]
-        cdef char value[256]
-        cdef char fmt_type[256]
+        cdef char section[SETTINGS_BUFLEN]
+        cdef char name[SETTINGS_BUFLEN]
+        cdef char value[SETTINGS_BUFLEN]
+        cdef char fmt_type[SETTINGS_BUFLEN]
         cdef uint16_t idx = 0
 
         settings = []

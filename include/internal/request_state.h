@@ -13,7 +13,7 @@
 #ifndef LIBSETTINGS_REGISTRATION_STATE_H
 #define LIBSETTINGS_REGISTRATION_STATE_H
 
-#define SBP_PAYLOAD_SIZE_MAX 255
+#include <libsettings/settings.h>
 
 /**
  * @brief Registration Helper Struct
@@ -26,7 +26,7 @@ typedef struct {
   bool pending;
   bool match;
   uint16_t msg_id;
-  uint8_t compare_data[SBP_PAYLOAD_SIZE_MAX];
+  uint8_t compare_data[SETTINGS_BUFLEN];
   uint8_t compare_data_len;
 } request_state_t;
 
