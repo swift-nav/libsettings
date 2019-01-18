@@ -1,0 +1,6 @@
+[requires]
+cmake_installer/3.9.0@conan/stable
+mingw_installer/1.0@conan/stable
+
+[generators]
+virtualenv

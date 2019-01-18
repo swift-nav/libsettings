@@ -1,0 +1,14 @@
+[build_requires]
+mingw_installer/1.0@conan/stable
+
+[settings]
+os_build=Windows
+os=Windows
+arch=x86
+arch_build=x86
+compiler=gcc
+compiler.version=4.9
+compiler.exception=sjlj
+compiler.libcxx=libstdc++11
+compiler.threads=win32
+build_type=Release
