@@ -1,6 +1,4 @@
-IF(NOT ${PYTHON})
-    find_program(PYTHON "python")
-ENDIF()
+find_package(PythonInterp 2.7 REQUIRED)
 
 find_program(VIRTUALENV virtualenv)
 if(NOT VIRTUALENV)
