@@ -40,9 +40,11 @@ python setup.py sdist --dist-dir python
 #### Prerequisities
 
 * Python 2.7 32-bit
-* virtualenv
-* virtualenvwrapper-win
+* virtualenv (for Python 2.7 32-bit)
+* virtualenvwrapper-win (for Python 2.7 32-bit)
 * conan
+
+If you have 64-bit python installed, you can install 32-bit version to arbitrary <PYTHON_PATH> directory.
 
 #### Commands
 
@@ -51,6 +53,8 @@ conan install . --profile=mingw
 activate # conan
 md build
 cd build
+set PYTHON_PATH=<PYTHON_PATH> # Needed only if default python installation is 64-bit
+# example 'set PYTHON_PATH=c:\Python27_32'
 cmake .. -G "MinGW Makefiles"
 make
 # If you want to update python bindings:
