@@ -18,14 +18,45 @@ Open source SwiftNav settings API library.
 
 ### Linux Native
 
+#### Prerequisities
+
+* Python 2.7
+* virtualenv
+
+#### Commands
+
 ``` sh
 mkdir build
 cd build
-cmake ../
+cmake ..
 make # output can be found in build/src/libsettings.so
 # If you want to update python bindings:
 cd ..
 python setup.py sdist --dist-dir python
+```
+
+### Win32
+
+#### Prerequisities
+
+* Python 2.7 32-bit
+* virtualenv
+* virtualenvwrapper-win
+* conan
+
+#### Commands
+
+``` sh
+conan install . --profile=mingw
+activate # conan
+md build
+cd build
+cmake .. -G "MinGW Makefiles"
+make
+# If you want to update python bindings:
+cd ..
+python setup.py sdist --dist-dir python
+deactivate # conan
 ```
 
 ## Example usage
