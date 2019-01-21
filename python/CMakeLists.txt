@@ -26,7 +26,6 @@ set(PY_OUTPUT   "${PROJECT_SOURCE_DIR}/python/libsettings.so")
 configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
 add_custom_command(OUTPUT "${PY_OUTPUT}"
-                   COMMAND chmod u+x ${SETUP_PY}
                    COMMAND PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/${LIBSETTINGS_VENV}/lib/python2.7/site-packages ${PYTHON} ${SETUP_PY} build_ext --force
                    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
                   )
