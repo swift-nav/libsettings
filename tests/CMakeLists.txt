@@ -1,33 +1,40 @@
 if (CMAKE_CROSSCOMPILING)
   message(STATUS "Skipping unit tests, cross compiling")
 else (CMAKE_CROSSCOMPILING)
-  enable_testing()
+  # Download and unpack googletest at configure time
+  configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+    RESULT_VARIABLE result
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+  if(result)
+    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+  endif()
+  execute_process(COMMAND ${CMAKE_COMMAND} --build .
+    RESULT_VARIABLE result
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+  if(result)
+    message(FATAL_ERROR "Build step for googletest failed: ${result}")
+  endif()
 
-  ############
-  # Prepare gtest
-  add_subdirectory("${PROJECT_SOURCE_DIR}/thirdparty/googletest" "thirdparty/googletest")
+  # Prevent overriding the parent project's compiler/linker
+  # settings on Windows
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-  mark_as_advanced(
-    BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
-    gmock_build_tests gtest_build_samples gtest_build_tests
-    gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
-  )
+  # Add googletest directly to our build. This defines
+  # the gtest and gtest_main targets.
+  add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+                   ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+                   EXCLUDE_FROM_ALL)
 
-  set_target_properties(gtest PROPERTIES FOLDER extern)
-  set_target_properties(gtest_main PROPERTIES FOLDER extern)
-  set_target_properties(gmock PROPERTIES FOLDER extern)
-  set_target_properties(gmock_main PROPERTIES FOLDER extern)
+  # The gtest/gtest_main targets carry header search path
+  # dependencies automatically when using CMake 2.8.11 or
+  # later. Otherwise we have to add them here ourselves.
+  if (CMAKE_VERSION VERSION_LESS 2.8.11)
+    include_directories("${gtest_SOURCE_DIR}/include")
+  endif()
 
-  macro(package_add_test TESTNAME)
-    add_executable(${TESTNAME} ${ARGN})
-    target_link_libraries(${TESTNAME} gtest gmock gtest_main)
-    add_test(${TESTNAME} ${TESTNAME})
-    set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
-  endmacro()
-
-  ################
-  # Define a test
-  package_add_test(
+  # Now simply link against gtest or gtest_main as needed. Eg
+  add_executable(
     test_libsettings
     src/test_request_state.cpp
     src/test_setting_data.cpp
@@ -44,15 +51,24 @@ else (CMAKE_CROSSCOMPILING)
     ${PROJECT_SOURCE_DIR}/src/setting_type_int.c
     ${PROJECT_SOURCE_DIR}/src/setting_type_str.c
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
-  add_dependencies(test_libsettings gtest)
+  )
   include_directories(${PROJECT_SOURCE_DIR}/include)
+  target_link_libraries(test_libsettings gtest_main)
 
-  ################################
-  # Unit Tests
-  ################################
-  add_custom_command(
+  if (WIN32)
+    add_custom_command(
+      TARGET test_libsettings POST_BUILD
+      COMMENT "Running unit tests"
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/libgtest.dll ${CMAKE_BINARY_DIR}/tests
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/libgtest_main.dll ${CMAKE_BINARY_DIR}/tests
+      COMMAND test_libsettings
+    )
+  else (WIN32)
+    add_custom_command(
       TARGET test_libsettings POST_BUILD
       COMMENT "Running unit tests"
       COMMAND test_libsettings
     )
+  endif (WIN32)
+
 endif (CMAKE_CROSSCOMPILING)
