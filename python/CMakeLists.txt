@@ -11,34 +11,27 @@ endif (NOT WIN32)
 configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
 if (WIN32)
-    if (DEFINED ENV{PYTHON_PATH})
-        SET(PYTHON_PATH_LOCAL "$ENV{PYTHON_PATH}")
-    else ()
-        execute_process(COMMAND CMD /c python.exe -c "import sys;print(sys.exec_prefix)" OUTPUT_VARIABLE PYTHON_PATH_LOCAL OUTPUT_STRIP_TRAILING_WHITESPACE)
-    endif ()
-    SET(PYTHON_SCRIPTS "${PYTHON_PATH_LOCAL}/Scripts")
+    execute_process(COMMAND CMD /c python.exe -c "import sys;print(sys.exec_prefix)" OUTPUT_VARIABLE PYTHON_PATH_VENV OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND CMD /c python.exe -c "import sys;print(sys.real_prefix)" OUTPUT_VARIABLE PYTHON_PATH_REAL OUTPUT_STRIP_TRAILING_WHITESPACE)
+    SET(PYTHON_SCRIPTS "${PYTHON_PATH_VENV}/Scripts")
 
     add_custom_command(
         OUTPUT ${LIBSETTINGS_VENV}
         COMMAND gendef - c:/windows/system32/python27.dll > ${CMAKE_BINARY_DIR}/python27.def
         COMMAND dlltool --dllname python27.dll --def ${CMAKE_BINARY_DIR}/python27.def --output-lib ${CMAKE_BINARY_DIR}/libpython27.a
-        COMMAND ${PYTHON_SCRIPTS}/rmvirtualenv ${LIBSETTINGS_VENV}
-        COMMAND ${PYTHON_SCRIPTS}/mkvirtualenv -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt -p ${PYTHON_PATH_LOCAL}/python.exe ${LIBSETTINGS_VENV}
     )
-    file(WRITE "${PYTHON_PATH_LOCAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{WORKON_HOME}/${LIBSETTINGS_VENV}/lib/site-packages")
+    file(WRITE "${PYTHON_PATH_REAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{VIRTUAL_ENV}/lib/site-packages")
 
     add_custom_command(
         OUTPUT "${PY_OUTPUT}"
         COMMAND ${PYTHON} ${SETUP_PY} build_ext --force --compiler=mingw32 -L ${CMAKE_BINARY_DIR}
-        COMMAND ${PYTHON_SCRIPTS}/rmvirtualenv ${LIBSETTINGS_VENV}
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
 else (WIN32)
-    set(VIRTUALENV ${VIRTUALENV})
     add_custom_command(
         OUTPUT ${LIBSETTINGS_VENV}
         COMMAND virtualenv -p python2.7 ${LIBSETTINGS_VENV}
-        COMMAND ./${LIBSETTINGS_VENV}/bin/pip install cython==0.26
+        COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
     )
 
     add_custom_command(
