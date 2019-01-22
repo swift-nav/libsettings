@@ -20,8 +20,8 @@ Open source SwiftNav settings API library.
 
 #### Prerequisities
 
-* Python 2.7
-* cmake
+* Python
+* CMake
 * virtualenv (pip install virtualenv)
 
 #### Commands
@@ -29,8 +29,8 @@ Open source SwiftNav settings API library.
 ``` sh
 mkdir build
 cd build
-cmake ..
-make # output can be found in build/src/libsettings.so
+cmake .. # If you want to use python3: 'cmake -D PYTHON=python3 ..'
+make
 # If you want to update python bindings:
 cd ..
 python setup.py sdist --dist-dir python
@@ -47,7 +47,7 @@ exists in your setup and make a copy of it.
 
 #### Prerequisities
 
-* Python 2.7
+* Python 2.7.x or 3.4.x (limiting factor mingwpy support)
 * virtualenvwrapper-win (pip install virtualenvwrapper-win)
 
 #### Commands

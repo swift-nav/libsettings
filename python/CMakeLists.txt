@@ -8,6 +8,10 @@ if (NOT WIN32)
     set(PY_SHEBANG  "#!/usr/bin/env python")
 endif (NOT WIN32)
 
+if (NOT PYTHON)
+    set(PYTHON "python")
+endif (NOT PYTHON)
+
 configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
 if (WIN32)
@@ -30,13 +34,19 @@ if (WIN32)
 else (WIN32)
     add_custom_command(
         OUTPUT ${LIBSETTINGS_VENV}
-        COMMAND virtualenv -p python2.7 ${LIBSETTINGS_VENV}
+        COMMAND virtualenv ${LIBSETTINGS_VENV} -p ${PYTHON}
         COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
+    )
+
+    execute_process(
+        COMMAND ${PYTHON} -c "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"
+        OUTPUT_VARIABLE PYTHON_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
     add_custom_command(
         OUTPUT "${PY_OUTPUT}"
-        COMMAND PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/${LIBSETTINGS_VENV}/lib/python2.7/site-packages ${PYTHON} ${SETUP_PY} build_ext --force
+        COMMAND PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/${LIBSETTINGS_VENV}/lib/python${PYTHON_VERSION}/site-packages ${PYTHON} ${SETUP_PY} build_ext --force
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
 endif (WIN32)
