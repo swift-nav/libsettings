@@ -20,6 +20,8 @@ if (WIN32)
 
     add_custom_command(
         OUTPUT ${LIBSETTINGS_VENV}
+        COMMAND gendef - c:/windows/system32/python27.dll > ${CMAKE_BINARY_DIR}/python27.def
+        COMMAND dlltool --dllname python27.dll --def ${CMAKE_BINARY_DIR}/python27.def --output-lib ${CMAKE_BINARY_DIR}/libpython27.a
         COMMAND ${PYTHON_SCRIPTS}/rmvirtualenv ${LIBSETTINGS_VENV}
         COMMAND ${PYTHON_SCRIPTS}/mkvirtualenv -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt -p ${PYTHON_PATH_LOCAL}/python.exe ${LIBSETTINGS_VENV}
     )
@@ -27,7 +29,7 @@ if (WIN32)
 
     add_custom_command(
         OUTPUT "${PY_OUTPUT}"
-        COMMAND ${PYTHON} ${SETUP_PY} build_ext --force --compiler=mingw32
+        COMMAND ${PYTHON} ${SETUP_PY} build_ext --force --compiler=mingw32 -L ${CMAKE_BINARY_DIR}
         COMMAND ${PYTHON_SCRIPTS}/rmvirtualenv ${LIBSETTINGS_VENV}
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )

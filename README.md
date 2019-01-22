@@ -35,26 +35,63 @@ cd ..
 python setup.py sdist --dist-dir python
 ```
 
-### Win32
+### Windows
 
-#### Prerequisities
+#### Notes
+
+This process will overwrite <PYTHON_PATH>/Lib/site-packages/virtualenv_path_extensions.pth
+This is a file used by virtualenv and doesn't belong to standard python installation.
+In case you are using virtualenv with other projects you might want to check if this file
+exists in your setup and make a copy of it.
+
+#### 32-bit target
+
+##### Prerequisities
 
 * Python 2.7 32-bit
-* virtualenv (for Python 2.7 32-bit)
-* virtualenvwrapper-win (for Python 2.7 32-bit)
-* conan
+* mingwpy (pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy)
+* conan (pip install conan)
+* virtualenv (for Python 2.7 32-bit) (pip install virtualenv)
+* virtualenvwrapper-win (for Python 2.7 32-bit) (pip install virtualenvwrapper-win)
 
-If you have 64-bit python installed, you can install 32-bit version to arbitrary <PYTHON_PATH> directory.
+If you have 64-bit python installed as default, you can install 32-bit version
+to arbitrary <PYTHON_PATH> directory. When installing requirements, use pip from
+this directory.
 
-#### Commands
+##### Commands
 
 ``` sh
-conan install . --profile=mingw
+conan install . --profile=libsettings.conan
 activate # conan
 md build
 cd build
 set PYTHON_PATH=<PYTHON_PATH> # Needed only if default python installation is 64-bit
 # example 'set PYTHON_PATH=c:\Python27_32'
+cmake .. -G "MinGW Makefiles"
+make
+# If you want to update python bindings:
+cd ..
+python setup.py sdist --dist-dir python
+deactivate # conan
+```
+
+#### 64-bit target
+
+##### Prerequisities
+
+* Python 2.7 64-bit
+* conan (pip install conan)
+* mingwpy (pip install -i https://pypi.anaconda.org/carlkl/simple mingwpy)
+* virtualenv (pip install virtualenv)
+* virtualenvwrapper-win (pip install virtualenvwrapper-win)
+
+##### Commands
+
+``` sh
+conan install . --profile=libsettings64.conan
+activate # conan
+md build
+cd build
 cmake .. -G "MinGW Makefiles"
 make
 # If you want to update python bindings:
