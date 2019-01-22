@@ -12,26 +12,35 @@ if (NOT PYTHON)
     set(PYTHON "python")
 endif (NOT PYTHON)
 
-configure_file(${SETUP_PY_IN} ${SETUP_PY})
-
 if (WIN32)
     execute_process(COMMAND CMD /c python.exe -c "import sys;print(sys.exec_prefix)" OUTPUT_VARIABLE PYTHON_PATH_VENV OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND CMD /c python.exe -c "import sys;print(sys.real_prefix)" OUTPUT_VARIABLE PYTHON_PATH_REAL OUTPUT_STRIP_TRAILING_WHITESPACE)
     SET(PYTHON_SCRIPTS "${PYTHON_PATH_VENV}/Scripts")
 
+    execute_process(
+        COMMAND python -c "import sys;print('{}{}'.format(sys.version_info[0], sys.version_info[1]))"
+        OUTPUT_VARIABLE PYTHON_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    set(PYTHON_GENERATED_LIB "python${PYTHON_VERSION}-gen")
+
+    configure_file(${SETUP_PY_IN} ${SETUP_PY})
+
     add_custom_command(
         OUTPUT ${LIBSETTINGS_VENV}
-        COMMAND gendef - c:/windows/system32/python27.dll > ${CMAKE_BINARY_DIR}/python27.def
-        COMMAND dlltool --dllname python27.dll --def ${CMAKE_BINARY_DIR}/python27.def --output-lib ${CMAKE_BINARY_DIR}/libpython27.a
+        COMMAND gendef - c:/windows/system32/python${PYTHON_VERSION}.dll > ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def
+        COMMAND dlltool --dllname python${PYTHON_VERSION}.dll --def ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def --output-lib ${CMAKE_BINARY_DIR}/lib${PYTHON_GENERATED_LIB}.a
     )
     file(WRITE "${PYTHON_PATH_REAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{VIRTUAL_ENV}/lib/site-packages")
 
     add_custom_command(
         OUTPUT "${PY_OUTPUT}"
-        COMMAND ${PYTHON} ${SETUP_PY} build_ext --force --compiler=mingw32 -L ${CMAKE_BINARY_DIR}
+        COMMAND python.exe ${SETUP_PY} build_ext --force --compiler=mingw32 -L ${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
 else (WIN32)
+
     add_custom_command(
         OUTPUT ${LIBSETTINGS_VENV}
         COMMAND virtualenv ${LIBSETTINGS_VENV} -p ${PYTHON}
@@ -43,6 +52,8 @@ else (WIN32)
         OUTPUT_VARIABLE PYTHON_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+
+    configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
     add_custom_command(
         OUTPUT "${PY_OUTPUT}"

@@ -19,9 +19,12 @@ sources = glob("python/*.pyx") + glob("src/*.c")
 
 cflags = ["-Wno-unused-label", "-std=c99"]
 ldflags = []
+libraries = []
 
 if os.name == 'nt':
     ldflags.append("-static-libgcc")
+    libraries.append("${PYTHON_GENERATED_LIB}")
+
 
 setup(
     name='libsettings',
@@ -34,6 +37,7 @@ setup(
         Extension(
             'libsettings',
             sources,
+            libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=cflags,
             extra_link_args=ldflags,
