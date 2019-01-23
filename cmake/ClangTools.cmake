@@ -49,7 +49,10 @@ endif()
 
 if (EXISTS ${CLANG_FORMAT_PATH})
     # Format all files .c files (and their headers) in project
-    add_custom_target(clang-format-all COMMAND clang-format -i ../src/*.c ../include/libsettings/*.h)
+    add_custom_target(clang-format-all
+        COMMAND git ls-files -- '../*.[ch]' '../*.cpp'
+        | sed 's/^...//' | sed 's\#\^\#${CMAKE_SOURCE_DIR}/\#'
+        | xargs clang-format -i)
 
     # Format all staged lines
     add_custom_target(clang-format-head COMMAND git-clang-format)
