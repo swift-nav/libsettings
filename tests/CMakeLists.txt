@@ -50,7 +50,7 @@ else (CMAKE_CROSSCOMPILING)
     ${PROJECT_SOURCE_DIR}/src/setting_type_float.c
     ${PROJECT_SOURCE_DIR}/src/setting_type_int.c
     ${PROJECT_SOURCE_DIR}/src/setting_type_str.c
-    ${PROJECT_SOURCE_DIR}/src/settings_util.c)
+    ${PROJECT_SOURCE_DIR}/src/settings_util.c
   )
   include_directories(${PROJECT_SOURCE_DIR}/include)
   target_link_libraries(test_libsettings gtest_main)
