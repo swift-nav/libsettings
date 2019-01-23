@@ -20,8 +20,8 @@ int float_to_string(const void *priv, char *str, int slen, const void *blob, int
   (void)priv;
 
   switch (blen) {
-  case 4: return snprintf(str, slen, "%."SETTINGS_FLOAT_PRECISION_STR"g", (double)*(float *)blob);
-  case 8: return snprintf(str, slen, "%."SETTINGS_FLOAT_PRECISION_STR"g", *(double *)blob);
+  case 4: return snprintf(str, slen, "%." SETTINGS_FLOAT_PRECISION_STR "g", (double)*(float *)blob);
+  case 8: return snprintf(str, slen, "%." SETTINGS_FLOAT_PRECISION_STR "g", *(double *)blob);
   default: return -1;
   }
 }

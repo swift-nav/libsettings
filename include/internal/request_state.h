@@ -35,7 +35,10 @@ extern "C" {
 #endif
 
 void request_state_init(request_state_t *state, uint16_t msg_id, const char *data, size_t data_len);
-int request_state_check(request_state_t *state, settings_api_t *api, const char *data, size_t data_len);
+int request_state_check(request_state_t *state,
+                        settings_api_t *api,
+                        const char *data,
+                        size_t data_len);
 bool request_state_match(const request_state_t *state);
 int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t msg_id);
 void request_state_deinit(request_state_t *state);

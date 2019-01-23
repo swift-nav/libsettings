@@ -16,7 +16,8 @@
 
 #include <internal/setting_type_int.h>
 
-TEST(test_setting_type_int, to_string) {
+TEST(test_setting_type_int, to_string)
+{
   char str[255] = {0};
 
   int8_t blob8 = std::numeric_limits<int8_t>::min();
@@ -50,7 +51,8 @@ TEST(test_setting_type_int, to_string) {
   EXPECT_STREQ(std::to_string(blob32).c_str(), str);
 }
 
-TEST(test_setting_type_int, from_string) {
+TEST(test_setting_type_int, from_string)
+{
   const char *str = std::to_string(std::numeric_limits<int8_t>::min()).c_str();
   int8_t blob8 = 0;
   EXPECT_TRUE(int_from_string(NULL, &blob8, sizeof(blob8), str));

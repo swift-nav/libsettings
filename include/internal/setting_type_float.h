@@ -15,7 +15,7 @@
 
 #include <stdbool.h>
 
-#define SETTINGS_FLOAT_PRECISION      12
+#define SETTINGS_FLOAT_PRECISION 12
 #define SETTINGS_FLOAT_PRECISION_STR "12"
 
 #ifdef __cplusplus

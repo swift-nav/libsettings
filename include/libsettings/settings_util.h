@@ -16,15 +16,15 @@
 #include <inttypes.h>
 
 typedef enum settings_tokens_e {
-  SETTINGS_TOKENS_INVALID = -1,    /** An error occurred */
-  SETTINGS_TOKENS_EMPTY = 0,       /** No tokens found */
-  SETTINGS_TOKENS_SECTION = 1,     /** Section token found */
-  SETTINGS_TOKENS_NAME = 2,        /** Section and name tokens found */
-  SETTINGS_TOKENS_VALUE = 3,       /** Section, name and value tokens found */
-  SETTINGS_TOKENS_TYPE = 4,        /** Section, name, value and type tokens found */
-  SETTINGS_TOKENS_EXTRA_NULL = 5,  /** Section, name, value and type tokens found,
-                                       this is for backwards compatibility for FW
-                                       versions 2.2 and older */
+  SETTINGS_TOKENS_INVALID = -1,   /** An error occurred */
+  SETTINGS_TOKENS_EMPTY = 0,      /** No tokens found */
+  SETTINGS_TOKENS_SECTION = 1,    /** Section token found */
+  SETTINGS_TOKENS_NAME = 2,       /** Section and name tokens found */
+  SETTINGS_TOKENS_VALUE = 3,      /** Section, name and value tokens found */
+  SETTINGS_TOKENS_TYPE = 4,       /** Section, name, value and type tokens found */
+  SETTINGS_TOKENS_EXTRA_NULL = 5, /** Section, name, value and type tokens found,
+                                      this is for backwards compatibility for FW
+                                      versions 2.2 and older */
 } settings_tokens_t;
 
 #ifdef __cplusplus

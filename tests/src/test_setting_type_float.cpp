@@ -17,14 +17,16 @@
 
 #include <internal/setting_type_float.h>
 
-static double to_precision(double num, int precision) {
+static double to_precision(double num, int precision)
+{
   std::ostringstream str;
   str << std::setprecision(precision);
   str << num;
   return std::stod(str.str(), NULL);
 }
 
-TEST(test_setting_type_float, to_string) {
+TEST(test_setting_type_float, to_string)
+{
   char str[255] = {0};
 
   float blob_float = pow(10, -1 * SETTINGS_FLOAT_PRECISION);
@@ -44,7 +46,8 @@ TEST(test_setting_type_float, to_string) {
   EXPECT_DOUBLE_EQ(to_precision(blob_double, SETTINGS_FLOAT_PRECISION), std::stod(str, NULL));
 }
 
-TEST(test_setting_type_float, from_string) {
+TEST(test_setting_type_float, from_string)
+{
   std::string str = "1e-" SETTINGS_FLOAT_PRECISION_STR;
   float blob_float = 0;
   EXPECT_TRUE(float_from_string(NULL, &blob_float, sizeof(blob_float), str.c_str()));
