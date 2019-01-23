@@ -1,10 +1,6 @@
 find_package(PythonInterp 2.7 REQUIRED)
 
-find_program(VIRTUALENV virtualenv)
-if(NOT VIRTUALENV)
-    message(FATAL_ERROR "`virtualenv` not found")
-endif()
-
+set(VIRTUALENV virtualenv)
 set(VIRTUALENV ${VIRTUALENV} -p python2.7)
 set(LIBSETTINGS_VENV "venv")
 
