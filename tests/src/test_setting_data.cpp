@@ -15,7 +15,8 @@
 #include <internal/setting_data.h>
 #include <internal/setting_type_enum.h>
 
-TEST(test_setting_data, format) {
+TEST(test_setting_data, format)
+{
   type_data_t *type_data_list = NULL;
   const char *const enum_names[] = {"Test1", "Test2", NULL};
   settings_type_t type;
@@ -45,10 +46,9 @@ TEST(test_setting_data, format) {
   char buf[255] = {0};
   res = setting_data_format(setting_data, true, buf, sizeof(buf), NULL);
 
-  char expected[] = {'s', 'e', 'c', 't', 'i', 'o', 'n', '\0',
-                     'n', 'a', 'm', 'e', '\0',
-                     'T', 'e', 's', 't', '1', '\0',
-                     'e', 'n', 'u', 'm', ':', 'T', 'e', 's', 't', '1', ',', 'T', 'e', 's', 't', '2', '\0'};
+  char expected[] = {'s',  'e', 'c', 't', 'i', 'o', 'n',  '\0', 'n', 'a', 'm', 'e',
+                     '\0', 'T', 'e', 's', 't', '1', '\0', 'e',  'n', 'u', 'm', ':',
+                     'T',  'e', 's', 't', '1', ',', 'T',  'e',  's', 't', '2', '\0'};
 
   EXPECT_EQ(sizeof(expected), res);
 

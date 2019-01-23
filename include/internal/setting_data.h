@@ -121,7 +121,9 @@ void setting_data_remove(setting_data_t *data_list, setting_data_t **setting_dat
  * @param name: setting name string to match
  * @return the setting type entry if a match is found, otherwise NULL
  */
-setting_data_t *setting_data_lookup(setting_data_t *data_list, const char *section, const char *name);
+setting_data_t *setting_data_lookup(setting_data_t *data_list,
+                                    const char *section,
+                                    const char *name);
 
 /**
  * @brief setting_data_free - free the setting data list
