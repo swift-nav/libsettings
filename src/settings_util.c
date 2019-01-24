@@ -20,7 +20,7 @@ int settings_format(const char *section,
                     const char *value,
                     const char *type,
                     char *buf,
-                    uint16_t blen)
+                    size_t blen)
 {
   int n = 0;
   int l = 0;
@@ -36,7 +36,7 @@ int settings_format(const char *section,
 
     l = snprintf(&buf[n], blen - n, "%s", token);
 
-    if ((l < 0) || (l >= blen - n)) {
+    if ((l < 0) || ((size_t)l >= blen - n)) {
       return -1;
     }
 
@@ -48,7 +48,7 @@ int settings_format(const char *section,
 
 /* Parse SBP message payload into setting parameters */
 settings_tokens_t settings_parse(const char *buf,
-                                 uint16_t blen,
+                                 size_t blen,
                                  const char **section,
                                  const char **name,
                                  const char **value,
@@ -66,8 +66,8 @@ settings_tokens_t settings_parse(const char *buf,
 
   const char **tokens[] = {section, name, value, type};
   settings_tokens_t tok = SETTINGS_TOKENS_EMPTY;
-  uint16_t str_start = 0;
-  for (uint16_t idx = 0; idx < blen; ++idx) {
+  size_t str_start = 0;
+  for (size_t idx = 0; idx < blen; ++idx) {
     if (buf[idx] != '\0') {
       continue;
     }
