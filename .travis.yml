@@ -3,6 +3,12 @@ sudo: required
 
 language: c
 
+matrix:
+  include:
+   - os: linux
+   - os: osx
+     osx_image: xcode10
+
 git:
   depth: 1
 
@@ -15,6 +21,17 @@ branches:
     - master
       # Any tag starting with a version string: vX.Y.Z(-blahblahblah).
     - /^v\d+.\d+.\d+(-\S+)?$/
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update;
+      brew install gcc@6;
+      export CC=gcc-6;
+      export CXX=g++-6;
+      export TRAVIS_COMPILER=gcc-6;
+      export CC_FOR_BUILD=gcc-6;
+      pip install virtualenv;
+    fi
 
 script:
     - mkdir build; cd build; cmake ../; make
