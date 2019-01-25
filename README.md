@@ -31,8 +31,8 @@ mkdir build
 cd build
 cmake .. # If you want to use python3: 'cmake -D PYTHON=python3 ..'
 make
-# If you want to update python bindings:
 cd ..
+# If you want to update python bindings source distribution package:
 python setup.py sdist --dist-dir python
 ```
 
@@ -45,21 +45,48 @@ This is a file used by virtualenv and doesn't belong to standard python installa
 In case you are using virtualenv with other projects you might want to check if this file
 exists in your setup and make a copy of it.
 
-#### Prerequisities
+#### Prerequisities for Python 2.7.x or 3.4.x
 
-* Python 2.7.x or 3.4.x (limiting factor mingwpy support)
 * virtualenvwrapper-win (pip install virtualenvwrapper-win)
 
-#### Commands
+#### Commands for Python 2.7.x or 3.4.x
 
 ``` sh
-mkvirtualenv -r requirements-win.txt venv
+mkvirtualenv -r requirements-win-cp27-cp34.txt venv
 md build
 cd build
+# Make sure CMake is using venv/Scripts/gcc.exe as compiler and not some other
+# gcc possibly installed
 cmake .. -G "MinGW Makefiles"
 make
-# If you want to update python bindings:
 cd ..
+# If you want to update python bindings source distribution package:
+python setup.py sdist --dist-dir python
+deactivate # virtualenv
+rmvirtualenv venv
+```
+
+#### Prerequisities for Python 3.5.x or 3.6.x or 3.7.x
+
+* virtualenvwrapper-win (pip install virtualenvwrapper-win)
+* Microsoft Visual C++ 14.0, for example from:
+  https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017
+
+#### Commands for Python 3.5.x or 3.6.x or 3.7.x
+
+Use 'Native Tools Command Prompt for VS 2017', select x86/x64 based on your Python architecture
+
+``` sh
+mkvirtualenv -r requirements-win-cp35-cp36-cp37.txt venv
+md build
+cd build
+cmake ..
+# settings.dll from C sources (not tested in runtime)
+msbuild libsettings.sln /p:Configuration="Release" /p:Platform="Win32"
+cd ..
+# libsettings.pyd for importing from Python
+python setup.py build_ext --force
+# If you want to update python bindings source distribution package:
 python setup.py sdist --dist-dir python
 deactivate # virtualenv
 rmvirtualenv venv

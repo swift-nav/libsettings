@@ -1,5 +1,5 @@
 --extra-index-url https://pypi.anaconda.org/carlkl/simple
 cmake
-cython==0.26
+cython
 mingwpy
 piksi_tools
