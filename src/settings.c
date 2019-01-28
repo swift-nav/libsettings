@@ -443,6 +443,23 @@ static int settings_register_cb(settings_t *ctx,
   return 0;
 }
 
+static int settings_unregister_cb(settings_t *ctx,
+                                  bool *cb_registered,
+                                  sbp_msg_callbacks_node_t **cb_node)
+{
+  if (!*cb_registered) {
+    return 0;
+  }
+
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, cb_node) != 0) {
+    ctx->client_iface.log(log_err, "error unregistering callback");
+    return -1;
+  }
+
+  *cb_registered = false;
+  return 0;
+}
+
 /**
  * @brief settings_register_register_resp_callback - register callback for
  * SBP_MSG_SETTINGS_REGISTER_RESP
@@ -466,17 +483,9 @@ static int settings_register_register_resp_callback(settings_t *ctx)
  */
 static int settings_unregister_register_resp_callback(settings_t *ctx)
 {
-  if (!ctx->register_resp_cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->register_resp_cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering settings write callback");
-    return -1;
-  }
-
-  ctx->register_resp_cb_registered = false;
-  return 0;
+  return settings_unregister_cb(ctx,
+                                &ctx->register_resp_cb_registered,
+                                &ctx->register_resp_cb_node);
 }
 
 /**
@@ -502,17 +511,9 @@ static int settings_register_write_callback(settings_t *ctx)
  */
 static int settings_unregister_write_callback(settings_t *ctx)
 {
-  if (!ctx->write_cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->write_cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering settings write callback");
-    return -1;
-  }
-
-  ctx->write_cb_registered = false;
-  return 0;
+  return settings_unregister_cb(ctx,
+                                &ctx->write_cb_registered,
+                                &ctx->write_cb_node);
 }
 
 /**
@@ -538,17 +539,9 @@ static int settings_register_read_resp_callback(settings_t *ctx)
  */
 static int settings_unregister_read_resp_callback(settings_t *ctx)
 {
-  if (!ctx->read_resp_cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->read_resp_cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering settings read resp callback");
-    return -1;
-  }
-
-  ctx->read_resp_cb_registered = false;
-  return 0;
+  return settings_unregister_cb(ctx,
+                                &ctx->read_resp_cb_registered,
+                                &ctx->read_resp_cb_node);
 }
 
 /**
@@ -574,17 +567,9 @@ static int settings_register_write_resp_callback(settings_t *ctx)
  */
 static int settings_unregister_write_resp_callback(settings_t *ctx)
 {
-  if (!ctx->write_resp_cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->write_resp_cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering settings write resp callback");
-    return -1;
-  }
-
-  ctx->write_resp_cb_registered = false;
-  return 0;
+  return settings_unregister_cb(ctx,
+                                &ctx->write_resp_cb_registered,
+                                &ctx->write_resp_cb_node);
 }
 
 /**
@@ -610,17 +595,9 @@ static int settings_register_read_by_idx_resp_callback(settings_t *ctx)
  */
 static int settings_unregister_read_by_idx_resp_callback(settings_t *ctx)
 {
-  if (!ctx->read_by_idx_resp_cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->read_by_idx_resp_cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering settings read by idx resp callback");
-    return -1;
-  }
-
-  ctx->read_by_idx_resp_cb_registered = false;
-  return 0;
+  return settings_unregister_cb(ctx,
+                                &ctx->read_by_idx_resp_cb_registered,
+                                &ctx->read_by_idx_resp_cb_node);
 }
 
 /**
@@ -646,17 +623,9 @@ static int settings_register_read_by_idx_done_callback(settings_t *ctx)
  */
 static int settings_unregister_read_by_idx_done_callback(settings_t *ctx)
 {
-  if (!ctx->read_by_idx_done_cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &ctx->read_by_idx_done_cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering settings read by idx done callback");
-    return -1;
-  }
-
-  ctx->read_by_idx_done_cb_registered = false;
-  return 0;
+  return settings_unregister_cb(ctx,
+                                &ctx->read_by_idx_done_cb_registered,
+                                &ctx->read_by_idx_done_cb_node);
 }
 
 /**
