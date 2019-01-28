@@ -417,6 +417,32 @@ static void settings_read_by_idx_done_callback(uint16_t sender_id,
   }
 }
 
+static int settings_register_cb(settings_t *ctx,
+                                uint16_t msg_id,
+                                sbp_msg_callback_t cb,
+                                bool *cb_registered,
+                                sbp_msg_callbacks_node_t **cb_node)
+{
+  if (*cb_registered) {
+    /* Already done */
+    return 0;
+  }
+
+  int res = ctx->client_iface.register_cb(ctx->client_iface.ctx,
+                                          msg_id,
+                                          cb,
+                                          ctx,
+                                          cb_node);
+
+  if (res != 0) {
+    ctx->client_iface.log(log_err, "error registering callback for msg id %d", msg_id);
+    return -1;
+  }
+
+  *cb_registered = true;
+  return 0;
+}
+
 /**
  * @brief settings_register_register_resp_callback - register callback for
  * SBP_MSG_SETTINGS_REGISTER_RESP
@@ -425,23 +451,11 @@ static void settings_read_by_idx_done_callback(uint16_t sender_id,
  */
 static int settings_register_register_resp_callback(settings_t *ctx)
 {
-  if (ctx->register_resp_cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                    SBP_MSG_SETTINGS_REGISTER_RESP,
-                                    settings_register_resp_callback,
-                                    ctx,
-                                    &ctx->register_resp_cb_node)
-      != 0) {
-    ctx->client_iface.log(log_err, "error registering settings register resp callback");
-    return -1;
-  }
-
-  ctx->register_resp_cb_registered = true;
-  return 0;
+  return settings_register_cb(ctx,
+                              SBP_MSG_SETTINGS_REGISTER_RESP,
+                              settings_register_resp_callback,
+                              &ctx->register_resp_cb_registered,
+                              &ctx->register_resp_cb_node);
 }
 
 /**
@@ -473,23 +487,11 @@ static int settings_unregister_register_resp_callback(settings_t *ctx)
  */
 static int settings_register_write_callback(settings_t *ctx)
 {
-  if (ctx->write_cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                    SBP_MSG_SETTINGS_WRITE,
-                                    settings_write_callback,
-                                    ctx,
-                                    &ctx->write_cb_node)
-      != 0) {
-    ctx->client_iface.log(log_err, "error registering settings write callback");
-    return -1;
-  }
-
-  ctx->write_cb_registered = true;
-  return 0;
+  return settings_register_cb(ctx,
+                              SBP_MSG_SETTINGS_WRITE,
+                              settings_write_callback,
+                              &ctx->write_cb_registered,
+                              &ctx->write_cb_node);
 }
 
 /**
@@ -521,23 +523,11 @@ static int settings_unregister_write_callback(settings_t *ctx)
  */
 static int settings_register_read_resp_callback(settings_t *ctx)
 {
-  if (ctx->read_resp_cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                    SBP_MSG_SETTINGS_READ_RESP,
-                                    settings_read_resp_callback,
-                                    ctx,
-                                    &ctx->read_resp_cb_node)
-      != 0) {
-    ctx->client_iface.log(log_err, "error registering settings read resp callback");
-    return -1;
-  }
-
-  ctx->read_resp_cb_registered = true;
-  return 0;
+  return settings_register_cb(ctx,
+                              SBP_MSG_SETTINGS_READ_RESP,
+                              settings_read_resp_callback,
+                              &ctx->read_resp_cb_registered,
+                              &ctx->read_resp_cb_node);
 }
 
 /**
@@ -569,23 +559,11 @@ static int settings_unregister_read_resp_callback(settings_t *ctx)
  */
 static int settings_register_write_resp_callback(settings_t *ctx)
 {
-  if (ctx->write_resp_cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                    SBP_MSG_SETTINGS_WRITE_RESP,
-                                    settings_write_resp_callback,
-                                    ctx,
-                                    &ctx->write_resp_cb_node)
-      != 0) {
-    ctx->client_iface.log(log_err, "error registering settings write resp callback");
-    return -1;
-  }
-
-  ctx->write_resp_cb_registered = true;
-  return 0;
+  return settings_register_cb(ctx,
+                              SBP_MSG_SETTINGS_WRITE_RESP,
+                              settings_write_resp_callback,
+                              &ctx->write_resp_cb_registered,
+                              &ctx->write_resp_cb_node);
 }
 
 /**
@@ -617,23 +595,11 @@ static int settings_unregister_write_resp_callback(settings_t *ctx)
  */
 static int settings_register_read_by_idx_resp_callback(settings_t *ctx)
 {
-  if (ctx->read_by_idx_resp_cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                    SBP_MSG_SETTINGS_READ_BY_INDEX_RESP,
-                                    settings_read_by_idx_resp_callback,
-                                    ctx,
-                                    &ctx->read_by_idx_resp_cb_node)
-      != 0) {
-    ctx->client_iface.log(log_err, "error registering settings read by idx resp callback");
-    return -1;
-  }
-
-  ctx->read_by_idx_resp_cb_registered = true;
-  return 0;
+  return settings_register_cb(ctx,
+                              SBP_MSG_SETTINGS_READ_BY_INDEX_RESP,
+                              settings_read_by_idx_resp_callback,
+                              &ctx->read_by_idx_resp_cb_registered,
+                              &ctx->read_by_idx_resp_cb_node);
 }
 
 /**
@@ -665,23 +631,11 @@ static int settings_unregister_read_by_idx_resp_callback(settings_t *ctx)
  */
 static int settings_register_read_by_idx_done_callback(settings_t *ctx)
 {
-  if (ctx->read_by_idx_done_cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  if (ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                    SBP_MSG_SETTINGS_READ_BY_INDEX_DONE,
-                                    settings_read_by_idx_done_callback,
-                                    ctx,
-                                    &ctx->read_by_idx_done_cb_node)
-      != 0) {
-    ctx->client_iface.log(log_err, "error registering settings read by idx done callback");
-    return -1;
-  }
-
-  ctx->read_by_idx_done_cb_registered = true;
-  return 0;
+  return settings_register_cb(ctx,
+                              SBP_MSG_SETTINGS_READ_BY_INDEX_DONE,
+                              settings_read_by_idx_done_callback,
+                              &ctx->read_by_idx_done_cb_registered,
+                              &ctx->read_by_idx_done_cb_node);
 }
 
 /**
