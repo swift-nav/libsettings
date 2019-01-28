@@ -23,13 +23,16 @@ if (NOT MSVC)
         )
 
         set(PYTHON_GENERATED_LIB "python${PYTHON_VERSION}-gen")
-        execute_process(COMMAND CMD /c ${PYTHON} -c "import sys;print(sys.real_prefix)" OUTPUT_VARIABLE PYTHON_PATH_REAL OUTPUT_STRIP_TRAILING_WHITESPACE)
         add_custom_command(
             OUTPUT ${LIBSETTINGS_VENV}
             COMMAND gendef - c:/windows/system32/python${PYTHON_VERSION}.dll > ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def
             COMMAND dlltool --dllname python${PYTHON_VERSION}.dll --def ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def --output-lib ${CMAKE_BINARY_DIR}/lib${PYTHON_GENERATED_LIB}.a
         )
-        file(WRITE "${PYTHON_PATH_REAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{VIRTUAL_ENV}/lib/site-packages")
+
+        execute_process(COMMAND CMD /c ${PYTHON} -c "import sys;print(getattr(sys, 'real_prefix', ''))" OUTPUT_VARIABLE PYTHON_PATH_REAL OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if (${PYTHON_PATH_REAL}) 
+            file(WRITE "${PYTHON_PATH_REAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{VIRTUAL_ENV}/lib/site-packages")
+        endif ()
 
         add_custom_command(
             OUTPUT "${PY_OUTPUT}"

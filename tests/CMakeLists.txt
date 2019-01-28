@@ -2,6 +2,8 @@ if (CMAKE_CROSSCOMPILING)
   message(STATUS "Skipping unit tests, cross compiling")
 elseif (MSVC)
   message(STATUS "Skipping unit tests, MSVC detected")
+elseif (SKIP_UNIT_TESTS)
+  message(STATUS "Skipping unit tests requested")
 else ()
   # Download and unpack googletest at configure time
   configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
