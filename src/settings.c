@@ -122,10 +122,10 @@ typedef struct settings_s {
   settings_api_t client_iface;
   uint16_t sender_id;
   /* TODO: make independent structure of these */
-  char resp_section[SBP_PAYLOAD_SIZE_MAX];
-  char resp_name[SBP_PAYLOAD_SIZE_MAX];
-  char resp_value[SBP_PAYLOAD_SIZE_MAX];
-  char resp_type[SBP_PAYLOAD_SIZE_MAX];
+  char resp_section[SETTINGS_BUFLEN];
+  char resp_name[SETTINGS_BUFLEN];
+  char resp_value[SETTINGS_BUFLEN];
+  char resp_type[SETTINGS_BUFLEN];
   bool read_by_idx_done;
   settings_write_res_t status;
 } settings_t;
@@ -189,7 +189,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   uint8_t write_result = SETTINGS_WR_OK;
   setting_data_update_value(setting_data, value, &write_result);
 
-  uint8_t resp[SBP_PAYLOAD_SIZE_MAX];
+  uint8_t resp[SETTINGS_BUFLEN] = {0};
   uint8_t resp_len = 0;
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
   write_response->status = write_result;
@@ -197,7 +197,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
   int l = setting_data_format(setting_data,
                               false,
                               write_response->setting,
-                              SBP_PAYLOAD_SIZE_MAX - resp_len,
+                              sizeof(resp) - resp_len,
                               NULL);
   if (l < 0) {
     return;
@@ -268,10 +268,10 @@ static void settings_read_resp_callback(uint16_t sender_id,
   if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type)
       >= SETTINGS_TOKENS_VALUE) {
     if (value) {
-      strncpy(ctx->resp_value, value, SBP_PAYLOAD_SIZE_MAX);
+      strncpy(ctx->resp_value, value, sizeof(ctx->resp_value));
     }
     if (type) {
-      strncpy(ctx->resp_type, type, SBP_PAYLOAD_SIZE_MAX);
+      strncpy(ctx->resp_type, type, sizeof(ctx->resp_type));
     }
   } else {
     ctx->client_iface.log(log_warning, "read response parsing failed");
@@ -736,7 +736,7 @@ static int setting_perform_request_reply(settings_t *ctx,
  */
 static int setting_register(settings_t *ctx, setting_data_t *setting_data)
 {
-  char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
+  char msg[SETTINGS_BUFLEN] = {0};
   uint8_t msg_header_len;
 
   int msg_len = setting_data_format(setting_data, true, msg, sizeof(msg), &msg_header_len);
@@ -766,7 +766,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
 {
   int result = 0;
   /* Build message */
-  char msg[SBP_PAYLOAD_SIZE_MAX];
+  char msg[SETTINGS_BUFLEN] = {0};
   uint8_t msg_len = 0;
   int l;
 
@@ -965,7 +965,7 @@ settings_write_res_t settings_write(settings_t *ctx,
                                     size_t value_len,
                                     settings_type_t type)
 {
-  char msg[SBP_PAYLOAD_SIZE_MAX] = {0};
+  char msg[SETTINGS_BUFLEN] = {0};
   uint8_t msg_header_len;
 
   if (settings_register_write_resp_callback(ctx) != 0) {
@@ -988,7 +988,7 @@ settings_write_res_t settings_write(settings_t *ctx,
   }
 
   int msg_len =
-    setting_data_format(setting_data, false, msg, SBP_PAYLOAD_SIZE_MAX, &msg_header_len);
+    setting_data_format(setting_data, false, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting write error format failed");
@@ -1059,7 +1059,7 @@ int settings_read(settings_t *ctx,
   assert(value_len);
 
   /* Build message */
-  char msg[SBP_PAYLOAD_SIZE_MAX];
+  char msg[SETTINGS_BUFLEN] = {0};
   int msg_len = settings_format(section, name, NULL, NULL, msg, sizeof(msg));
 
   if (msg_len < 0) {

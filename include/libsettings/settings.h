@@ -43,6 +43,8 @@ typedef int settings_type_t;
  */
 typedef struct settings_s settings_t;
 
+#define SETTINGS_BUFLEN 255
+
 /**
  * @brief   Standard settings type definitions.
  */
