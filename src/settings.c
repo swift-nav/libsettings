@@ -186,8 +186,7 @@ static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *ms
     return;
   }
 
-  uint8_t write_result = SETTINGS_WR_OK;
-  setting_data_update_value(setting_data, value, &write_result);
+  settings_write_res_t write_result = setting_data_update_value(setting_data, value);
 
   uint8_t resp[SETTINGS_BUFLEN] = {0};
   uint8_t resp_len = 0;
@@ -229,11 +228,10 @@ static int settings_update_watch_only(settings_t *ctx, const char *msg, uint8_t 
     return 0;
   }
 
-  uint8_t write_result = SETTINGS_WR_OK;
-  setting_data_update_value(setting_data, value, &write_result);
-  if (write_result != SETTINGS_WR_OK) {
+  if (setting_data_update_value(setting_data, value) != SETTINGS_WR_OK) {
     return -1;
   }
+
   return 0;
 }
 

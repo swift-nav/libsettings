@@ -85,16 +85,13 @@ void setting_data_destroy(setting_data_t *setting_data)
   }
 }
 
-void setting_data_update_value(setting_data_t *setting_data,
-                               const char *value,
-                               uint8_t *write_result)
+settings_write_res_t setting_data_update_value(setting_data_t *setting_data,
+                                               const char *value)
 {
   if (setting_data->readonly) {
-    *write_result = SETTINGS_WR_READ_ONLY;
-    return;
+    return SETTINGS_WR_READ_ONLY;
   }
 
-  *write_result = SETTINGS_WR_OK;
   /* Store copy and update value */
   memcpy(setting_data->var_copy, setting_data->var, setting_data->var_len);
   if (!setting_data->type_data->from_string(setting_data->type_data->priv,
@@ -103,27 +100,27 @@ void setting_data_update_value(setting_data_t *setting_data,
                                             value)) {
     /* Revert value if conversion fails */
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
-    *write_result = SETTINGS_WR_PARSE_FAILED;
-    return;
+    return SETTINGS_WR_PARSE_FAILED;
   }
 
   if (NULL == setting_data->notify) {
-    return;
+    return SETTINGS_WR_OK;
   }
 
   /* Call notify function */
-  int notify_response = setting_data->notify(setting_data->notify_context);
+  settings_write_res_t res = setting_data->notify(setting_data->notify_context);
 
   if (setting_data->watchonly) {
     /* No need for actions */
-    return;
+    return SETTINGS_WR_OK;
   }
 
-  if (notify_response != SETTINGS_WR_OK) {
+  if (res != SETTINGS_WR_OK) {
     /* Revert value if notify returns error */
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
-    *write_result = notify_response;
   }
+
+  return res;
 }
 
 int setting_data_format(setting_data_t *setting_data,

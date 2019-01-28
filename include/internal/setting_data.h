@@ -77,11 +77,10 @@ void setting_data_destroy(setting_data_t *setting_data);
  * on success
  * @param setting_data: setting to update
  * @param value: value string to evaluate
- * @param write_result: result to pass to write response
+ * @return result of updating the value
  */
-void setting_data_update_value(setting_data_t *setting_data,
-                               const char *value,
-                               uint8_t *write_result);
+settings_write_res_t setting_data_update_value(setting_data_t *setting_data,
+                                               const char *value);
 
 /**
  * @brief setting_data_format - formats a fully formed setting message
