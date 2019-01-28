@@ -24,6 +24,9 @@ Open source SwiftNav settings API library.
 * CMake
 * virtualenv (pip install virtualenv)
 
+You can do without 'virtualenv' but beaware that in this case contents of
+requirements-unix.txt shall be installed to your Python environment.
+
 #### Commands
 
 ``` sh
@@ -40,7 +43,7 @@ python setup.py sdist --dist-dir python
 
 #### NOTE
 
-This process will overwrite <PYTHON_PATH>/Lib/site-packages/virtualenv_path_extensions.pth
+In case of virtualenv this process will overwrite <PYTHON_PATH>/Lib/site-packages/virtualenv_path_extensions.pth
 This is a file used by virtualenv and doesn't belong to standard python installation.
 In case you are using virtualenv with other projects you might want to check if this file
 exists in your setup and make a copy of it.
@@ -48,6 +51,9 @@ exists in your setup and make a copy of it.
 #### Prerequisities for Python 2.7.x or 3.4.x
 
 * virtualenvwrapper-win (pip install virtualenvwrapper-win)
+
+You can do without 'virtualenvwrapper-win' but beaware that in this case
+contents of requirements-*.txt should be installed to your Python environment.
 
 #### Commands for Python 2.7.x or 3.4.x
 

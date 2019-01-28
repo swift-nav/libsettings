@@ -17,7 +17,6 @@ matrix:
        - export CXX=g++-6
        - export TRAVIS_COMPILER=gcc-6
        - export CC_FOR_BUILD=gcc-6
-       - pip install setuptools setuptools_scm virtualenv
      script:
        - mkdir build; cd build; cmake ../; make
    - os: windows

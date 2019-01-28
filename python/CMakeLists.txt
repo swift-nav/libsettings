@@ -40,11 +40,7 @@ if (NOT MSVC)
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         )
     else (WIN32)
-        add_custom_command(
-            OUTPUT ${LIBSETTINGS_VENV}
-            COMMAND virtualenv ${LIBSETTINGS_VENV} -p ${PYTHON}
-            COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
-        )
+        find_program(VIRTUALENV virtualenv)
 
         execute_process(
             COMMAND ${PYTHON} -c "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"
@@ -52,11 +48,29 @@ if (NOT MSVC)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
 
-        add_custom_command(
-            OUTPUT "${PY_OUTPUT}"
-            COMMAND PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/${LIBSETTINGS_VENV}/lib/python${PYTHON_VERSION}/site-packages ${PYTHON} ${SETUP_PY} build_ext --force
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        )
+        if (VIRTUALENV)
+            add_custom_command(
+                OUTPUT ${LIBSETTINGS_VENV}
+                COMMAND virtualenv ${LIBSETTINGS_VENV} -p ${PYTHON}
+                COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
+            )
+            add_custom_command(
+                OUTPUT "${PY_OUTPUT}"
+                COMMAND PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/${LIBSETTINGS_VENV}/lib/python${PYTHON_VERSION}/site-packages ${PYTHON} ${SETUP_PY} build_ext --force
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+            )
+        else (VIRTUALENV)
+            add_custom_command(
+                OUTPUT ${LIBSETTINGS_VENV}
+                COMMAND pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
+            )
+            add_custom_command(
+                OUTPUT "${PY_OUTPUT}"
+                COMMAND ${PYTHON} ${SETUP_PY} build_ext --force
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+            )
+        endif (VIRTUALENV)
+
     endif (WIN32)
     add_custom_target(libsettings.so ALL DEPENDS ${LIBSETTINGS_VENV} ${PY_OUTPUT})
 endif (NOT MSVC)
