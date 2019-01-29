@@ -79,8 +79,7 @@ void setting_data_destroy(setting_data_t *setting_data);
  * @param value: value string to evaluate
  * @return result of updating the value
  */
-settings_write_res_t setting_data_update_value(setting_data_t *setting_data,
-                                               const char *value);
+settings_write_res_t setting_data_update_value(setting_data_t *setting_data, const char *value);
 
 /**
  * @brief setting_data_format - formats a fully formed setting message

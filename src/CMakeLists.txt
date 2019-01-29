@@ -8,6 +8,7 @@ add_library(settings
             settings_util.c
             request_state.c
             setting_data.c
+            setting_sbp_cb.c
             setting_type.c
             setting_type_enum.c
             setting_type_float.c

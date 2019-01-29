@@ -82,6 +82,8 @@
 
 #include <internal/request_state.h>
 #include <internal/setting_data.h>
+#include <internal/setting_def.h>
+#include <internal/setting_sbp_cb.h>
 #include <internal/setting_type.h>
 #include <internal/setting_type_enum.h>
 #include <internal/setting_type_float.h>
@@ -94,539 +96,7 @@
 #define WATCH_INIT_TIMEOUT_MS 500
 #define WATCH_INIT_TRIES 5
 
-static int log_err = 3;
-static int log_warning = 4;
-
-/**
- * @brief Settings Context
- *
- * This is the main context for managing client interactions with
- * the settings manager. It implements the client messaging context
- * as well as the list of types and settings necessary to perform
- * the registration, watching and callback functionality of the client.
- */
-typedef struct settings_s {
-  type_data_t *type_data_list;
-  setting_data_t *setting_data_list;
-  request_state_t request_state;
-  bool register_resp_cb_registered;
-  bool write_cb_registered;
-  bool write_resp_cb_registered;
-  bool read_resp_cb_registered;
-  bool read_by_idx_resp_cb_registered;
-  bool read_by_idx_done_cb_registered;
-  sbp_msg_callbacks_node_t *register_resp_cb_node;
-  sbp_msg_callbacks_node_t *write_cb_node;
-  sbp_msg_callbacks_node_t *write_resp_cb_node;
-  sbp_msg_callbacks_node_t *read_resp_cb_node;
-  sbp_msg_callbacks_node_t *read_by_idx_resp_cb_node;
-  sbp_msg_callbacks_node_t *read_by_idx_done_cb_node;
-  settings_api_t client_iface;
-  uint16_t sender_id;
-  /* TODO: make independent structure of these */
-  char resp_section[SETTINGS_BUFLEN];
-  char resp_name[SETTINGS_BUFLEN];
-  char resp_value[SETTINGS_BUFLEN];
-  char resp_type[SETTINGS_BUFLEN];
-  bool read_by_idx_done;
-  settings_write_res_t status;
-} settings_t;
-
 static const char *const bool_enum_names[] = {"False", "True", NULL};
-
-/**
- * @brief setting_send_write_response
- * @param write_response: pre-formatted write response sbp message
- * @param len: length of the message
- * @return zero on success, -1 if message failed to send
- */
-static int setting_send_write_response(settings_t *ctx,
-                                       msg_settings_write_resp_t *write_response,
-                                       uint8_t len)
-{
-  settings_api_t *api = &ctx->client_iface;
-  if (api->send(api->ctx, SBP_MSG_SETTINGS_WRITE_RESP, len, (uint8_t *)write_response) != 0) {
-    api->log(log_err, "sending settings write response failed");
-    return -1;
-  }
-  return 0;
-}
-
-static void settings_update_value(settings_t *ctx, uint8_t *msg, uint8_t len)
-{
-  /* Extract parameters from message:
-   * 4 null terminated strings: section, name, value and type.
-   * Expect to find at least section, name and value.
-   */
-  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-  if (settings_parse((char *)msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->client_iface.log(log_warning, "settings register resp cb, error parsing setting");
-    return;
-  }
-
-  /* Look up setting data */
-  setting_data_t *setting_data = setting_data_lookup(ctx->setting_data_list, section, name);
-  if (setting_data == NULL) {
-    return;
-  }
-
-  if (setting_data->watchonly) {
-    return;
-  }
-
-  settings_write_res_t write_result = setting_data_update_value(setting_data, value);
-
-  uint8_t resp[SETTINGS_BUFLEN] = {0};
-  uint8_t resp_len = 0;
-  msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
-  write_response->status = write_result;
-  resp_len += sizeof(write_response->status);
-  int l = setting_data_format(setting_data,
-                              false,
-                              write_response->setting,
-                              sizeof(resp) - resp_len,
-                              NULL);
-  if (l < 0) {
-    return;
-  }
-  resp_len += l;
-
-  setting_send_write_response(ctx, write_response, resp_len);
-}
-
-/**
- * @brief settings_register_resp_callback - callback for SBP_MSG_SETTINGS_REGISTER_RESP
- */
-static void settings_register_resp_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
-{
-  settings_t *ctx = (settings_t *)context;
-  (void)sender_id;
-
-  if (sender_id != SBP_SENDER_ID) {
-    ctx->client_iface.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
-    return;
-  }
-
-  /* Check for a response to a pending registration request */
-  int state = request_state_check(&ctx->request_state, &ctx->client_iface, (char *)msg, len);
-
-  if (state < 0) {
-    ctx->client_iface.log(log_warning, "settings register resp cb, register req/resp mismatch");
-    return;
-  }
-  
-  if (state > 0) {
-    ctx->client_iface.log(log_warning, "settings register resp cb, no pending registration request");
-    return;
-  }
-
-  settings_update_value(ctx, msg, len);
-}
-
-/**
- * @brief settings_write_callback - callback for SBP_MSG_SETTINGS_WRITE
- */
-static void settings_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
-{
-  settings_t *ctx = (settings_t *)context;
-  (void)sender_id;
-
-  if (sender_id != SBP_SENDER_ID) {
-    ctx->client_iface.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
-    return;
-  }
-
-  settings_update_value(ctx, msg, len);
-}
-
-static int settings_update_watch_only(settings_t *ctx, const char *msg, uint8_t len)
-{
-  /* Extract parameters from message:
-   * 4 null terminated strings: section, name, value and type
-   * Expect to find at least section, name and value.
-   */
-  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-  if (settings_parse(msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->client_iface.log(log_warning, "updating watched values failed, error parsing setting");
-    return -1;
-  }
-
-  /* Look up setting data */
-  setting_data_t *setting_data = setting_data_lookup(ctx->setting_data_list, section, name);
-  if (setting_data == NULL) {
-    return 0;
-  }
-
-  if (!setting_data->watchonly) {
-    return 0;
-  }
-
-  if (setting_data_update_value(setting_data, value) != SETTINGS_WR_OK) {
-    return -1;
-  }
-
-  return 0;
-}
-
-/**
- * @brief settings_read_resp_callback - callback for SBP_MSG_SETTINGS_READ_RESP
- */
-static void settings_read_resp_callback(uint16_t sender_id,
-                                        uint8_t len,
-                                        uint8_t msg[],
-                                        void *context)
-{
-  (void)sender_id;
-  assert(msg);
-  assert(context);
-
-  settings_t *ctx = (settings_t *)context;
-  const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
-
-  /* Check for a response to a pending request */
-  int res =
-    request_state_check(&ctx->request_state, &ctx->client_iface, read_response->setting, len);
-
-  if (res != 0) {
-    return;
-  }
-
-  if (settings_update_watch_only(ctx, read_response->setting, len) != 0) {
-    ctx->client_iface.log(log_warning, "error in settings read response message");
-  }
-
-  const char *value = NULL, *type = NULL;
-  if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type)
-      >= SETTINGS_TOKENS_VALUE) {
-    if (value) {
-      strncpy(ctx->resp_value, value, sizeof(ctx->resp_value));
-    }
-    if (type) {
-      strncpy(ctx->resp_type, type, sizeof(ctx->resp_type));
-    }
-  } else {
-    ctx->client_iface.log(log_warning, "read response parsing failed");
-    ctx->resp_value[0] = '\0';
-    ctx->resp_type[0] = '\0';
-  }
-}
-
-/**
- * @brief settings_write_resp_callback - callback for
- * SBP_MSG_SETTINGS_WRITE_RESP
- */
-static void settings_write_resp_callback(uint16_t sender_id,
-                                         uint8_t len,
-                                         uint8_t msg[],
-                                         void *context)
-{
-  (void)sender_id;
-  settings_t *ctx = (settings_t *)context;
-  msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)msg;
-
-  ctx->status = write_response->status;
-
-  /* Check for a response to a pending request */
-  request_state_check(&ctx->request_state,
-                      &ctx->client_iface,
-                      write_response->setting,
-                      len - sizeof(write_response->status));
-
-  if (write_response->status != SETTINGS_WR_OK) {
-    /* Enable this warning back after ESD-1022 is fixed
-     * ctx->client_iface.log(log_warning,
-     *                       "setting write rejected (code: %d), not updating watched values",
-     *                        write_response->status);
-     */
-    return;
-  }
-
-  if (settings_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
-      != 0) {
-    ctx->client_iface.log(log_warning, "error in settings read response message");
-  }
-}
-
-/**
- * @brief settings_read_by_idx_resp_callback - callback for
- * SBP_MSG_SETTINGS_READ_BY_IDX_RESP
- */
-static void settings_read_by_idx_resp_callback(uint16_t sender_id,
-                                               uint8_t len,
-                                               uint8_t msg[],
-                                               void *context)
-{
-  (void)sender_id;
-  settings_t *ctx = (settings_t *)context;
-  msg_settings_read_by_index_resp_t *resp = (msg_settings_read_by_index_resp_t *)msg;
-
-  /* Check for a response to a pending request */
-  int res =
-    request_state_check(&ctx->request_state, &ctx->client_iface, (char *)msg, sizeof(resp->index));
-
-  if (res != 0) {
-    return;
-  }
-
-  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-
-  if (settings_parse(resp->setting, len - sizeof(resp->index), &section, &name, &value, &type)
-      > 0) {
-    if (section) {
-      strncpy(ctx->resp_section, section, sizeof(ctx->resp_section));
-    }
-    if (name) {
-      strncpy(ctx->resp_name, name, sizeof(ctx->resp_name));
-    }
-    if (value) {
-      strncpy(ctx->resp_value, value, sizeof(ctx->resp_value));
-    }
-    if (type) {
-      strncpy(ctx->resp_type, type, sizeof(ctx->resp_type));
-    }
-  }
-}
-
-/**
- * @brief settings_read_by_idx_done_callback - callback for
- * SBP_MSG_SETTINGS_READ_BY_IDX_DONE
- */
-static void settings_read_by_idx_done_callback(uint16_t sender_id,
-                                               uint8_t len,
-                                               uint8_t msg[],
-                                               void *context)
-{
-  (void)sender_id;
-  (void)len;
-  (void)msg;
-
-  settings_t *ctx = (settings_t *)context;
-
-  ctx->resp_section[0] = '\0';
-  ctx->resp_name[0] = '\0';
-  ctx->resp_value[0] = '\0';
-  ctx->resp_type[0] = '\0';
-  ctx->read_by_idx_done = true;
-
-  int ret = request_state_signal(&ctx->request_state,
-                                 &ctx->client_iface,
-                                 SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
-
-  if (ret != 0) {
-    ctx->client_iface.log(log_warning, "Signaling request state failed with code: %d", ret);
-  }
-}
-
-static int settings_register_cb(settings_t *ctx,
-                                uint16_t msg_id,
-                                sbp_msg_callback_t cb,
-                                bool *cb_registered,
-                                sbp_msg_callbacks_node_t **cb_node)
-{
-  if (*cb_registered) {
-    /* Already done */
-    return 0;
-  }
-
-  int res = ctx->client_iface.register_cb(ctx->client_iface.ctx,
-                                          msg_id,
-                                          cb,
-                                          ctx,
-                                          cb_node);
-
-  if (res != 0) {
-    ctx->client_iface.log(log_err, "error registering callback for msg id %d", msg_id);
-    return -1;
-  }
-
-  *cb_registered = true;
-  return 0;
-}
-
-static int settings_unregister_cb(settings_t *ctx,
-                                  bool *cb_registered,
-                                  sbp_msg_callbacks_node_t **cb_node)
-{
-  if (!*cb_registered) {
-    return 0;
-  }
-
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering callback");
-    return -1;
-  }
-
-  *cb_registered = false;
-  return 0;
-}
-
-/**
- * @brief settings_register_register_resp_callback - register callback for
- * SBP_MSG_SETTINGS_REGISTER_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if registration failed
- */
-static int settings_register_register_resp_callback(settings_t *ctx)
-{
-  return settings_register_cb(ctx,
-                              SBP_MSG_SETTINGS_REGISTER_RESP,
-                              settings_register_resp_callback,
-                              &ctx->register_resp_cb_registered,
-                              &ctx->register_resp_cb_node);
-}
-
-/**
- * @brief settings_unregister_register_resp_callback - deregister callback for
- * SBP_MSG_SETTINGS_REGISTER_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if deregistration failed
- */
-static int settings_unregister_register_resp_callback(settings_t *ctx)
-{
-  return settings_unregister_cb(ctx,
-                                &ctx->register_resp_cb_registered,
-                                &ctx->register_resp_cb_node);
-}
-
-/**
- * @brief settings_register_write_callback - register callback for
- * SBP_MSG_SETTINGS_WRITE
- * @param ctx: settings context
- * @return zero on success, -1 if registration failed
- */
-static int settings_register_write_callback(settings_t *ctx)
-{
-  return settings_register_cb(ctx,
-                              SBP_MSG_SETTINGS_WRITE,
-                              settings_write_callback,
-                              &ctx->write_cb_registered,
-                              &ctx->write_cb_node);
-}
-
-/**
- * @brief settings_unregister_write_callback - deregister callback for
- * SBP_MSG_SETTINGS_WRITE
- * @param ctx: settings context
- * @return zero on success, -1 if deregistration failed
- */
-static int settings_unregister_write_callback(settings_t *ctx)
-{
-  return settings_unregister_cb(ctx,
-                                &ctx->write_cb_registered,
-                                &ctx->write_cb_node);
-}
-
-/**
- * @brief settings_register_read_resp_callback - register callback for
- * SBP_MSG_SETTINGS_READ_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if registration failed
- */
-static int settings_register_read_resp_callback(settings_t *ctx)
-{
-  return settings_register_cb(ctx,
-                              SBP_MSG_SETTINGS_READ_RESP,
-                              settings_read_resp_callback,
-                              &ctx->read_resp_cb_registered,
-                              &ctx->read_resp_cb_node);
-}
-
-/**
- * @brief settings_unregister_read_resp_callback - deregister callback for
- * SBP_MSG_SETTINGS_READ_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if deregistration failed
- */
-static int settings_unregister_read_resp_callback(settings_t *ctx)
-{
-  return settings_unregister_cb(ctx,
-                                &ctx->read_resp_cb_registered,
-                                &ctx->read_resp_cb_node);
-}
-
-/**
- * @brief settings_register_write_resp_callback - register callback for
- * SBP_MSG_SETTINGS_WRITE_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if registration failed
- */
-static int settings_register_write_resp_callback(settings_t *ctx)
-{
-  return settings_register_cb(ctx,
-                              SBP_MSG_SETTINGS_WRITE_RESP,
-                              settings_write_resp_callback,
-                              &ctx->write_resp_cb_registered,
-                              &ctx->write_resp_cb_node);
-}
-
-/**
- * @brief settings_unregister_write_resp_callback - deregister callback for
- * SBP_MSG_SETTINGS_WRITE_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if deregistration failed
- */
-static int settings_unregister_write_resp_callback(settings_t *ctx)
-{
-  return settings_unregister_cb(ctx,
-                                &ctx->write_resp_cb_registered,
-                                &ctx->write_resp_cb_node);
-}
-
-/**
- * @brief settings_register_read_by_idx_resp_callback - register callback for
- * SBP_MSG_SETTINGS_READ_BY_INDEX_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if registration failed
- */
-static int settings_register_read_by_idx_resp_callback(settings_t *ctx)
-{
-  return settings_register_cb(ctx,
-                              SBP_MSG_SETTINGS_READ_BY_INDEX_RESP,
-                              settings_read_by_idx_resp_callback,
-                              &ctx->read_by_idx_resp_cb_registered,
-                              &ctx->read_by_idx_resp_cb_node);
-}
-
-/**
- * @brief settings_unregister_read_by_idx_resp_callback - deregister callback for
- * SBP_MSG_SETTINGS_READ_BY_INDEX_RESP
- * @param ctx: settings context
- * @return zero on success, -1 if deregistration failed
- */
-static int settings_unregister_read_by_idx_resp_callback(settings_t *ctx)
-{
-  return settings_unregister_cb(ctx,
-                                &ctx->read_by_idx_resp_cb_registered,
-                                &ctx->read_by_idx_resp_cb_node);
-}
-
-/**
- * @brief settings_register_read_by_idx_done_callback - register callback for
- * SBP_MSG_SETTINGS_READ_BY_INDEX_DONE
- * @param ctx: settings context
- * @return zero on success, -1 if registration failed
- */
-static int settings_register_read_by_idx_done_callback(settings_t *ctx)
-{
-  return settings_register_cb(ctx,
-                              SBP_MSG_SETTINGS_READ_BY_INDEX_DONE,
-                              settings_read_by_idx_done_callback,
-                              &ctx->read_by_idx_done_cb_registered,
-                              &ctx->read_by_idx_done_cb_node);
-}
-
-/**
- * @brief settings_unregister_read_by_idx_done_callback - deregister callback for
- * SBP_MSG_SETTINGS_READ_BY_INDEX_DONE
- * @param ctx: settings context
- * @return zero on success, -1 if deregistration failed
- */
-static int settings_unregister_read_by_idx_done_callback(settings_t *ctx)
-{
-  return settings_unregister_cb(ctx,
-                                &ctx->read_by_idx_done_cb_registered,
-                                &ctx->read_by_idx_done_cb_node);
-}
 
 /**
  * @brief setting_perform_request_reply_from
@@ -784,8 +254,8 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
   }
   msg_len += l;
 
-  if (settings_register_read_resp_callback(ctx) != 0) {
-    ctx->client_iface.log(log_err, "error registering settings read callback");
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_RESP) != 0) {
+    ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
   }
 
@@ -798,7 +268,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
                                               WATCH_INIT_TRIES,
                                               SBP_SENDER_ID);
 
-  settings_unregister_read_resp_callback(ctx);
+  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
   return result;
 }
 
@@ -874,7 +344,7 @@ static int settings_add_setting(settings_t *ctx,
   setting_data_append(&ctx->setting_data_list, setting_data);
 
   if (watchonly) {
-    if (settings_register_write_resp_callback(ctx) != 0) {
+    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) != 0) {
       ctx->client_iface.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
@@ -884,10 +354,10 @@ static int settings_add_setting(settings_t *ctx,
                             name);
     }
   } else {
-    if (settings_register_register_resp_callback(ctx) != 0) {
+    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_REGISTER_RESP) != 0) {
       ctx->client_iface.log(log_err, "error registering settings register resp callback");
     }
-    if (settings_register_write_callback(ctx) != 0) {
+    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE) != 0) {
       ctx->client_iface.log(log_err, "error registering settings write callback");
     }
     if (setting_register(ctx, setting_data) != 0) {
@@ -973,8 +443,9 @@ settings_write_res_t settings_write(settings_t *ctx,
   char msg[SETTINGS_BUFLEN] = {0};
   uint8_t msg_header_len;
 
-  if (settings_register_write_resp_callback(ctx) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) != 0) {
     ctx->client_iface.log(log_err, "error registering settings write response callback");
+    return -1;
   }
 
   setting_data_t *setting_data = setting_data_create(ctx->type_data_list,
@@ -992,8 +463,7 @@ settings_write_res_t settings_write(settings_t *ctx,
     return -1;
   }
 
-  int msg_len =
-    setting_data_format(setting_data, false, msg, sizeof(msg), &msg_header_len);
+  int msg_len = setting_data_format(setting_data, false, msg, sizeof(msg), &msg_header_len);
 
   if (msg_len < 0) {
     ctx->client_iface.log(log_err, "setting write error format failed");
@@ -1072,7 +542,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-  if (settings_register_read_resp_callback(ctx) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_RESP) != 0) {
     ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
   }
@@ -1091,7 +561,7 @@ int settings_read(settings_t *ctx,
                                                WATCH_INIT_TRIES,
                                                SBP_SENDER_ID);
 
-  settings_unregister_read_resp_callback(ctx);
+  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
 
   if (res != 0) {
     return res;
@@ -1170,12 +640,12 @@ int settings_read_by_idx(settings_t *ctx,
 
   int res = -1;
 
-  if (settings_register_read_by_idx_resp_callback(ctx) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP) != 0) {
     ctx->client_iface.log(log_err, "error registering settings read by idx resp callback");
     goto read_by_idx_cleanup;
   }
 
-  if (settings_register_read_by_idx_done_callback(ctx) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE) != 0) {
     ctx->client_iface.log(log_err, "error registering settings read by idx done callback");
     goto read_by_idx_cleanup;
   }
@@ -1206,8 +676,8 @@ int settings_read_by_idx(settings_t *ctx,
   strncpy(type, ctx->resp_type, type_len);
 
 read_by_idx_cleanup:
-  settings_unregister_read_by_idx_resp_callback(ctx);
-  settings_unregister_read_by_idx_done_callback(ctx);
+  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
+  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE);
 
   /* Error */
   if (res != 0) {
@@ -1240,14 +710,9 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
 
   ctx->type_data_list = NULL;
   ctx->setting_data_list = NULL;
+  ctx->sbp_cb_list = NULL;
 
   ctx->request_state.pending = false;
-
-  ctx->write_cb_registered = false;
-  ctx->write_resp_cb_registered = false;
-  ctx->read_resp_cb_registered = false;
-  ctx->read_by_idx_resp_cb_registered = false;
-  ctx->read_by_idx_done_cb_registered = false;
 
   /* Register standard types */
   settings_type_t type;
@@ -1294,12 +759,12 @@ void settings_destroy(settings_t **ctx)
   assert(ctx != NULL);
   assert(*ctx != NULL);
   (*ctx)->client_iface.log(log_err, "Releasing settings framework");
-  settings_unregister_register_resp_callback(*ctx);
-  settings_unregister_write_callback(*ctx);
-  settings_unregister_write_resp_callback(*ctx);
-  settings_unregister_read_resp_callback(*ctx);
-  settings_unregister_read_by_idx_resp_callback(*ctx);
-  settings_unregister_read_by_idx_done_callback(*ctx);
+  setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_REGISTER_RESP);
+  setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_WRITE);
+  setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_WRITE_RESP);
+  setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_READ_RESP);
+  setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
+  setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE);
 
   members_destroy(*ctx);
   free(*ctx);
