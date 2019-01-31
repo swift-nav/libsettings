@@ -254,7 +254,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
   }
   msg_len += l;
 
-  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_RESP) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_RESP) < 0) {
     ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
   }
@@ -344,7 +344,7 @@ static int settings_add_setting(settings_t *ctx,
   setting_data_append(&ctx->setting_data_list, setting_data);
 
   if (watchonly) {
-    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) != 0) {
+    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) < 0) {
       ctx->client_iface.log(log_err, "error registering settings write resp callback");
     }
     if (setting_read_watched_value(ctx, setting_data) != 0) {
@@ -354,10 +354,10 @@ static int settings_add_setting(settings_t *ctx,
                             name);
     }
   } else {
-    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_REGISTER_RESP) != 0) {
+    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_REGISTER_RESP) < 0) {
       ctx->client_iface.log(log_err, "error registering settings register resp callback");
     }
-    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE) != 0) {
+    if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE) < 0) {
       ctx->client_iface.log(log_err, "error registering settings write callback");
     }
     if (setting_register(ctx, setting_data) != 0) {
@@ -443,7 +443,7 @@ settings_write_res_t settings_write(settings_t *ctx,
   char msg[SETTINGS_BUFLEN] = {0};
   uint8_t msg_header_len;
 
-  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) < 0) {
     ctx->client_iface.log(log_err, "error registering settings write response callback");
     return -1;
   }
@@ -542,7 +542,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_RESP) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_RESP) < 0) {
     ctx->client_iface.log(log_err, "error registering settings read resp callback");
     return -1;
   }
@@ -640,12 +640,12 @@ int settings_read_by_idx(settings_t *ctx,
 
   int res = -1;
 
-  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP) < 0) {
     ctx->client_iface.log(log_err, "error registering settings read by idx resp callback");
     goto read_by_idx_cleanup;
   }
 
-  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE) != 0) {
+  if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE) < 0) {
     ctx->client_iface.log(log_err, "error registering settings read by idx done callback");
     goto read_by_idx_cleanup;
   }
