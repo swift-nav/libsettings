@@ -114,7 +114,7 @@ static void setting_register_resp_callback(uint16_t sender_id, uint8_t len, uint
     return;
   }
 
-  setting_update_value(ctx, msg, len);
+  setting_update_value(ctx, (uint8_t *)resp->setting, len - sizeof(resp->status));
 }
 
 static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
