@@ -192,26 +192,31 @@ void setting_data_append(setting_data_t **data_list, setting_data_t *setting_dat
   }
 }
 
-void setting_data_remove(setting_data_t *data_list, setting_data_t **setting_data)
+void setting_data_remove(setting_data_t **data_list, setting_data_t **setting_data)
 {
-  if (data_list == NULL) {
-    return;
-  }
+  assert(*data_list != NULL);
 
-  setting_data_t *s;
-  /* Find element before the one to remove */
-  for (s = data_list; s->next != NULL; s = s->next) {
-    if (s->next != *setting_data) {
+  setting_data_t *curr = *data_list;
+  setting_data_t *prev = NULL;
+  /* Find element to remove */
+  while (curr != NULL) {
+    if (curr != *setting_data) {
+      prev = curr;
+      curr = curr->next;
       continue;
     }
 
-    struct setting_data_s *to_be_freed = s->next;
+    if (prev == NULL) {
+      /* This is the first item in the list make next one the new list head */
+      *data_list = curr->next;
+    } else {
+      prev->next = curr->next;
+    }
 
+    setting_data_destroy(*setting_data);
+    free(*setting_data);
     *setting_data = NULL;
-    s->next = s->next->next;
-
-    setting_data_destroy(to_be_freed);
-    free(to_be_freed);
+    break;
   }
 }
 

@@ -365,7 +365,7 @@ static int settings_add_setting(settings_t *ctx,
                             "error registering %s.%s with settings manager",
                             section,
                             name);
-      setting_data_remove(ctx->setting_data_list, &setting_data);
+      setting_data_remove(&ctx->setting_data_list, &setting_data);
       return -1;
     }
   }

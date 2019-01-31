@@ -110,7 +110,7 @@ void setting_data_append(setting_data_t **data_list, setting_data_t *setting_dat
  * @param data_list: setting data list
  * @param setting_data: setting to remove
  */
-void setting_data_remove(setting_data_t *data_list, setting_data_t **setting_data);
+void setting_data_remove(setting_data_t **data_list, setting_data_t **setting_data);
 
 /**
  * @brief setting_data_lookup - retrieves setting node from settings data list

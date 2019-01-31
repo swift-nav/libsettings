@@ -15,10 +15,11 @@
 #include <internal/setting_data.h>
 #include <internal/setting_type_enum.h>
 
-TEST(test_setting_data, format)
+static type_data_t *type_data_list = NULL;
+static const char *const enum_names[] = {"Test1", "Test2", NULL};
+
+static setting_data_t *create_setting_data()
 {
-  type_data_t *type_data_list = NULL;
-  const char *const enum_names[] = {"Test1", "Test2", NULL};
   settings_type_t type;
 
   int res = type_register(&type_data_list,
@@ -43,8 +44,17 @@ TEST(test_setting_data, format)
                                                      true,
                                                      false);
 
+  return setting_data;
+}
+
+TEST(test_setting_data, format)
+{
+  setting_data_t *setting_data = create_setting_data();
+
+  ASSERT_TRUE(setting_data != NULL);
+
   char buf[255] = {0};
-  res = setting_data_format(setting_data, true, buf, sizeof(buf), NULL);
+  int res = setting_data_format(setting_data, true, buf, sizeof(buf), NULL);
 
   char expected[] = {'s',  'e', 'c', 't', 'i', 'o', 'n',  '\0', 'n', 'a', 'm', 'e',
                      '\0', 'T', 'e', 's', 't', '1', '\0', 'e',  'n', 'u', 'm', ':',
@@ -55,4 +65,29 @@ TEST(test_setting_data, format)
   for (int i = 0; i < sizeof(expected); ++i) {
     EXPECT_EQ(expected[i], buf[i]);
   }
+}
+
+TEST(test_setting_data, list)
+{
+  setting_data_t *list = NULL;
+  setting_data_t *setting_data1 = create_setting_data();
+  setting_data_t *setting_data2 = create_setting_data();
+  setting_data_t *setting_data3 = create_setting_data();
+
+  setting_data_append(&list, setting_data1);
+  setting_data_append(&list, setting_data2);
+  setting_data_append(&list, setting_data3);
+
+  // Middle
+  setting_data_remove(&list, &setting_data2);
+  ASSERT_TRUE(list != NULL);
+  ASSERT_TRUE(setting_data2 == NULL);
+  // End
+  setting_data_remove(&list, &setting_data3);
+  ASSERT_TRUE(list != NULL);
+  ASSERT_TRUE(setting_data3 == NULL);
+  // One
+  setting_data_remove(&list, &setting_data1);
+  ASSERT_TRUE(list == NULL);
+  ASSERT_TRUE(setting_data1 == NULL);
 }
