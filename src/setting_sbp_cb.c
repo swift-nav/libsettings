@@ -93,16 +93,24 @@ static void setting_register_resp_callback(uint16_t sender_id, uint8_t len, uint
     return;
   }
 
+  msg_settings_register_resp_t *resp = (msg_settings_register_resp_t *)msg;
+
+  if (resp->status == SETTINGS_REG_PARSE_FAILED) {
+    /* In case the request was corrupted during transfer, let the timeout trigger
+     * and request be sent again, parse error is printed in sbp_settings_daemon */
+    return;
+  }
+
   /* Check for a response to a pending registration request */
-  int state = request_state_check(&ctx->request_state, &ctx->client_iface, (char *)msg, len);
+  int state = request_state_check(&ctx->request_state, &ctx->client_iface, resp->setting, len - sizeof(resp->status));
+
+  if (state > 0) {
+    /* No pending registration request */
+    return;
+  }
 
   if (state < 0) {
     ctx->client_iface.log(log_warning, "settings register resp cb, register req/resp mismatch");
-    return;
-  }
-  
-  if (state > 0) {
-    ctx->client_iface.log(log_warning, "settings register resp cb, no pending registration request");
     return;
   }
 
@@ -209,11 +217,9 @@ static void setting_write_resp_callback(uint16_t sender_id,
                       len - sizeof(write_response->status));
 
   if (write_response->status != SETTINGS_WR_OK) {
-    /* Enable this warning back after ESD-1022 is fixed
-     * ctx->client_iface.log(log_warning,
-     *                       "setting write rejected (code: %d), not updating watched values",
-     *                        write_response->status);
-     */
+    ctx->client_iface.log(log_warning,
+                          "setting write rejected (code: %d), not updating watched values",
+                          write_response->status);
     return;
   }
 
