@@ -49,7 +49,7 @@ static void setting_update_value(settings_t *ctx, uint8_t *msg, uint8_t len)
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   if (settings_parse((char *)msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->client_iface.log(log_warning, "settings register resp cb, error parsing setting");
+    ctx->client_iface.log(log_warning, "setting update value, error parsing setting");
     return;
   }
 
