@@ -369,6 +369,11 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id)
 
 int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id)
 {
+  if (ctx->sbp_cb_list == NULL) {
+    /* List is empty, nothing to unregister */
+    return 1;
+  }
+
   setting_sbp_cb_t *sbp_cb_list = ctx->sbp_cb_list;
 
   setting_sbp_cb_t *prev = NULL;
