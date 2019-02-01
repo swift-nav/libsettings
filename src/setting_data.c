@@ -194,7 +194,9 @@ void setting_data_append(setting_data_t **data_list, setting_data_t *setting_dat
 
 void setting_data_remove(setting_data_t **data_list, setting_data_t **setting_data)
 {
-  assert(*data_list != NULL);
+  assert(data_list != NULL);
+  assert(setting_data != NULL);
+  assert(*setting_data != NULL);
 
   setting_data_t *curr = *data_list;
   setting_data_t *prev = NULL;
