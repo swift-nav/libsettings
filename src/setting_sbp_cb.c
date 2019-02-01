@@ -83,7 +83,10 @@ static void setting_update_value(settings_t *ctx, uint8_t *msg, uint8_t len)
   setting_send_write_response(ctx, write_response, resp_len);
 }
 
-static void setting_register_resp_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
+static void setting_register_resp_callback(uint16_t sender_id,
+                                           uint8_t len,
+                                           uint8_t *msg,
+                                           void *context)
 {
   settings_t *ctx = (settings_t *)context;
   (void)sender_id;
@@ -102,7 +105,10 @@ static void setting_register_resp_callback(uint16_t sender_id, uint8_t len, uint
   }
 
   /* Check for a response to a pending registration request */
-  int state = request_state_check(&ctx->request_state, &ctx->client_iface, resp->setting, len - sizeof(resp->status));
+  int state = request_state_check(&ctx->request_state,
+                                  &ctx->client_iface,
+                                  resp->setting,
+                                  len - sizeof(resp->status));
 
   if (state > 0) {
     /* No pending registration request */
@@ -160,9 +166,9 @@ static int setting_update_watch_only(settings_t *ctx, const char *msg, uint8_t l
 }
 
 static void setting_read_resp_callback(uint16_t sender_id,
-                                        uint8_t len,
-                                        uint8_t msg[],
-                                        void *context)
+                                       uint8_t len,
+                                       uint8_t msg[],
+                                       void *context)
 {
   (void)sender_id;
   assert(msg);
@@ -200,9 +206,9 @@ static void setting_read_resp_callback(uint16_t sender_id,
 }
 
 static void setting_write_resp_callback(uint16_t sender_id,
-                                         uint8_t len,
-                                         uint8_t msg[],
-                                         void *context)
+                                        uint8_t len,
+                                        uint8_t msg[],
+                                        void *context)
 {
   (void)sender_id;
   settings_t *ctx = (settings_t *)context;
@@ -230,9 +236,9 @@ static void setting_write_resp_callback(uint16_t sender_id,
 }
 
 static void setting_read_by_index_resp_callback(uint16_t sender_id,
-                                                 uint8_t len,
-                                                 uint8_t msg[],
-                                                 void *context)
+                                                uint8_t len,
+                                                uint8_t msg[],
+                                                void *context)
 {
   (void)sender_id;
   settings_t *ctx = (settings_t *)context;
@@ -266,9 +272,9 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
 }
 
 static void setting_read_by_index_done_callback(uint16_t sender_id,
-                                                 uint8_t len,
-                                                 uint8_t msg[],
-                                                 void *context)
+                                                uint8_t len,
+                                                uint8_t msg[],
+                                                void *context)
 {
   (void)sender_id;
   (void)len;
@@ -294,26 +300,19 @@ static void setting_read_by_index_done_callback(uint16_t sender_id,
 static sbp_msg_callback_t setting_sbp_cb_get(uint16_t msg_id)
 {
   switch (msg_id) {
-  case SBP_MSG_SETTINGS_REGISTER_RESP:
-    return setting_register_resp_callback;
+  case SBP_MSG_SETTINGS_REGISTER_RESP: return setting_register_resp_callback;
 
-  case SBP_MSG_SETTINGS_WRITE:
-    return setting_write_callback;
+  case SBP_MSG_SETTINGS_WRITE: return setting_write_callback;
 
-  case SBP_MSG_SETTINGS_WRITE_RESP:
-    return setting_write_resp_callback;
+  case SBP_MSG_SETTINGS_WRITE_RESP: return setting_write_resp_callback;
 
-  case SBP_MSG_SETTINGS_READ_RESP:
-    return setting_read_resp_callback;
+  case SBP_MSG_SETTINGS_READ_RESP: return setting_read_resp_callback;
 
-  case SBP_MSG_SETTINGS_READ_BY_INDEX_RESP:
-    return setting_read_by_index_resp_callback;
+  case SBP_MSG_SETTINGS_READ_BY_INDEX_RESP: return setting_read_by_index_resp_callback;
 
-  case SBP_MSG_SETTINGS_READ_BY_INDEX_DONE:
-    return setting_read_by_index_done_callback;
+  case SBP_MSG_SETTINGS_READ_BY_INDEX_DONE: return setting_read_by_index_done_callback;
 
-  default:
-    assert(!"callback not found");
+  default: assert(!"callback not found");
   }
 
   /* To make cythonizer happy.. */

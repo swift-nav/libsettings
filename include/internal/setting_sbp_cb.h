@@ -30,7 +30,7 @@ extern "C" {
 
 /**
  * @brief   Register a callback function for specific SBP message
- * 
+ *
  * @param[in,out] ctx       Settings context
  * @param[in] msg_id        SBP message ID to register
  *
@@ -42,7 +42,7 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id);
 
 /**
  * @brief   Unegister a callback function for specific SBP message
- * 
+ *
  * @param[in,out] ctx       Settings context
  * @param[in] msg_id        SBP message ID to unregister
  *
