@@ -323,13 +323,15 @@ static sbp_msg_callback_t setting_sbp_cb_get(uint16_t msg_id)
 int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id)
 {
   setting_sbp_cb_t *sbp_cb_list = ctx->sbp_cb_list;
+  setting_sbp_cb_t *last = NULL;
 
-  /* Find the end of the list */
+  /* Traverse to list end */
   while (sbp_cb_list != NULL) {
     if (sbp_cb_list->msg_id == msg_id) {
       /* Already registered */
       return 1;
     }
+    last = sbp_cb_list;
     sbp_cb_list = sbp_cb_list->next;
   }
 
@@ -355,7 +357,12 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id)
     return -1;
   }
 
-  sbp_cb_list = sbp_cb;
+  if (last == NULL) {
+    /* List was empty, set as list head */
+    ctx->sbp_cb_list = sbp_cb;
+  } else {
+    last->next = sbp_cb;
+  }
 
   return 0;
 }
