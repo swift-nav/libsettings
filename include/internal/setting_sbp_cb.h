@@ -28,7 +28,28 @@ typedef struct setting_sbp_cb_s {
 extern "C" {
 #endif
 
+/**
+ * @brief   Register a callback function for specific SBP message
+ * 
+ * @param[in,out] ctx       Settings context
+ * @param[in] msg_id        SBP message ID to register
+ *
+ * @return                  0 on success
+ *                          1 if callback is already registered
+ *                         -1 on error
+ */
 int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id);
+
+/**
+ * @brief   Unegister a callback function for specific SBP message
+ * 
+ * @param[in,out] ctx       Settings context
+ * @param[in] msg_id        SBP message ID to unregister
+ *
+ * @return                  0 on success
+ *                          1 if callback is not registered
+ *                         -1 on error
+ */
 int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id);
 
 #ifdef __cplusplus
