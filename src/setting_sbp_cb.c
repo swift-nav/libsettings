@@ -384,8 +384,8 @@ int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id)
 
   /* Update list linking */
   if (prev == NULL) {
-    /* This was first in the list */
-    sbp_cb_list = sbp_cb->next;
+    /* This was first in the list, update list head */
+    ctx->sbp_cb_list = sbp_cb->next;
   } else {
     prev->next = sbp_cb->next;
   }
