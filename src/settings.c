@@ -669,7 +669,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
 
     if (ctx->client_iface.wait(ctx->client_iface.ctx, timeout_ms)) {
       size_t len1 = strlen(message) + 1;
-      ctx->client_iface.log(log_err,
+      ctx->client_iface.log(log_warning,
                             "Waiting reply for msg id %d with %s.%s timed out",
                             message_type,
                             message,
