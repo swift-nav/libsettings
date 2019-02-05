@@ -2,4 +2,3 @@
 cmake
 cython
 mingwpy
-piksi_tools
