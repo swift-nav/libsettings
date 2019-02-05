@@ -223,9 +223,11 @@ static void setting_write_resp_callback(uint16_t sender_id,
                       len - sizeof(write_response->status));
 
   if (write_response->status != SETTINGS_WR_OK) {
-    ctx->client_iface.log(log_warning,
-                          "setting write rejected (code: %d), not updating watched values",
-                          write_response->status);
+    /* Enable this warning back after ESD-1022 is fixed
+     * ctx->client_iface.log(log_warning,
+     *                       "setting write rejected (code: %d), not updating watched values",
+     *                       write_response->status);
+     */
     return;
   }
 
