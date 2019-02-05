@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 #include <limits>
+#include <cmath>
 #include <sstream>
 
 #include <internal/setting_type_float.h>
