@@ -21,18 +21,21 @@ Open source SwiftNav settings API library.
 #### Prerequisities
 
 * Python
+* pip
 * CMake
 * virtualenv (pip install virtualenv)
 
 You can do without 'virtualenv' but beaware that in this case contents of
-requirements-unix.txt shall be installed to your Python environment.
+requirements-unix.txt shall be installed to your Python environment. You can
+specify the Python version while calling 'cmake' otherwise the default one
+is used.
 
 #### Commands
 
 ``` sh
 mkdir build
 cd build
-cmake .. # If you want to use python3: 'cmake -D PYTHON=python3 ..'
+cmake .. # If you want to speficy python version: 'cmake -D PYTHON=python3 ..'
 make
 cd ..
 # If you want to update python bindings source distribution package:
@@ -50,10 +53,13 @@ exists in your setup and make a copy of it.
 
 #### Prerequisities for Python 2.7.x or 3.4.x
 
+* pip
 * virtualenvwrapper-win (pip install virtualenvwrapper-win)
 
 You can do without 'virtualenvwrapper-win' but beaware that in this case
 contents of requirements-*.txt should be installed to your Python environment.
+
+For MinGW make to work correctly sh.exe must NOT be in your path.
 
 #### Commands for Python 2.7.x or 3.4.x
 
@@ -74,7 +80,7 @@ rmvirtualenv venv
 
 #### Prerequisities for Python 3.5.x or 3.6.x or 3.7.x
 
-* virtualenvwrapper-win (pip install virtualenvwrapper-win)
+* pip
 * Microsoft Visual C++ 14.0, for example from:
   https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017
 
@@ -83,19 +89,19 @@ rmvirtualenv venv
 Use 'Native Tools Command Prompt for VS 2017', select x86/x64 based on your Python architecture
 
 ``` sh
-mkvirtualenv -r requirements-win-cp35-cp36-cp37.txt venv
 md build
 cd build
 cmake ..
-# settings.dll from C sources (not tested in runtime)
+# settings.dll from C sources
 msbuild libsettings.sln /p:Configuration="Release" /p:Platform="Win32"
 cd ..
 # libsettings.pyd for importing from Python
+# If you use virtualenv, make sure that the path file is updated accordingly,
+# other wise cython will not be available. See python/CMakeLists.txt for details.
+pip install -r requirements-win-cp35-cp36-cp37.txt
 python setup.py build_ext --force
 # If you want to update python bindings source distribution package:
 python setup.py sdist --dist-dir python
-deactivate # virtualenv
-rmvirtualenv venv
 ```
 
 #### Sanity check
