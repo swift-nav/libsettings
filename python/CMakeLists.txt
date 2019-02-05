@@ -34,7 +34,11 @@ if (NOT MSVC)
         )
 
         # Setup the virtualenv search path so that Cython is found
-        execute_process(COMMAND CMD /c ${PYTHON} -c "import sys;print(getattr(sys, 'real_prefix', ''))" OUTPUT_VARIABLE PYTHON_PATH_REAL OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(
+            COMMAND CMD /c ${PYTHON} -c "import sys;print(getattr(sys, 'real_prefix', ''))"
+            OUTPUT_VARIABLE PYTHON_PATH_REAL
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
         if (${PYTHON_PATH_REAL}) 
             file(WRITE "${PYTHON_PATH_REAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{VIRTUAL_ENV}/lib/site-packages")
         endif ()
