@@ -3,6 +3,52 @@ sudo: required
 
 language: c
 
+matrix:
+  include:
+   - os: linux
+     script:
+       - mkdir build; cd build; cmake ../; make
+   - os: osx
+     osx_image: xcode10
+     before_install:
+       - brew update
+       - brew install gcc@6
+       - export CC=gcc-6
+       - export CXX=g++-6
+       - export TRAVIS_COMPILER=gcc-6
+       - export CC_FOR_BUILD=gcc-6
+     script:
+       - mkdir build; cd build; cmake ../; make
+   - os: windows
+     dist: 1803-containers
+     python: "2.7"
+     before_install:
+       - choco install python2
+       - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
+       - python -m pip install --upgrade pip wheel
+       - pip install -r requirements-win-cp27-cp34.txt
+       # For MinGW make to work correctly sh.exe must NOT be in your path.
+       - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
+     script:
+       - mkdir build
+       - cd build
+       - cmake -D SKIP_UNIT_TESTS=true .. -G "MinGW Makefiles"
+       - mingw32-make.exe
+   - os: windows
+     dist: 1803-containers
+     python: "3.7"
+     before_install:
+       - choco install python3
+       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+       - python -m pip install --upgrade pip wheel
+       - pip install -r requirements-win-cp35-cp36-cp37.txt
+     script:
+       - mkdir build
+       - cd build
+       - cmake ..
+       - cd ..
+       - python setup.py build_ext --force
+
 git:
   depth: 1
 
@@ -15,6 +61,3 @@ branches:
     - master
       # Any tag starting with a version string: vX.Y.Z(-blahblahblah).
     - /^v\d+.\d+.\d+(-\S+)?$/
-
-script:
-    - mkdir build; cd build; cmake ../; make

@@ -1,0 +1,4 @@
+--extra-index-url https://pypi.anaconda.org/carlkl/simple
+cmake
+cython
+mingwpy

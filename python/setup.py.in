@@ -1,4 +1,4 @@
-#!/usr/bin/python
+${PY_SHEBANG}
 # Copyright (C) 2018 Swift Navigation Inc.
 # Contact: <dev@swift-nav.com>
 #
@@ -12,16 +12,23 @@
 from glob import glob
 from setuptools import setup, Extension
 
-import os
+import os, sys
 
 include_dirs = ["include", "libsbp/c/include"]
 sources = glob("python/*.pyx") + glob("src/*.c")
 
+py_version = '{}{}'.format(sys.version_info[0], sys.version_info[1])
+
 cflags = ["-Wno-unused-label", "-std=c99"]
 ldflags = []
+libraries = []
 
 if os.name == 'nt':
-    ldflags.append("-static-libgcc")
+    if py_version == '27' or py_version == '34':
+      ldflags.append("-static-libgcc")
+      libraries.append("python{}-gen".format(py_version))
+    else:
+       cflags = []
 
 setup(
     name='libsettings',
@@ -34,6 +41,7 @@ setup(
         Extension(
             'libsettings',
             sources,
+            libraries=libraries,
             include_dirs=include_dirs,
             extra_compile_args=cflags,
             extra_link_args=ldflags,
