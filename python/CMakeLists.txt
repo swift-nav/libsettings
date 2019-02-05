@@ -22,11 +22,10 @@ if (NOT MSVC)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
 
-        set(PYTHON_GENERATED_LIB "python${PYTHON_VERSION}-gen")
         add_custom_command(
             OUTPUT ${LIBSETTINGS_VENV}
             COMMAND gendef - c:/windows/system32/python${PYTHON_VERSION}.dll > ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def
-            COMMAND dlltool --dllname python${PYTHON_VERSION}.dll --def ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def --output-lib ${CMAKE_BINARY_DIR}/lib${PYTHON_GENERATED_LIB}.a
+            COMMAND dlltool --dllname python${PYTHON_VERSION}.dll --def ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def --output-lib ${CMAKE_BINARY_DIR}/libpython${PYTHON_VERSION}-gen.a
         )
 
         execute_process(COMMAND CMD /c ${PYTHON} -c "import sys;print(getattr(sys, 'real_prefix', ''))" OUTPUT_VARIABLE PYTHON_PATH_REAL OUTPUT_STRIP_TRAILING_WHITESPACE)
