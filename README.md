@@ -89,6 +89,9 @@ rmvirtualenv venv
 Use 'Native Tools Command Prompt for VS 2017', select x86/x64 based on your Python architecture
 
 ``` sh
+# If you use virtualenv, make sure that the path file is updated accordingly,
+# see python/CMakeLists.txt for details.
+pip install -r requirements-win-cp35-cp36-cp37.txt
 md build
 cd build
 cmake ..
@@ -96,9 +99,6 @@ cmake ..
 msbuild libsettings.sln /p:Configuration="Release" /p:Platform="Win32"
 cd ..
 # libsettings.pyd for importing from Python
-# If you use virtualenv, make sure that the path file is updated accordingly,
-# other wise cython will not be available. See python/CMakeLists.txt for details.
-pip install -r requirements-win-cp35-cp36-cp37.txt
 python setup.py build_ext --force
 # If you want to update python bindings source distribution package:
 python setup.py sdist --dist-dir python
