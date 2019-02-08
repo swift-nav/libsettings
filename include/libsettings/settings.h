@@ -56,7 +56,17 @@ enum {
 };
 
 /**
- * @brief Settings error codes
+ * @brief Settings register error codes
+ */
+typedef enum settings_reg_res_e {
+  SETTINGS_REG_OK = 0,      /**< Setting registered, requested value used */
+  SETTINGS_REG_OK_PERM = 1, /**< Setting registered, permanent storage value found and returned */
+  SETTINGS_REG_REGISTERED = 2,   /**< Setting is already registered, value from memory returned */
+  SETTINGS_REG_PARSE_FAILED = 3, /**< Could not parse setting */
+} settings_reg_res_t;
+
+/**
+ * @brief Settings write error codes
  */
 typedef enum settings_write_res_e {
   SETTINGS_WR_OK = 0,               /**< Setting written               */

@@ -39,7 +39,7 @@ cmake .. # If you want to speficy python version: 'cmake -D PYTHON=python3 ..'
 make
 cd ..
 # If you want to update python bindings source distribution package:
-python setup.py sdist --dist-dir python
+python setup.py sdist --dist-dir python/sdist
 ```
 
 ### Windows
@@ -73,7 +73,7 @@ cmake .. -G "MinGW Makefiles"
 make
 cd ..
 # If you want to update python bindings source distribution package:
-python setup.py sdist --dist-dir python
+python setup.py sdist --dist-dir python/sdist
 deactivate # virtualenv
 rmvirtualenv venv
 ```
@@ -101,7 +101,7 @@ cd ..
 # libsettings.pyd for importing from Python
 python setup.py build_ext --force
 # If you want to update python bindings source distribution package:
-python setup.py sdist --dist-dir python
+python setup.py sdist --dist-dir python/sdist
 ```
 
 #### Sanity check
