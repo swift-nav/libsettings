@@ -7,6 +7,7 @@ matrix:
   include:
    - os: linux
      script:
+       - git submodule update --init
        - mkdir build; cd build; cmake ../; make
    - os: osx
      osx_image: xcode10
@@ -18,6 +19,7 @@ matrix:
        - export TRAVIS_COMPILER=gcc-6
        - export CC_FOR_BUILD=gcc-6
      script:
+       - git submodule update --init
        - mkdir build; cd build; cmake ../; make
    - os: windows
      dist: 1803-containers
@@ -27,9 +29,10 @@ matrix:
        - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
        - python -m pip install --upgrade pip wheel
        - pip install -r requirements-win-cp27-cp34.txt
+     script:
+       - git submodule update --init
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-     script:
        - mkdir build
        - cd build
        - cmake -D SKIP_UNIT_TESTS=true .. -G "MinGW Makefiles"
@@ -43,6 +46,7 @@ matrix:
        - python -m pip install --upgrade pip wheel
        - pip install -r requirements-win-cp35-cp36-cp37.txt
      script:
+       - git submodule update --init
        - mkdir build
        - cd build
        - cmake ..
@@ -51,6 +55,7 @@ matrix:
 
 git:
   depth: 1
+  submodules: false # Don't do recursive init
 
 cache:
   apt: true
