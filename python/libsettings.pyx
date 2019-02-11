@@ -14,6 +14,8 @@ cimport cython
 from libc.stdint cimport uint8_t, uint16_t
 from libc.stdint cimport uintptr_t
 
+from libc.stdio cimport printf
+
 from sbp.msg import SBP, SENDER_ID
 
 from threading import Event
@@ -132,7 +134,7 @@ cdef class Settings:
         self.c_api.signal = &signal_wrapper
         self.c_api.register_cb = &register_cb_wrapper
         self.c_api.unregister_cb = &unregister_cb_wrapper
-        self.c_api.log = &log_wrapper
+        self.c_api.log = NULL
 
         self.ctx = settings_create(sender_id, &self.c_api)
 
@@ -283,7 +285,7 @@ cdef int unregister_cb_wrapper(void *ctx, sbp_msg_callbacks_node_t **node):
 
     return 0
 
-cdef void log_wrapper(int priority, const char *fmt, ...):
+#cdef void log_wrapper(int priority, const char *fmt, ...):
     # Currently no proper way to cythonize the variadic arguments..
     # https://github.com/cython/cython/wiki/FAQ#how-do-i-use-variable-args
-    print fmt
+#    print fmt

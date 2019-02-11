@@ -77,6 +77,8 @@
 #include <libsbp/sbp.h>
 #include <libsbp/settings.h>
 
+#include <swiftnav/logging.h>
+
 #include <libsettings/settings.h>
 #include <libsettings/settings_util.h>
 
@@ -696,7 +698,10 @@ read_by_idx_cleanup:
 settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
 {
   assert(client_iface != NULL);
-  assert(client_iface->log != NULL);
+
+  if (client_iface->log != NULL) {
+    logging_set_implementation(client_iface->log, detailed_log_);
+  }
 
   settings_t *ctx = (settings_t *)malloc(sizeof(*ctx));
   if (ctx == NULL) {
