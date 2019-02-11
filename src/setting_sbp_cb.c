@@ -16,6 +16,8 @@
 
 #include <libsbp/settings.h>
 
+#include <swiftnav/logging.h>
+
 #include <libsettings/settings_util.h>
 
 #include <internal/request_state.h>
@@ -35,7 +37,7 @@ static int setting_send_write_response(settings_t *ctx,
 {
   settings_api_t *api = &ctx->client_iface;
   if (api->send(api->ctx, SBP_MSG_SETTINGS_WRITE_RESP, len, (uint8_t *)write_response) != 0) {
-    api->log(log_err, "sending settings write response failed");
+    log_error("sending settings write response failed");
     return -1;
   }
   return 0;
@@ -49,7 +51,7 @@ static void setting_update_value(settings_t *ctx, uint8_t *msg, uint8_t len)
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   if (settings_parse((char *)msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->client_iface.log(log_warning, "setting update value, error parsing setting");
+    log_warn("setting update value, error parsing setting");
     return;
   }
 
@@ -92,7 +94,7 @@ static void setting_register_resp_callback(uint16_t sender_id,
   (void)sender_id;
 
   if (sender_id != SBP_SENDER_ID) {
-    ctx->client_iface.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
+    log_warn("invalid sender %d != %d", sender_id, SBP_SENDER_ID);
     return;
   }
 
@@ -130,7 +132,7 @@ static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg
   (void)sender_id;
 
   if (sender_id != SBP_SENDER_ID) {
-    ctx->client_iface.log(log_warning, "invalid sender %d != %d", sender_id, SBP_SENDER_ID);
+    log_warn("invalid sender %d != %d", sender_id, SBP_SENDER_ID);
     return;
   }
 
@@ -145,7 +147,7 @@ static int setting_update_watch_only(settings_t *ctx, const char *msg, uint8_t l
    */
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   if (settings_parse(msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    ctx->client_iface.log(log_warning, "updating watched values failed, error parsing setting");
+    log_warn("updating watched values failed, error parsing setting");
     return -1;
   }
 
@@ -187,7 +189,7 @@ static void setting_read_resp_callback(uint16_t sender_id,
   }
 
   if (setting_update_watch_only(ctx, read_response->setting, len) != 0) {
-    ctx->client_iface.log(log_warning, "error in settings read response message");
+    log_warn("error in settings read response message");
   }
 
   const char *value = NULL, *type = NULL;
@@ -200,7 +202,7 @@ static void setting_read_resp_callback(uint16_t sender_id,
       strncpy(ctx->resp_type, type, sizeof(ctx->resp_type));
     }
   } else {
-    ctx->client_iface.log(log_warning, "read response parsing failed");
+    log_warn("read response parsing failed");
     ctx->resp_value[0] = '\0';
     ctx->resp_type[0] = '\0';
   }
@@ -225,7 +227,7 @@ static void setting_write_resp_callback(uint16_t sender_id,
 
   if (write_response->status != SETTINGS_WR_OK) {
     /* Enable this warning back after ESD-1022 is fixed
-     * ctx->client_iface.log(log_warning,
+     * log_warn(
      *                       "setting write rejected (code: %d), not updating watched values",
      *                       write_response->status);
      */
@@ -234,7 +236,7 @@ static void setting_write_resp_callback(uint16_t sender_id,
 
   if (setting_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
       != 0) {
-    ctx->client_iface.log(log_warning, "error in settings read response message");
+    log_warn("error in settings read response message");
   }
 }
 
@@ -296,7 +298,7 @@ static void setting_read_by_index_done_callback(uint16_t sender_id,
                                  SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
 
   if (ret != 0) {
-    ctx->client_iface.log(log_warning, "Signaling request state failed with code: %d", ret);
+    log_warn("Signaling request state failed with code: %d", ret);
   }
 }
 
@@ -354,7 +356,7 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id)
                                           &sbp_cb->cb_node);
 
   if (res != 0) {
-    ctx->client_iface.log(log_err, "error registering callback for msg id %d", msg_id);
+    log_error("error registering callback for msg id %d", msg_id);
     free(sbp_cb);
     return -1;
   }
@@ -407,7 +409,7 @@ int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id)
   free(sbp_cb);
 
   if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &cb_node) != 0) {
-    ctx->client_iface.log(log_err, "error unregistering callback");
+    log_error("error unregistering callback");
     return -1;
   }
 
