@@ -116,7 +116,8 @@ static void setting_register_resp_callback(uint16_t sender_id,
   }
 
   if (state < 0) {
-    ctx->client_iface.log(log_warning, "settings register resp cb, register req/resp mismatch");
+    /* Pending request and the response don't match, most likely this response
+     * was meant to some other client doing registration at the same time. */
     return;
   }
 
