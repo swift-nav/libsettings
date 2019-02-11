@@ -284,8 +284,3 @@ cdef int unregister_cb_wrapper(void *ctx, sbp_msg_callbacks_node_t **node):
     del settings._callbacks[<uintptr_t>node]
 
     return 0
-
-#cdef void log_wrapper(int priority, const char *fmt, ...):
-    # Currently no proper way to cythonize the variadic arguments..
-    # https://github.com/cython/cython/wiki/FAQ#how-do-i-use-variable-args
-#    print fmt
