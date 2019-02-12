@@ -14,8 +14,6 @@ cimport cython
 from libc.stdint cimport uint8_t, uint16_t
 from libc.stdint cimport uintptr_t
 
-from libc.stdio cimport printf
-
 from sbp.msg import SBP, SENDER_ID
 
 from threading import Event
