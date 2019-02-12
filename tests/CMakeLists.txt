@@ -47,24 +47,17 @@ else ()
     src/test_setting_type_float.cpp
     src/test_setting_type_int.cpp
     src/test_setting_type_str.cpp
-    src/test_settings_util.cpp
-    ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging.c
-    ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging_common.c
-    ${PROJECT_SOURCE_DIR}/src/request_state.c
-    ${PROJECT_SOURCE_DIR}/src/setting_data.c
-    ${PROJECT_SOURCE_DIR}/src/setting_sbp_cb.c
-    ${PROJECT_SOURCE_DIR}/src/setting_type.c
-    ${PROJECT_SOURCE_DIR}/src/setting_type_enum.c
-    ${PROJECT_SOURCE_DIR}/src/setting_type_float.c
-    ${PROJECT_SOURCE_DIR}/src/setting_type_int.c
-    ${PROJECT_SOURCE_DIR}/src/setting_type_str.c
-    ${PROJECT_SOURCE_DIR}/src/settings.c
-    ${PROJECT_SOURCE_DIR}/src/settings_util.c)
+    src/test_settings_util.cpp)
   add_dependencies(test_libsettings gtest)
-  include_directories(${PROJECT_SOURCE_DIR}/include)
-  target_link_libraries(test_libsettings gtest_main)
+  target_include_directories(test_libsettings PRIVATE ${PROJECT_SOURCE_DIR}/include)
+  target_link_libraries(test_libsettings settings gtest_main)
+  set_property(TARGET test_libsettings PROPERTY CXX_STANDARD 11)
+  set_property(TARGET test_libsettings PROPERTY CXX_STANDARD_REQUIRED ON)
+  set_property(TARGET test_libsettings PROPERTY CXX_EXTENSIONS OFF)
 
-  if (WIN32)
+
+
+if (WIN32)
     add_custom_command(
       TARGET test_libsettings POST_BUILD
       COMMENT "Running unit tests"

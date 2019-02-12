@@ -20,6 +20,38 @@ add_library(settings
 target_link_libraries(settings)
 
 target_include_directories(settings PUBLIC ${PROJECT_SOURCE_DIR}/include)
+set_property(TARGET settings PROPERTY C_STANDARD 99)
+set_property(TARGET settings PROPERTY C_STANDARD_REQUIRED ON)
+set_property(TARGET settings PROPERTY C_EXTENSIONS OFF)
+
+if (LIBSBP_SEARCH_PATH)
+    target_include_directories(settings PUBLIC "${LIBSBP_SEARCH_PATH}/include")
+else (LIBSBP_SEARCH_PATH)
+    if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
+        target_include_directories(settings PUBLIC "${PROJECT_SOURCE_DIR}/libsbp/c/include")
+    else()
+        message(WARNING "No LibSbp include path found.")
+    endif()
+endif(LIBSBP_SEARCH_PATH)
+
+if (NOT MSVC)
+    target_compile_options(settings PRIVATE
+            -Wall -Wextra -Wno-strict-prototypes -Werror -fno-unwind-tables
+            -fno-asynchronous-unwind-tables -Wimplicit -Wshadow -Wswitch-default
+            -Wswitch-enum -Wundef -Wuninitialized -Wcast-align -Wformat=2
+            -Wimplicit-function-declaration -Wredundant-decls -Wformat-security
+            -ggdb)
+endif (NOT MSVC)
+
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+    target_compile_options(settings PRIVATE -Wno-unknown-warning-option -Wno-error=typedef-redefinition)
+endif()
+
+if (ENABLE_STACK_ANALYSIS AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    message(STATUS "Enabling stack analysis.")
+    target_compile_options(settings PUBLIC -fstack-usage -fstack-check)
+endif ()
+
 
 install(TARGETS settings DESTINATION lib)
 install(FILES ${libsettings_HEADERS} DESTINATION include/libsettings)
