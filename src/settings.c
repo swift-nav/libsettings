@@ -753,7 +753,7 @@ void settings_destroy(settings_t **ctx)
 {
   assert(ctx != NULL);
   assert(*ctx != NULL);
-  log_error("Releasing settings framework");
+  log_info("Releasing settings framework");
   setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_REGISTER_RESP);
   setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_WRITE);
   setting_sbp_cb_unregister(*ctx, SBP_MSG_SETTINGS_WRITE_RESP);
