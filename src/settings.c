@@ -69,6 +69,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,6 +100,18 @@
 #define WATCH_INIT_TRIES 5
 
 static const char *const bool_enum_names[] = {"False", "True", NULL};
+
+static settings_log_t client_log = NULL;
+
+/* Workaround for Cython not properly supporting variadic arguments */
+static void log_preformat(int level, const char *fmt, ...) {
+  char buffer[256];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buffer, 256, fmt, args);
+  client_log(level, buffer);
+  va_end(args);
+}
 
 /**
  * @brief setting_perform_request_reply_from
@@ -690,8 +703,15 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
   assert(client_iface != NULL);
 
   if (client_iface->log != NULL) {
-    logging_set_implementation(client_iface->log, detailed_log_);
+    if (client_iface->log_preformat) {
+      client_log = client_iface->log;
+      logging_set_implementation(log_preformat, detailed_log_);
+    } else {
+      logging_set_implementation(client_iface->log, detailed_log_);
+    }
   }
+
+  log_info("Building settings framework");
 
   settings_t *ctx = (settings_t *)malloc(sizeof(*ctx));
   if (ctx == NULL) {

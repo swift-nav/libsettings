@@ -75,6 +75,7 @@ cdef extern from "../include/libsettings/settings.h":
         settings_reg_cb_t register_cb
         settings_unreg_cb_t unregister_cb
         settings_log_t log
+        bint log_preformat
     ctypedef settings_api_s settings_api_t
 
     settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
@@ -132,7 +133,8 @@ cdef class Settings:
         self.c_api.signal = &signal_wrapper
         self.c_api.register_cb = &register_cb_wrapper
         self.c_api.unregister_cb = &unregister_cb_wrapper
-        self.c_api.log = NULL
+        self.c_api.log = log_wrapper
+        self.c_api.log_preformat = True
 
         self.ctx = settings_create(sender_id, &self.c_api)
 
@@ -288,3 +290,8 @@ cdef int unregister_cb_wrapper(void *ctx, sbp_msg_callbacks_node_t **node):
         return -1
 
     return 0
+
+cdef void log_wrapper(int priority, const char *fmt, ...):
+    # Currently no proper way to cythonize the variadic arguments..
+    # https://github.com/cython/cython/wiki/FAQ#how-do-i-use-variable-args
+    print fmt
