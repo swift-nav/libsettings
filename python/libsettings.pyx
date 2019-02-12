@@ -269,16 +269,22 @@ cdef int register_cb_wrapper(void *ctx,
                              sbp_msg_callback_t cb,
                              void *cb_context,
                              sbp_msg_callbacks_node_t **node):
-    settings = <object>ctx
-    settings._callbacks[<uintptr_t>node] = (msg_type, <uintptr_t>cb, <uintptr_t>cb_context)
-    settings._link.add_callback(settings._callback_broker, msg_type)
+    try:
+        settings = <object>ctx
+        settings._callbacks[<uintptr_t>node] = (msg_type, <uintptr_t>cb, <uintptr_t>cb_context)
+        settings._link.add_callback(settings._callback_broker, msg_type)
+    except:
+        return -1
 
     return 0
 
 cdef int unregister_cb_wrapper(void *ctx, sbp_msg_callbacks_node_t **node):
-    settings = <object>ctx
-    cb_data = settings._callbacks[<uintptr_t>node]
-    settings._link.remove_callback(settings._callback_broker, cb_data[0])
-    del settings._callbacks[<uintptr_t>node]
+    try:
+        settings = <object>ctx
+        cb_data = settings._callbacks[<uintptr_t>node]
+        settings._link.remove_callback(settings._callback_broker, cb_data[0])
+        del settings._callbacks[<uintptr_t>node]
+    except:
+        return -1
 
     return 0

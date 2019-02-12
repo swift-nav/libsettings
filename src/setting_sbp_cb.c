@@ -396,7 +396,6 @@ int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id)
   }
 
   setting_sbp_cb_t *sbp_cb = sbp_cb_list;
-  sbp_msg_callbacks_node_t *cb_node = sbp_cb->cb_node;
 
   /* Update list linking */
   if (prev == NULL) {
@@ -406,12 +405,13 @@ int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id)
     prev->next = sbp_cb->next;
   }
 
-  free(sbp_cb);
+  int ret = 0;
 
-  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &cb_node) != 0) {
-    log_error("error unregistering callback");
-    return -1;
+  if (ctx->client_iface.unregister_cb(ctx->client_iface.ctx, &sbp_cb->cb_node) != 0) {
+    log_error("error unregistering callback for msg id %d", msg_id);
+    ret = -1;
   }
 
-  return 0;
+  free(sbp_cb);
+  return ret;
 }
