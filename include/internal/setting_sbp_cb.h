@@ -17,12 +17,12 @@
 
 #include <libsettings/settings.h>
 
-typedef struct setting_sbp_cb_s {
+struct setting_sbp_cb_s {
   uint16_t msg_id;
   sbp_msg_callback_t cb;
   sbp_msg_callbacks_node_t *cb_node;
   struct setting_sbp_cb_s *next;
-} setting_sbp_cb_t;
+};
 
 #ifdef __cplusplus
 extern "C" {
