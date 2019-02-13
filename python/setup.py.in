@@ -14,8 +14,8 @@ from setuptools import setup, Extension
 
 import os, sys
 
-include_dirs = ["include", "libsbp/c/include"]
-sources = glob("python/*.pyx") + glob("src/*.c")
+include_dirs = ["include", "libsbp/c/include", "libswiftnav/include"]
+sources = glob("python/*.pyx") + glob("src/*.c") + glob("libswiftnav/src/logging*.c") 
 
 py_version = '{}{}'.format(sys.version_info[0], sys.version_info[1])
 

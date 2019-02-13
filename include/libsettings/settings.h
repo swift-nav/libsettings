@@ -112,6 +112,7 @@ typedef struct settings_api_s {
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
+  bool log_preformat;
 } settings_api_t;
 
 /**

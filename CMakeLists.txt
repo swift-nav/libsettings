@@ -115,6 +115,8 @@ else (LIBSBP_SEARCH_PATH)
   endif()
 endif(LIBSBP_SEARCH_PATH)
 
+include_directories("libswiftnav/include")
+
 add_subdirectory(src)
 add_subdirectory(python)
 add_subdirectory(tests)

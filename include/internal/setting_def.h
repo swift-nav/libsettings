@@ -15,9 +15,6 @@
 
 #include <libsettings/settings.h>
 
-static int log_err = 3;
-static int log_warning = 4;
-
 typedef struct setting_sbp_cb_s setting_sbp_cb_t;
 
 /**

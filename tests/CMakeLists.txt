@@ -48,6 +48,8 @@ else ()
     src/test_setting_type_int.cpp
     src/test_setting_type_str.cpp
     src/test_settings_util.cpp
+    ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging.c
+    ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging_common.c
     ${PROJECT_SOURCE_DIR}/src/request_state.c
     ${PROJECT_SOURCE_DIR}/src/setting_data.c
     ${PROJECT_SOURCE_DIR}/src/setting_sbp_cb.c
