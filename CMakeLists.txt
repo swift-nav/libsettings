@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.1)
-
+cmake_minimum_required(VERSION 3.0)
 
 ################################################################################
 # Build Controls
 ################################################################################
-# When not explicitly provided, default to building shared libraries where possible.
-option(BUILD_SHARED_LIBS "If set, build shared libraries where possible." OFF)
 # Enable Clang auto-formatting, defaults to on.
 option(ENABLE_AUTOFORMAT "Enable automatic formatting and replacement with clang-format." ON)
 # Enable Clang auto-linting, defaults to off.

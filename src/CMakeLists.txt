@@ -1,3 +1,6 @@
+################################################################################
+# Build Targets
+################################################################################
 set(libsettings_HEADERS
   ${PROJECT_SOURCE_DIR}/include/libsettings/settings.h
   ${PROJECT_SOURCE_DIR}/include/libsettings/settings_util.h
@@ -52,6 +55,11 @@ if (ENABLE_STACK_ANALYSIS AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     target_compile_options(settings PUBLIC -fstack-usage -fstack-check)
 endif ()
 
-
-install(TARGETS settings DESTINATION lib)
-install(FILES ${libsettings_HEADERS} DESTINATION include/libsettings)
+################################################################################
+# Installation
+################################################################################
+# Export these targets to a cmake file in the build directory, useful for projects that
+# include libsettings as source
+export(TARGETS settings
+        NAMESPACE LibSettings::
+        FILE ${PROJECT_BINARY_DIR}/LibSettingsImport.cmake)
