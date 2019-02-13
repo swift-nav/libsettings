@@ -13,13 +13,13 @@ option(ENABLE_AUTOLINT "Enable automatic linting and warning with clang-tidy. " 
 # Enable static stack analyzer, defaults to off.
 option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 
+project(libsettings LANGUAGES C CXX)
+
 ################################################################################
 # Include Modules
 ################################################################################
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(ClangTools)
-
-project(libsettings LANGUAGES C CXX)
 
 ################################################################################
 # Targets

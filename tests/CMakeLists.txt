@@ -50,14 +50,12 @@ else ()
     src/test_settings_util.cpp)
   add_dependencies(test_libsettings gtest)
   target_include_directories(test_libsettings PRIVATE ${PROJECT_SOURCE_DIR}/include)
-  target_link_libraries(test_libsettings settings gtest_main)
+  target_link_libraries(test_libsettings PUBLIC settings gtest_main)
   set_property(TARGET test_libsettings PROPERTY CXX_STANDARD 11)
   set_property(TARGET test_libsettings PROPERTY CXX_STANDARD_REQUIRED ON)
   set_property(TARGET test_libsettings PROPERTY CXX_EXTENSIONS OFF)
 
-
-
-if (WIN32)
+  if (WIN32)
     add_custom_command(
       TARGET test_libsettings POST_BUILD
       COMMENT "Running unit tests"
