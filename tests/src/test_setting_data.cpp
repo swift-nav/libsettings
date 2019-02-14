@@ -31,7 +31,7 @@ static setting_data_t *create_setting_data()
 
   EXPECT_EQ(0, res);
 
-  int var = 0;
+  static int var = 0;
 
   setting_data_t *setting_data = setting_data_create(type_data_list,
                                                      "section",

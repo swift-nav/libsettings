@@ -25,7 +25,7 @@ typedef struct setting_sbp_cb_s setting_sbp_cb_t;
  * as well as the list of types and settings necessary to perform
  * the registration, watching and callback functionality of the client.
  */
-typedef struct settings_s {
+struct settings_s {
   type_data_t *type_data_list;
   setting_data_t *setting_data_list;
   request_state_t request_state;
@@ -39,6 +39,6 @@ typedef struct settings_s {
   char resp_type[SETTINGS_BUFLEN];
   bool read_by_idx_done;
   settings_write_res_t status;
-} settings_t;
+};
 
 #endif /* LIBSETTINGS_SETTING_DEF_H */

@@ -104,7 +104,8 @@ static const char *const bool_enum_names[] = {"False", "True", NULL};
 static settings_log_t client_log = NULL;
 
 /* Workaround for Cython not properly supporting variadic arguments */
-static void log_preformat(int level, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) static void log_preformat(int level, const char *fmt, ...)
+{
   char buffer[256];
   va_list args;
   va_start(args, fmt);
