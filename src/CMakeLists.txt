@@ -3,12 +3,11 @@
 ################################################################################
 set(libsettings_HEADERS
   ${PROJECT_SOURCE_DIR}/include/libsettings/settings.h
-  ${PROJECT_SOURCE_DIR}/include/libsettings/settings_util.h
-  )
+  ${PROJECT_SOURCE_DIR}/include/libsettings/settings_util.h)
 
 add_library(settings
-            ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging.c
-            ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging_common.c
+            ${LIBSWIFTNAV_PATH}/src/logging.c
+            ${LIBSWIFTNAV_PATH}/src/logging_common.c
             settings.c
             settings_util.c
             request_state.c
@@ -20,22 +19,22 @@ add_library(settings
             setting_type_int.c
             setting_type_str.c)
 
-target_link_libraries(settings)
-
 target_include_directories(settings PUBLIC ${PROJECT_SOURCE_DIR}/include)
 set_property(TARGET settings PROPERTY C_STANDARD 99)
 set_property(TARGET settings PROPERTY C_STANDARD_REQUIRED ON)
 set_property(TARGET settings PROPERTY C_EXTENSIONS OFF)
 
-if (LIBSBP_SEARCH_PATH)
-    target_include_directories(settings PUBLIC "${LIBSBP_SEARCH_PATH}/include")
-else (LIBSBP_SEARCH_PATH)
-    if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-        target_include_directories(settings PUBLIC "${PROJECT_SOURCE_DIR}/libsbp/c/include")
-    else()
-        message(WARNING "No LibSbp include path found.")
-    endif()
-endif(LIBSBP_SEARCH_PATH)
+if(EXISTS ${LIBSBP_PATH}/c/include/)
+    target_include_directories(settings PUBLIC ${LIBSBP_PATH}/c/include/)
+else()
+    message(WARNING "No LibSbp include path found.")
+endif()
+
+if (EXISTS ${LIBSWIFTNAV_PATH}/include/)
+    target_include_directories(settings PRIVATE ${LIBSWIFTNAV_PATH}/include)
+else()
+    message(WARNING "No LibSwiftNav include path found.")
+endif()
 
 if (NOT MSVC)
     target_compile_options(settings PRIVATE

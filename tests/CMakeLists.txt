@@ -47,13 +47,21 @@ else ()
     src/test_setting_type_float.cpp
     src/test_setting_type_int.cpp
     src/test_setting_type_str.cpp
-    src/test_settings_util.cpp)
+    src/test_settings_util.cpp
+    ${LIBSWIFTNAV_PATH}/src/logging.c
+    ${LIBSWIFTNAV_PATH}/src/logging_common.c)
   add_dependencies(test_libsettings gtest)
   target_include_directories(test_libsettings PRIVATE ${PROJECT_SOURCE_DIR}/include)
   target_link_libraries(test_libsettings PUBLIC settings gtest_main)
   set_property(TARGET test_libsettings PROPERTY CXX_STANDARD 11)
   set_property(TARGET test_libsettings PROPERTY CXX_STANDARD_REQUIRED ON)
   set_property(TARGET test_libsettings PROPERTY CXX_EXTENSIONS OFF)
+
+  if (EXISTS ${LIBSWIFTNAV_PATH}/include/)
+    target_include_directories(test_libsettings PRIVATE ${LIBSWIFTNAV_PATH}/include)
+  else()
+    message(WARNING "No LibSwiftNav include path found.")
+  endif()
 
   if (WIN32)
     add_custom_command(
