@@ -57,6 +57,8 @@ endif ()
 ################################################################################
 # Installation
 ################################################################################
+install(TARGETS settings DESTINATION lib)
+install(FILES ${libsettings_HEADERS} DESTINATION include/libsettings)
 # Export these targets to a cmake file in the build directory, useful for projects that
 # include libsettings as source
 export(TARGETS settings
