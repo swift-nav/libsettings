@@ -37,16 +37,6 @@ include(ClangTools)
 # Targets
 ################################################################################
 
-if (LIBSBP_SEARCH_PATH)
-  include_directories("${LIBSBP_SEARCH_PATH}/include")
-else (LIBSBP_SEARCH_PATH)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-    include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
-  endif()
-endif(LIBSBP_SEARCH_PATH)
-
-include_directories("libswiftnav/include")
-
 add_subdirectory(src)
 add_subdirectory(python)
 add_subdirectory(tests)
