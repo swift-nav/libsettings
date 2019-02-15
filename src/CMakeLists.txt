@@ -36,14 +36,16 @@ else()
     message(WARNING "No LibSwiftNav include path found.")
 endif()
 
-if (NOT MSVC)
+if (MSVC)
+    target_compile_options(settings PRIVATE /Wall)
+else()
     target_compile_options(settings PRIVATE
             -Wall -Wextra -Wno-strict-prototypes -Werror -fno-unwind-tables
             -fno-asynchronous-unwind-tables -Wimplicit -Wshadow -Wswitch-default
             -Wswitch-enum -Wundef -Wuninitialized -Wcast-align -Wformat=2
             -Wimplicit-function-declaration -Wredundant-decls -Wformat-security
             -ggdb)
-endif (NOT MSVC)
+endif()
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     target_compile_options(settings PRIVATE -Wno-unknown-warning-option -Wno-error=typedef-redefinition)
