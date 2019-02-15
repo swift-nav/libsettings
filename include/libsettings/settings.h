@@ -260,8 +260,9 @@ int settings_register_watch(settings_t *ctx,
  * @param[in] type          Type of the setting.
  *
  * @return                  The operation result.
- * @retval 0                The setting was written successfully. Error otherwise,
- *                          @see settings_write_res_t
+ * @retval -1               Sending of the request failed.
+ * @retval 0                The setting was written successfully.
+ * @retval >0               Response returned an error @see settings_write_res_t
  */
 settings_write_res_t settings_write(settings_t *ctx,
                                     const char *section,
@@ -280,8 +281,9 @@ settings_write_res_t settings_write(settings_t *ctx,
  * @param[in] value         Value to be written.
  *
  * @return                  The operation result.
- * @retval 0                The setting was written successfully. Error otherwise,
- *                          @see settings_write_res_t
+ * @retval -1               Sending of the request failed.
+ * @retval 0                The setting was written successfully.
+ * @retval >0               Response returned an error @see settings_write_res_t
  */
 settings_write_res_t settings_write_int(settings_t *ctx,
                                         const char *section,
@@ -298,8 +300,9 @@ settings_write_res_t settings_write_int(settings_t *ctx,
  * @param[in] value         Value to be written.
  *
  * @return                  The operation result.
- * @retval 0                The setting was written successfully. Error otherwise,
- *                          @see settings_write_res_t
+ * @retval -1               Sending of the request failed.
+ * @retval 0                The setting was written successfully.
+ * @retval >0               Response returned an error @see settings_write_res_t
  */
 settings_write_res_t settings_write_float(settings_t *ctx,
                                           const char *section,
@@ -316,8 +319,9 @@ settings_write_res_t settings_write_float(settings_t *ctx,
  * @param[in] str           Value to be written.
  *
  * @return                  The operation result.
- * @retval 0                The setting was written successfully. Error otherwise,
- *                          @see settings_write_res_t
+ * @retval -1               Sending of the request failed.
+ * @retval 0                The setting was written successfully.
+ * @retval >0               Response returned an error @see settings_write_res_t
  */
 settings_write_res_t settings_write_str(settings_t *ctx,
                                         const char *section,
@@ -334,8 +338,9 @@ settings_write_res_t settings_write_str(settings_t *ctx,
  * @param[in] value         Value to be written.
  *
  * @return                  The operation result.
- * @retval 0                The setting was written successfully. Error otherwise,
- *                          @see settings_write_res_t
+ * @retval -1               Sending of the request failed.
+ * @retval 0                The setting was written successfully.
+ * @retval >0               Response returned an error @see settings_write_res_t
  */
 settings_write_res_t settings_write_bool(settings_t *ctx,
                                          const char *section,
