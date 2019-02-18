@@ -106,12 +106,20 @@ static settings_log_t client_log = NULL;
 /* Workaround for Cython not properly supporting variadic arguments */
 __attribute__((format(printf, 2, 3))) static void log_preformat(int level, const char *fmt, ...)
 {
-  char buffer[256];
+  char buffer[SETTINGS_BUFLEN];
   va_list args;
   va_start(args, fmt);
-  vsnprintf(buffer, 256, fmt, args);
-  client_log(level, buffer);
+  int ret = vsnprintf(buffer, sizeof(buffer), fmt, args);
   va_end(args);
+
+  if (ret < 0) {
+    client_log(LOG_ERROR, "log_preformat encoding error");
+    return;
+  } else if ((size_t)ret >= sizeof(buffer)) {
+    client_log(LOG_WARN, "log_preformat too long message");
+  }
+
+  client_log(level, buffer);
 }
 
 /**

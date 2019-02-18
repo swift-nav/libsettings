@@ -21,6 +21,11 @@ matrix:
      script:
        - git submodule update --init
        - mkdir build; cd build; cmake ../; make
+   - os: osx
+     osx_image: xcode10.1
+     script:
+       - git submodule update --init
+       - mkdir build; cd build; cmake ../; make
    - os: windows
      dist: 1803-containers
      python: "2.7"
