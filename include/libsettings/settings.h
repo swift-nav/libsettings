@@ -27,6 +27,16 @@
 
 #include <libsbp/sbp.h>
 
+#if defined(_MSC_VER)
+#define LIBSETTINGS_EXPORT __declspec(dllexport)
+#define LIBSETTINGS_IMPORT __declspec(dllimport)
+#elif defined(__GNUC__)
+#define LIBSETTINGS_EXPORT __attribute__((visibility("default")))
+#define LIBSETTINGS_IMPORT
+#else
+#pragma error Unknown dynamic link import / export semantics.
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -139,7 +149,7 @@ typedef int (*settings_notify_fn)(void *context);
  * @return                  Pointer to the created context, or NULL if the
  *                          operation failed.
  */
-settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl);
+LIBSETTINGS_EXPORT settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl);
 
 /**
  * @brief   Destroy a settings context.
@@ -149,7 +159,7 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl);
  *
  * @param[inout] ctx        Double pointer to the context to destroy.
  */
-void settings_destroy(settings_t **ctx);
+LIBSETTINGS_EXPORT void settings_destroy(settings_t **ctx);
 
 /**
  * @brief   Register an enum type.
@@ -164,7 +174,9 @@ void settings_destroy(settings_t **ctx);
  * @retval 0                The enum type was registered successfully.
  * @retval -1               An error occurred.
  */
-int settings_register_enum(settings_t *ctx, const char *const enum_names[], settings_type_t *type);
+LIBSETTINGS_EXPORT int settings_register_enum(settings_t *ctx,
+                                              const char *const enum_names[],
+                                              settings_type_t *type);
 
 /**
  * @brief   Register a setting.
@@ -188,14 +200,14 @@ int settings_register_enum(settings_t *ctx, const char *const enum_names[], sett
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int settings_register_setting(settings_t *ctx,
-                              const char *section,
-                              const char *name,
-                              void *var,
-                              size_t var_len,
-                              settings_type_t type,
-                              settings_notify_fn notify,
-                              void *notify_context);
+LIBSETTINGS_EXPORT int settings_register_setting(settings_t *ctx,
+                                                 const char *section,
+                                                 const char *name,
+                                                 void *var,
+                                                 size_t var_len,
+                                                 settings_type_t type,
+                                                 settings_notify_fn notify,
+                                                 void *notify_context);
 
 /**
  * @brief   Register a read-only setting.
@@ -213,12 +225,12 @@ int settings_register_setting(settings_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int settings_register_readonly(settings_t *ctx,
-                               const char *section,
-                               const char *name,
-                               const void *var,
-                               size_t var_len,
-                               settings_type_t type);
+LIBSETTINGS_EXPORT int settings_register_readonly(settings_t *ctx,
+                                                  const char *section,
+                                                  const char *name,
+                                                  const void *var,
+                                                  size_t var_len,
+                                                  settings_type_t type);
 
 /**
  * @brief   Create and add a watch only setting.
@@ -239,14 +251,14 @@ int settings_register_readonly(settings_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-int settings_register_watch(settings_t *ctx,
-                            const char *section,
-                            const char *name,
-                            void *var,
-                            size_t var_len,
-                            settings_type_t type,
-                            settings_notify_fn notify,
-                            void *notify_context);
+LIBSETTINGS_EXPORT int settings_register_watch(settings_t *ctx,
+                                               const char *section,
+                                               const char *name,
+                                               void *var,
+                                               size_t var_len,
+                                               settings_type_t type,
+                                               settings_notify_fn notify,
+                                               void *notify_context);
 
 /**
  * @brief   Write a new value for registered setting.
@@ -264,12 +276,12 @@ int settings_register_watch(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-settings_write_res_t settings_write(settings_t *ctx,
-                                    const char *section,
-                                    const char *name,
-                                    const void *value,
-                                    size_t value_len,
-                                    settings_type_t type);
+LIBSETTINGS_EXPORT settings_write_res_t settings_write(settings_t *ctx,
+                                                       const char *section,
+                                                       const char *name,
+                                                       const void *value,
+                                                       size_t value_len,
+                                                       settings_type_t type);
 
 /**
  * @brief   Write a new value for registered setting of type int.
@@ -285,10 +297,10 @@ settings_write_res_t settings_write(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-settings_write_res_t settings_write_int(settings_t *ctx,
-                                        const char *section,
-                                        const char *name,
-                                        int value);
+LIBSETTINGS_EXPORT settings_write_res_t settings_write_int(settings_t *ctx,
+                                                           const char *section,
+                                                           const char *name,
+                                                           int value);
 
 /**
  * @brief   Write a new value for registered setting of type float.
@@ -304,10 +316,10 @@ settings_write_res_t settings_write_int(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-settings_write_res_t settings_write_float(settings_t *ctx,
-                                          const char *section,
-                                          const char *name,
-                                          float value);
+LIBSETTINGS_EXPORT settings_write_res_t settings_write_float(settings_t *ctx,
+                                                             const char *section,
+                                                             const char *name,
+                                                             float value);
 
 /**
  * @brief   Write a new value for registered setting of type str.
@@ -323,10 +335,10 @@ settings_write_res_t settings_write_float(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-settings_write_res_t settings_write_str(settings_t *ctx,
-                                        const char *section,
-                                        const char *name,
-                                        const char *str);
+LIBSETTINGS_EXPORT settings_write_res_t settings_write_str(settings_t *ctx,
+                                                           const char *section,
+                                                           const char *name,
+                                                           const char *str);
 
 /**
  * @brief   Write a new value for registered setting of type bool.
@@ -342,10 +354,10 @@ settings_write_res_t settings_write_str(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-settings_write_res_t settings_write_bool(settings_t *ctx,
-                                         const char *section,
-                                         const char *name,
-                                         bool value);
+LIBSETTINGS_EXPORT settings_write_res_t settings_write_bool(settings_t *ctx,
+                                                            const char *section,
+                                                            const char *name,
+                                                            bool value);
 
 /**
  * @brief   Read value of registered setting.
@@ -361,12 +373,12 @@ settings_write_res_t settings_write_bool(settings_t *ctx,
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-int settings_read(settings_t *ctx,
-                  const char *section,
-                  const char *name,
-                  void *value,
-                  size_t value_len,
-                  settings_type_t type);
+LIBSETTINGS_EXPORT int settings_read(settings_t *ctx,
+                                     const char *section,
+                                     const char *name,
+                                     void *value,
+                                     size_t value_len,
+                                     settings_type_t type);
 
 /**
  * @brief   Read value of registered setting of type int.
@@ -380,7 +392,10 @@ int settings_read(settings_t *ctx,
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-int settings_read_int(settings_t *ctx, const char *section, const char *name, int *value);
+LIBSETTINGS_EXPORT int settings_read_int(settings_t *ctx,
+                                         const char *section,
+                                         const char *name,
+                                         int *value);
 
 /**
  * @brief   Read value of registered setting of type float.
@@ -394,7 +409,10 @@ int settings_read_int(settings_t *ctx, const char *section, const char *name, in
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-int settings_read_float(settings_t *ctx, const char *section, const char *name, float *value);
+LIBSETTINGS_EXPORT int settings_read_float(settings_t *ctx,
+                                           const char *section,
+                                           const char *name,
+                                           float *value);
 
 /**
  * @brief   Read value of registered setting of type str.
@@ -409,11 +427,11 @@ int settings_read_float(settings_t *ctx, const char *section, const char *name, 
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-int settings_read_str(settings_t *ctx,
-                      const char *section,
-                      const char *name,
-                      char *str,
-                      size_t str_len);
+LIBSETTINGS_EXPORT int settings_read_str(settings_t *ctx,
+                                         const char *section,
+                                         const char *name,
+                                         char *str,
+                                         size_t str_len);
 
 /**
  * @brief   Read value of registered setting of type bool.
@@ -427,7 +445,10 @@ int settings_read_str(settings_t *ctx,
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-int settings_read_bool(settings_t *ctx, const char *section, const char *name, bool *value);
+LIBSETTINGS_EXPORT int settings_read_bool(settings_t *ctx,
+                                          const char *section,
+                                          const char *name,
+                                          bool *value);
 
 /**
  * @brief   Read value of registered setting based on index.
@@ -449,16 +470,16 @@ int settings_read_bool(settings_t *ctx, const char *section, const char *name, b
  * @retval <0               Error.
  * @retval >0               Last index was read successfully. There are no more indexes to read.
  */
-int settings_read_by_idx(settings_t *ctx,
-                         uint16_t idx,
-                         char *section,
-                         size_t section_len,
-                         char *name,
-                         size_t name_len,
-                         char *value,
-                         size_t value_len,
-                         char *type,
-                         size_t type_len);
+LIBSETTINGS_EXPORT int settings_read_by_idx(settings_t *ctx,
+                                            uint16_t idx,
+                                            char *section,
+                                            size_t section_len,
+                                            char *name,
+                                            size_t name_len,
+                                            char *value,
+                                            size_t value_len,
+                                            char *type,
+                                            size_t type_len);
 
 #ifdef __cplusplus
 }
