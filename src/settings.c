@@ -106,7 +106,7 @@ static settings_log_t client_log = NULL;
 /* Workaround for Cython not properly supporting variadic arguments */
 __attribute__((format(printf, 2, 3))) static void log_preformat(int level, const char *fmt, ...)
 {
-  char buffer[1024];
+  char buffer[SETTINGS_BUFLEN];
   va_list args;
   va_start(args, fmt);
   int ret = vsnprintf(buffer, sizeof(buffer), fmt, args);
