@@ -14,6 +14,28 @@ from setuptools import setup, Extension
 
 import os, sys
 
+CLASSIFIERS = [
+  'Intended Audience :: Developers',
+  'Intended Audience :: Science/Research',
+  'Operating System :: POSIX :: Linux',
+  'Operating System :: MacOS :: MacOS X',
+  'Operating System :: Microsoft :: Windows',
+  'Programming Language :: Python',
+  'Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator',
+  'Topic :: Software Development :: Libraries :: Python Modules',
+  'Programming Language :: Python :: 2.7',
+  'Programming Language :: Python :: 3.4',
+  'Programming Language :: Python :: 3.5',
+  'Programming Language :: Python :: 3.6',
+  'Programming Language :: Python :: 3.7',
+]
+
+PLATFORMS = [
+  'linux',
+  'osx',
+  'win32',
+]
+
 include_dirs = ["include", "libsbp/c/include", "libswiftnav/include"]
 sources = glob("python/*.pyx") + glob("src/*.c") + glob("libswiftnav/src/logging*.c") 
 
@@ -32,11 +54,13 @@ if os.name == 'nt':
 
 setup(
     name='libsettings',
-    version="0.1.8",
+    version="0.1.9",
     author="Swift Navigation",
     author_email="dev@swift-nav.com",
     description="Open source SwiftNav settings API library.",
     url="https://github.com/swift-nav/libsettings",
+    classifiers=CLASSIFIERS,
+    platforms=PLATFORMS,
     ext_modules=[
         Extension(
             'libsettings',
