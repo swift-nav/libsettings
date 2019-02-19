@@ -1,5 +1,7 @@
 graft include
 graft libsbp/c/include/libsbp
+include libswiftnav/include/swiftnav/common.h
+include libswiftnav/include/swiftnav/logging.h
 
 include setup.py
 include LICENSE
