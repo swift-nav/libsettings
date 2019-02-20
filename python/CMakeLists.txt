@@ -26,10 +26,16 @@ if (NOT MSVC)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
 
+        execute_process(
+            COMMAND python -c "import sys;sys.path.append('${PROJECT_SOURCE_DIR}/python/');import utils;utils.get_python_dll_path(${PYTHON_VERSION})"
+            OUTPUT_VARIABLE PYDLL_PATH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
         # http://www.mingw.org/wiki/createimportlibraries
         add_custom_command(
             OUTPUT ${LIBSETTINGS_VENV}
-            COMMAND gendef - c:/windows/system32/python${PYTHON_VERSION}.dll > ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def
+            COMMAND gendef - ${PYDLL_PATH} > ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def
             COMMAND dlltool --dllname python${PYTHON_VERSION}.dll --def ${CMAKE_BINARY_DIR}/python${PYTHON_VERSION}.def --output-lib ${CMAKE_BINARY_DIR}/libpython${PYTHON_VERSION}-gen.a
         )
 

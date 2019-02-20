@@ -57,6 +57,34 @@ matrix:
        - cmake ..
        - cd ..
        - python setup.py build_ext --force
+   - os: windows
+     dist: 1803-containers
+     python: "conda-32"
+     before_install:
+       - choco install miniconda3 --x86
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       # For MinGW make to work correctly sh.exe must NOT be in your path.
+       - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
+       - ./bdist-wheel-win.bat
+       - ls -la ./dist
+   - os: windows
+     dist: 1803-containers
+     python: "conda-64"
+     before_install:
+       - choco install miniconda3
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       # For MinGW make to work correctly sh.exe must NOT be in your path.
+       - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
+       - ./bdist-wheel-win.bat
+       - ls -la ./dist
 
 git:
   depth: 1
