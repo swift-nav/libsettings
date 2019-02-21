@@ -28,37 +28,6 @@ matrix:
        - mkdir build; cd build; cmake ../; make
    - os: windows
      dist: 1803-containers
-     python: "2.7"
-     before_install:
-       - choco install python2
-       - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
-       - python -m pip install --upgrade pip wheel
-       - pip install -r requirements-win-cp27-cp34.txt
-     script:
-       - git submodule update --init
-       # For MinGW make to work correctly sh.exe must NOT be in your path.
-       - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-       - mkdir build
-       - cd build
-       - cmake -D SKIP_UNIT_TESTS=true .. -G "MinGW Makefiles"
-       - mingw32-make.exe
-   - os: windows
-     dist: 1803-containers
-     python: "3.7"
-     before_install:
-       - choco install python3
-       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-       - python -m pip install --upgrade pip wheel
-       - pip install -r requirements-win-cp35-cp36-cp37.txt
-     script:
-       - git submodule update --init
-       - mkdir build
-       - cd build
-       - cmake ..
-       - cd ..
-       - python setup.py build_ext --force
-   - os: windows
-     dist: 1803-containers
      python: "conda-32"
      before_install:
        - choco install miniconda3 --x86
