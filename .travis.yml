@@ -6,9 +6,22 @@ language: c
 matrix:
   include:
    - os: linux
+     before_install:
+       - sudo pip install -U six
      script:
        - git submodule update --init
-       - mkdir build; cd build; cmake ../; make
+       - mkdir build; cd build; cmake ../; make; cd ..
+     deploy:
+       - provider: pypi
+         user: pmiettinen
+         distributions: "sdist"
+         skip_cleanup: true
+         server: https://test.pypi.org/legacy/ # Remove for deployment to official PyPi repo
+         password:
+           secure: VQK+dsULgTqrprQ6fY9GXGnUIAw2goD0MaHiadjKlZF1zqKsBhl5GigCuU7xue389cn34eq7Pu0g7d2EemEuw/eCaMIzPzi8beENd0mQNCy3ZbjxMmV4xrBUYJZLBq25SfAycq+waq6DdOyesBfcjOdIW8XxVekpyiF9YJPmG3/7AdbKKflmW3OMS8/U3c32W+W2KQ1qamC2WEkmEPpFsCUaSaleFTYslVgbb2K6LIm7y+pVGTyeKcDV+25ZuyVHwSjhrh+eT7VXBC0gP20WQMhK4N3uA2IJXVDAdmSwyRtrZj/u9hUMZ0Ess2SGq6znn4Xu9imCXlUuAApU63yFPZxJo7PG6YlAoGMWGQMfNu8jxSwDowmb8FKXn861tUTmLF+9I5RkjLFR78KbeQDMXXDu2jGuRq1sTKcRkq8wJ9+PTFDFDVVg6qkpUn/e9Oc9bQxOcZX6MHABTBA3H781it8yEMXbhWYcRlwV6yDeB6jZF7ZW0kTuoPZeMnEbT0Mb2799n8dy7r7hyDgYMFC6Ek3O6wxralPJGnfrKP3PmOr93B11z+DM/hjmAgJvp/x7oAgB8um5DIK+SguFk40rGTvRwHxONhiDE8DOIO30Z15gekTG6gWrQLbViF8nhtjEHrKCr2aIbD+fKCCiCDOPRIVHgCgq4fuV6adf86z8yPg=
+         on:
+           all_branches: true
+           repo: swift-nav/libsettings
    - os: osx
      osx_image: xcode10
      before_install:
@@ -20,15 +33,15 @@ matrix:
        - export CC_FOR_BUILD=gcc-6
      script:
        - git submodule update --init
-       - mkdir build; cd build; cmake ../; make
+       - mkdir build; cd build; cmake ../; make; cd ..
    - os: osx
      osx_image: xcode10.1
      script:
        - git submodule update --init
-       - mkdir build; cd build; cmake ../; make
+       - mkdir build; cd build; cmake ../; make; cd ..
    - os: windows
      dist: 1803-containers
-     python: "conda-32"
+     python: "2.7 32-bit"
      before_install:
        - choco install miniconda3 --x86
        - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
@@ -38,11 +51,43 @@ matrix:
        - git submodule update --init
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-       - ./bdist-wheel-win.bat
-       - ls -la ./dist
+       - ./bdist-wheel-win-gcc.bat 2.7
    - os: windows
      dist: 1803-containers
-     python: "conda-64"
+     python: "3.5 32-bit"
+     before_install:
+       - choco install miniconda3 --x86
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       - ./bdist-wheel-win-msvc.bat 3.5
+   - os: windows
+     dist: 1803-containers
+     python: "3.6 32-bit"
+     before_install:
+       - choco install miniconda3 --x86
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       - ./bdist-wheel-win-msvc.bat 3.6
+   - os: windows
+     dist: 1803-containers
+     python: "3.7 32-bit"
+     before_install:
+       - choco install miniconda3 --x86
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       - ./bdist-wheel-win-msvc.bat 3.7
+   - os: windows
+     dist: 1803-containers
+     python: "2.7 64-bit"
      before_install:
        - choco install miniconda3
        - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
@@ -52,8 +97,52 @@ matrix:
        - git submodule update --init
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-       - ./bdist-wheel-win.bat
-       - ls -la ./dist
+       - ./bdist-wheel-win-gcc.bat 2.7
+   - os: windows
+     dist: 1803-containers
+     python: "3.5 64-bit"
+     before_install:
+       - choco install miniconda3
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       - ./bdist-wheel-win-msvc.bat 3.5
+   - os: windows
+     dist: 1803-containers
+     python: "3.6 64-bit"
+     before_install:
+       - choco install miniconda3
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       - ./bdist-wheel-win-msvc.bat 3.6
+   - os: windows
+     dist: 1803-containers
+     python: "3.7 64-bit"
+     before_install:
+       - choco install miniconda3
+       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
+       - conda info -s
+       - conda update --yes conda
+     script:
+       - git submodule update --init
+       - ./bdist-wheel-win-msvc.bat 3.7
+
+deploy:
+  - provider: pypi
+    user: pmiettinen
+    distributions: "bdist_wheel"
+    skip_cleanup: true
+    server: https://test.pypi.org/legacy/ # Remove for deployment to official PyPi repo
+    password:
+      secure: VQK+dsULgTqrprQ6fY9GXGnUIAw2goD0MaHiadjKlZF1zqKsBhl5GigCuU7xue389cn34eq7Pu0g7d2EemEuw/eCaMIzPzi8beENd0mQNCy3ZbjxMmV4xrBUYJZLBq25SfAycq+waq6DdOyesBfcjOdIW8XxVekpyiF9YJPmG3/7AdbKKflmW3OMS8/U3c32W+W2KQ1qamC2WEkmEPpFsCUaSaleFTYslVgbb2K6LIm7y+pVGTyeKcDV+25ZuyVHwSjhrh+eT7VXBC0gP20WQMhK4N3uA2IJXVDAdmSwyRtrZj/u9hUMZ0Ess2SGq6znn4Xu9imCXlUuAApU63yFPZxJo7PG6YlAoGMWGQMfNu8jxSwDowmb8FKXn861tUTmLF+9I5RkjLFR78KbeQDMXXDu2jGuRq1sTKcRkq8wJ9+PTFDFDVVg6qkpUn/e9Oc9bQxOcZX6MHABTBA3H781it8yEMXbhWYcRlwV6yDeB6jZF7ZW0kTuoPZeMnEbT0Mb2799n8dy7r7hyDgYMFC6Ek3O6wxralPJGnfrKP3PmOr93B11z+DM/hjmAgJvp/x7oAgB8um5DIK+SguFk40rGTvRwHxONhiDE8DOIO30Z15gekTG6gWrQLbViF8nhtjEHrKCr2aIbD+fKCCiCDOPRIVHgCgq4fuV6adf86z8yPg=
+    on:
+      all_branches: true
+      repo: swift-nav/libsettings
 
 git:
   depth: 1
@@ -65,6 +154,4 @@ cache:
 
 branches:
   only:
-    - master
-      # Any tag starting with a version string: vX.Y.Z(-blahblahblah).
-    - /^v\d+.\d+.\d+(-\S+)?$/
+    - /.*/
