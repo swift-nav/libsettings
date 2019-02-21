@@ -6,22 +6,9 @@ language: c
 matrix:
   include:
    - os: linux
-     before_install:
-       - sudo pip install -U six
      script:
        - git submodule update --init
        - mkdir build; cd build; cmake ../; make; cd ..
-     deploy:
-       - provider: pypi
-         user: pmiettinen
-         distributions: "sdist"
-         skip_cleanup: true
-         server: https://test.pypi.org/legacy/ # Remove for deployment to official PyPi repo
-         password:
-           secure: VQK+dsULgTqrprQ6fY9GXGnUIAw2goD0MaHiadjKlZF1zqKsBhl5GigCuU7xue389cn34eq7Pu0g7d2EemEuw/eCaMIzPzi8beENd0mQNCy3ZbjxMmV4xrBUYJZLBq25SfAycq+waq6DdOyesBfcjOdIW8XxVekpyiF9YJPmG3/7AdbKKflmW3OMS8/U3c32W+W2KQ1qamC2WEkmEPpFsCUaSaleFTYslVgbb2K6LIm7y+pVGTyeKcDV+25ZuyVHwSjhrh+eT7VXBC0gP20WQMhK4N3uA2IJXVDAdmSwyRtrZj/u9hUMZ0Ess2SGq6znn4Xu9imCXlUuAApU63yFPZxJo7PG6YlAoGMWGQMfNu8jxSwDowmb8FKXn861tUTmLF+9I5RkjLFR78KbeQDMXXDu2jGuRq1sTKcRkq8wJ9+PTFDFDVVg6qkpUn/e9Oc9bQxOcZX6MHABTBA3H781it8yEMXbhWYcRlwV6yDeB6jZF7ZW0kTuoPZeMnEbT0Mb2799n8dy7r7hyDgYMFC6Ek3O6wxralPJGnfrKP3PmOr93B11z+DM/hjmAgJvp/x7oAgB8um5DIK+SguFk40rGTvRwHxONhiDE8DOIO30Z15gekTG6gWrQLbViF8nhtjEHrKCr2aIbD+fKCCiCDOPRIVHgCgq4fuV6adf86z8yPg=
-         on:
-           all_branches: true
-           repo: swift-nav/libsettings
    - os: osx
      osx_image: xcode10
      before_install:
@@ -131,18 +118,6 @@ matrix:
      script:
        - git submodule update --init
        - ./bdist-wheel-win-msvc.bat 3.7
-
-deploy:
-  - provider: pypi
-    user: pmiettinen
-    distributions: "bdist_wheel"
-    skip_cleanup: true
-    server: https://test.pypi.org/legacy/ # Remove for deployment to official PyPi repo
-    password:
-      secure: VQK+dsULgTqrprQ6fY9GXGnUIAw2goD0MaHiadjKlZF1zqKsBhl5GigCuU7xue389cn34eq7Pu0g7d2EemEuw/eCaMIzPzi8beENd0mQNCy3ZbjxMmV4xrBUYJZLBq25SfAycq+waq6DdOyesBfcjOdIW8XxVekpyiF9YJPmG3/7AdbKKflmW3OMS8/U3c32W+W2KQ1qamC2WEkmEPpFsCUaSaleFTYslVgbb2K6LIm7y+pVGTyeKcDV+25ZuyVHwSjhrh+eT7VXBC0gP20WQMhK4N3uA2IJXVDAdmSwyRtrZj/u9hUMZ0Ess2SGq6znn4Xu9imCXlUuAApU63yFPZxJo7PG6YlAoGMWGQMfNu8jxSwDowmb8FKXn861tUTmLF+9I5RkjLFR78KbeQDMXXDu2jGuRq1sTKcRkq8wJ9+PTFDFDVVg6qkpUn/e9Oc9bQxOcZX6MHABTBA3H781it8yEMXbhWYcRlwV6yDeB6jZF7ZW0kTuoPZeMnEbT0Mb2799n8dy7r7hyDgYMFC6Ek3O6wxralPJGnfrKP3PmOr93B11z+DM/hjmAgJvp/x7oAgB8um5DIK+SguFk40rGTvRwHxONhiDE8DOIO30Z15gekTG6gWrQLbViF8nhtjEHrKCr2aIbD+fKCCiCDOPRIVHgCgq4fuV6adf86z8yPg=
-    on:
-      all_branches: true
-      repo: swift-nav/libsettings
 
 git:
   depth: 1
