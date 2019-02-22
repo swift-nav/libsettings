@@ -30,10 +30,7 @@ matrix:
      dist: 1803-containers
      python: "2.7 32-bit"
      before_install:
-       - choco install miniconda3 --x86
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh --x86
      script:
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
@@ -45,10 +42,7 @@ matrix:
      dist: 1803-containers
      python: "3.5 32-bit"
      before_install:
-       - choco install miniconda3 --x86
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh --x86
      script:
        - ./scripts/bdist-wheel-win-msvc.bat 3.5
        - conda create -y -n py3.5 python=3.5 pip
@@ -57,10 +51,7 @@ matrix:
      dist: 1803-containers
      python: "3.6 32-bit"
      before_install:
-       - choco install miniconda3 --x86
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh --x86
      script:
        - ./scripts/bdist-wheel-win-msvc.bat 3.6
        - conda create -y -n py3.6 python=3.6 pip
@@ -69,10 +60,7 @@ matrix:
      dist: 1803-containers
      python: "3.7 32-bit"
      before_install:
-       - choco install miniconda3 --x86
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh --x86
      script:
        - ./scripts/bdist-wheel-win-msvc.bat 3.7
        - conda create -y -n py3.7 python=3.7 pip
@@ -81,10 +69,7 @@ matrix:
      dist: 1803-containers
      python: "2.7 64-bit"
      before_install:
-       - choco install miniconda3
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh
      script:
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
@@ -96,10 +81,7 @@ matrix:
      dist: 1803-containers
      python: "3.5 64-bit"
      before_install:
-       - choco install miniconda3
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh
      script:
        - ./scripts/bdist-wheel-win-msvc.bat 3.5
        - conda create -y -n py3.5 python=3.5 pip
@@ -108,10 +90,7 @@ matrix:
      dist: 1803-containers
      python: "3.6 64-bit"
      before_install:
-       - choco install miniconda3
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh
      script:
        - ./scripts/bdist-wheel-win-msvc.bat 3.6
        - conda create -y -n py3.6 python=3.6 pip
@@ -120,10 +99,7 @@ matrix:
      dist: 1803-containers
      python: "3.7 64-bit"
      before_install:
-       - choco install miniconda3
-       - export PATH="/c/Tools/miniconda3:/c/Tools/miniconda3/Library/mingw-w64/bin:/c/Tools/miniconda3/Library/usr/bin:/c/Tools/miniconda3/Library/bin:/c/Tools/miniconda3/Scripts:/c/Tools/miniconda3/bin:/c/Tools/miniconda3/condabin:$PATH"
-       - conda info -s
-       - conda update --yes conda
+       - source ./scripts/install_conda.sh
      script:
        - ./scripts/bdist-wheel-win-msvc.bat 3.7
        - conda create -y -n py3.7 python=3.7 pip
