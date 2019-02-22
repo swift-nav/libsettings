@@ -7,8 +7,9 @@ matrix:
   include:
    - os: linux
      script:
-       - mkdir build; cd build; cmake ../; make; cd ..
-       - python setup.py sdist
+       - source ./scripts/sdist-unix.sh
+
+
    - os: osx
      osx_image: xcode10
      before_install:
@@ -19,74 +20,90 @@ matrix:
        - export TRAVIS_COMPILER=gcc-6
        - export CC_FOR_BUILD=gcc-6
      script:
-       - mkdir build; cd build; cmake ../; make; cd ..
-       - python setup.py sdist
+       - source ./scripts/sdist-unix.sh
+
+
    - os: osx
      osx_image: xcode10.1
      script:
-       - mkdir build; cd build; cmake ../; make; cd ..
-       - python setup.py sdist
+       - source ./scripts/sdist-unix.sh
+
+
    - os: windows
      dist: 1803-containers
      python: "2.7 32-bit"
      before_install:
-       - source ./scripts/install_conda.sh --x86
+       - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-gcc.sh 2.7
+
+
    - os: windows
      dist: 1803-containers
      python: "3.5 32-bit"
      before_install:
-       - source ./scripts/install_conda.sh --x86
+       - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.5 
+
+
    - os: windows
      dist: 1803-containers
      python: "3.6 32-bit"
      before_install:
-       - source ./scripts/install_conda.sh --x86
+       - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+
+
    - os: windows
      dist: 1803-containers
      python: "3.7 32-bit"
      before_install:
-       - source ./scripts/install_conda.sh --x86
+       - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.7
+
+
    - os: windows
      dist: 1803-containers
      python: "2.7 64-bit"
      before_install:
-       - source ./scripts/install_conda.sh
+       - source ./scripts/install-conda.sh
      script:
        - source ./scripts/bdist-wheel-win-gcc.sh 2.7
+
+
    - os: windows
      dist: 1803-containers
      python: "3.5 64-bit"
      before_install:
-       - source ./scripts/install_conda.sh
+       - source ./scripts/install-conda.sh
      script:
        source ./scripts/bdist-wheel-win-msvc.sh 3.5
+
+
    - os: windows
      dist: 1803-containers
      python: "3.6 64-bit"
      before_install:
-       - source ./scripts/install_conda.sh
+       - source ./scripts/install-conda.sh
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+
+
    - os: windows
      dist: 1803-containers
      python: "3.7 64-bit"
      before_install:
-       - source ./scripts/install_conda.sh
+       - source ./scripts/install-conda.sh
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
 
 before_script:
  - git submodule update --init
 
-after_script:
+after_success:
  - cd dist; pip install --user libsettings-*; cd ..
  - pip install --user sbp
  - python -c "from libsettings import Settings" || exit 1
