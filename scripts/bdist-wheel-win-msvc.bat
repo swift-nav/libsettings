@@ -22,7 +22,6 @@ cmake ..
 CALL msbuild libsettings.sln /p:Configuration="Release" /p:Platform="Win32"
 cd ..
 python setup.py bdist_wheel
-rmdir /s /q build
 CALL deactivate
 CALL rmvirtualenv venv
 CALL conda deactivate

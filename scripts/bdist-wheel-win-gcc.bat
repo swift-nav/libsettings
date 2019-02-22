@@ -16,7 +16,6 @@ cmake  -D SKIP_UNIT_TESTS=true .. -G "MinGW Makefiles"
 mingw32-make.exe
 cd ..
 python setup.py bdist_wheel
-rmdir /s /q build
 CALL deactivate
 CALL rmvirtualenv venv
 CALL conda deactivate
