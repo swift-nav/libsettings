@@ -7,7 +7,6 @@ matrix:
   include:
    - os: linux
      script:
-       - git submodule update --init
        - mkdir build; cd build; cmake ../; make; cd ..
        - python setup.py sdist
    - os: osx
@@ -20,13 +19,11 @@ matrix:
        - export TRAVIS_COMPILER=gcc-6
        - export CC_FOR_BUILD=gcc-6
      script:
-       - git submodule update --init
        - mkdir build; cd build; cmake ../; make; cd ..
        - python setup.py sdist
    - os: osx
      osx_image: xcode10.1
      script:
-       - git submodule update --init
        - mkdir build; cd build; cmake ../; make; cd ..
        - python setup.py sdist
    - os: windows
@@ -38,10 +35,9 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-       - ./bdist-wheel-win-gcc.bat 2.7
+       - ./scripts/bdist-wheel-win-gcc.bat 2.7
        - mv "/c/Program Files/Git/usr/bin/hidden_sh.exe" "/c/Program Files/Git/usr/bin/sh.exe"
        - conda create -y -n py2.7 python=2.7 pip
        - source activate py2.7
@@ -54,8 +50,7 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
-       - ./bdist-wheel-win-msvc.bat 3.5
+       - ./scripts/bdist-wheel-win-msvc.bat 3.5
        - conda create -y -n py3.5 python=3.5 pip
        - source activate py3.5
    - os: windows
@@ -67,8 +62,7 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
-       - ./bdist-wheel-win-msvc.bat 3.6
+       - ./scripts/bdist-wheel-win-msvc.bat 3.6
        - conda create -y -n py3.6 python=3.6 pip
        - source activate py3.6
    - os: windows
@@ -80,8 +74,7 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
-       - ./bdist-wheel-win-msvc.bat 3.7
+       - ./scripts/bdist-wheel-win-msvc.bat 3.7
        - conda create -y -n py3.7 python=3.7 pip
        - source activate py3.7
    - os: windows
@@ -93,10 +86,9 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
        # For MinGW make to work correctly sh.exe must NOT be in your path.
        - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-       - ./bdist-wheel-win-gcc.bat 2.7
+       - ./scripts/bdist-wheel-win-gcc.bat 2.7
        - mv "/c/Program Files/Git/usr/bin/hidden_sh.exe" "/c/Program Files/Git/usr/bin/sh.exe"
        - conda create -y -n py2.7 python=2.7 pip
        - source activate py2.7
@@ -109,8 +101,7 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
-       - ./bdist-wheel-win-msvc.bat 3.5
+       - ./scripts/bdist-wheel-win-msvc.bat 3.5
        - conda create -y -n py3.5 python=3.5 pip
        - source activate py3.5
    - os: windows
@@ -122,8 +113,7 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
-       - ./bdist-wheel-win-msvc.bat 3.6
+       - ./scripts/bdist-wheel-win-msvc.bat 3.6
        - conda create -y -n py3.6 python=3.6 pip
        - source activate py3.6
    - os: windows
@@ -135,10 +125,12 @@ matrix:
        - conda info -s
        - conda update --yes conda
      script:
-       - git submodule update --init
-       - ./bdist-wheel-win-msvc.bat 3.7
+       - ./scripts/bdist-wheel-win-msvc.bat 3.7
        - conda create -y -n py3.7 python=3.7 pip
        - source activate py3.7
+
+before_script:
+ - git submodule update --init
 
 after_script:
  - cd dist; pip install --user libsettings-*; cd ..
