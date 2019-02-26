@@ -32,18 +32,34 @@
  * @return zero on success, -1 if message failed to send
  */
 static int setting_send_write_response(settings_t *ctx,
-                                       msg_settings_write_resp_t *write_response,
-                                       uint8_t len)
+                                       setting_data_t *setting_data,
+                                       settings_write_res_t write_result)
 {
+  uint8_t resp[SETTINGS_BUFLEN] = {0};
+  uint8_t resp_len = 0;
+  msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
+  write_response->status = write_result;
+  resp_len += sizeof(write_response->status);
+  int l = setting_data_format(setting_data,
+                              false,
+                              write_response->setting,
+                              sizeof(resp) - resp_len,
+                              NULL);
+  if (l < 0) {
+    log_error("formatting settings write response failed");
+    return -1;
+  }
+  resp_len += l;
+
   settings_api_t *api = &ctx->client_iface;
-  if (api->send(api->ctx, SBP_MSG_SETTINGS_WRITE_RESP, len, (uint8_t *)write_response) != 0) {
+  if (api->send(api->ctx, SBP_MSG_SETTINGS_WRITE_RESP, resp_len, (uint8_t *)write_response) != 0) {
     log_error("sending settings write response failed");
     return -1;
   }
   return 0;
 }
 
-static void setting_update_value(settings_t *ctx, uint8_t *msg, uint8_t len)
+static void setting_value_update(settings_t *ctx, const char *msg, uint8_t len, bool watchonly)
 {
   /* Extract parameters from message:
    * 4 null terminated strings: section, name, value and type.
@@ -61,28 +77,16 @@ static void setting_update_value(settings_t *ctx, uint8_t *msg, uint8_t len)
     return;
   }
 
-  if (setting_data->watchonly) {
+  if (watchonly != setting_data->watchonly) {
     return;
   }
 
   settings_write_res_t write_result = setting_data_update_value(setting_data, value);
 
-  uint8_t resp[SETTINGS_BUFLEN] = {0};
-  uint8_t resp_len = 0;
-  msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)resp;
-  write_response->status = write_result;
-  resp_len += sizeof(write_response->status);
-  int l = setting_data_format(setting_data,
-                              false,
-                              write_response->setting,
-                              sizeof(resp) - resp_len,
-                              NULL);
-  if (l < 0) {
-    return;
+  /* In case of watcher, do not send write response */
+  if (!setting_data->watchonly) {
+    setting_send_write_response(ctx, setting_data, write_result);
   }
-  resp_len += l;
-
-  setting_send_write_response(ctx, write_response, resp_len);
 }
 
 static void setting_register_resp_callback(uint16_t sender_id,
@@ -116,8 +120,8 @@ static void setting_register_resp_callback(uint16_t sender_id,
     return;
   }
 
-  setting_update_value(ctx, (uint8_t *)resp->setting, len - sizeof(resp->status));
-  setting_update_watch_only(ctx, (uint8_t *)resp->setting, len - sizeof(resp->status));
+  setting_value_update(ctx, resp->setting, len - sizeof(resp->status), false);
+  setting_value_update(ctx, resp->setting, len - sizeof(resp->status), true);
 }
 
 static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
@@ -130,39 +134,15 @@ static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg
     return;
   }
 
-  setting_update_value(ctx, msg, len);
+  msg_settings_write_t *request = (msg_settings_write_t *)msg;
+
+  setting_value_update(ctx, request->setting, len, false);
 }
 
-static int setting_update_watch_only(settings_t *ctx, const char *msg, uint8_t len)
-{
-  /* Extract parameters from message:
-   * 4 null terminated strings: section, name, value and type
-   * Expect to find at least section, name and value.
-   */
-  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-  if (settings_parse(msg, len, &section, &name, &value, &type) < SETTINGS_TOKENS_VALUE) {
-    log_warn("updating watched values failed, error parsing setting");
-    return -1;
-  }
-
-  /* Look up setting data */
-  setting_data_t *setting_data = setting_data_lookup(ctx->setting_data_list, section, name);
-  if (setting_data == NULL) {
-    return 0;
-  }
-
-  if (!setting_data->watchonly) {
-    return 0;
-  }
-
-  if (setting_data_update_value(setting_data, value) != SETTINGS_WR_OK) {
-    return -1;
-  }
-
-  return 0;
-}
-
-static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
+static void setting_read_resp_callback(uint16_t sender_id,
+                                       uint8_t len,
+                                       uint8_t *msg,
+                                       void *context)
 {
   (void)sender_id;
   assert(msg);
@@ -187,7 +167,7 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
     if (type) {
       strncpy(state->resp_type, type, sizeof(state->resp_type));
     }
-    setting_update_watch_only(ctx, read_response->setting, len);
+    setting_value_update(ctx, read_response->setting, len, true);
   } else if (tokens == SETTINGS_TOKENS_NAME) {
     log_debug("setting %s.%s not found", section, name);
   } else {
@@ -199,7 +179,7 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
 
 static void setting_write_resp_callback(uint16_t sender_id,
                                         uint8_t len,
-                                        uint8_t msg[],
+                                        uint8_t *msg,
                                         void *context)
 {
   (void)sender_id;
@@ -220,12 +200,12 @@ static void setting_write_resp_callback(uint16_t sender_id,
     return;
   }
 
-  setting_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status));
+  setting_value_update(ctx, write_response->setting, len - sizeof(write_response->status), true);
 }
 
 static void setting_read_by_index_resp_callback(uint16_t sender_id,
                                                 uint8_t len,
-                                                uint8_t msg[],
+                                                uint8_t *msg,
                                                 void *context)
 {
   (void)sender_id;
@@ -260,7 +240,7 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
 
 static void setting_read_by_index_done_callback(uint16_t sender_id,
                                                 uint8_t len,
-                                                uint8_t msg[],
+                                                uint8_t *msg,
                                                 void *context)
 {
   (void)sender_id;
