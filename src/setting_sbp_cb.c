@@ -177,19 +177,18 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
     return;
   }
 
-  if (setting_update_watch_only(ctx, read_response->setting, len) != 0) {
-    log_warn("error in settings read response message");
-  }
-
-  const char *value = NULL, *type = NULL;
-  if (settings_parse(read_response->setting, len, NULL, NULL, &value, &type)
-      >= SETTINGS_TOKENS_VALUE) {
+  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
+  settings_tokens_t tokens = settings_parse(read_response->setting, len, &section, &name, &value, &type);
+  if (tokens >= SETTINGS_TOKENS_VALUE) {
     if (value) {
       strncpy(state->resp_value, value, sizeof(state->resp_value));
     }
     if (type) {
       strncpy(state->resp_type, type, sizeof(state->resp_type));
     }
+    setting_update_watch_only(ctx, read_response->setting, len);
+  } else if (tokens == SETTINGS_TOKENS_NAME) {
+    log_debug("setting %s.%s not found", section, name);
   } else {
     log_warn("read response parsing failed");
     state->resp_value[0] = '\0';
