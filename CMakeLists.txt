@@ -5,7 +5,7 @@ project(libsettings)
 # Include Modules
 ################################################################################
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(ClangTools)
+include(ClangToolsLibsettings)
 
 ################################################################################
 # Build Controls
@@ -115,7 +115,10 @@ else (LIBSBP_SEARCH_PATH)
   endif()
 endif(LIBSBP_SEARCH_PATH)
 
-include_directories("libswiftnav/include")
+if(EXISTS ${PROJECT_SOURCE_DIR}/libswiftnav)
+  include_directories("${PROJECT_SOURCE_DIR}/libswiftnav/include")
+  add_subdirectory("${PROJECT_SOURCE_DIR}/libswiftnav")
+endif()
 
 add_subdirectory(src)
 add_subdirectory(python)

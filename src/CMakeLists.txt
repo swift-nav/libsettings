@@ -4,8 +4,6 @@ set(libsettings_HEADERS
   )
 
 add_library(settings
-            ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging.c
-            ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging_common.c
             settings.c
             settings_util.c
             request_state.c
@@ -17,7 +15,7 @@ add_library(settings
             setting_type_int.c
             setting_type_str.c)
 
-target_link_libraries(settings)
+target_link_libraries(settings swiftnav)
 
 target_include_directories(settings PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
