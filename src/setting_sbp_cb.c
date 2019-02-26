@@ -219,10 +219,7 @@ static void setting_write_resp_callback(uint16_t sender_id,
     return;
   }
 
-  if (setting_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status))
-      != 0) {
-    log_warn("error in settings read response message");
-  }
+  setting_update_watch_only(ctx, write_response->setting, len - sizeof(write_response->status));
 }
 
 static void setting_read_by_index_resp_callback(uint16_t sender_id,

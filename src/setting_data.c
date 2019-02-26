@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <swiftnav/logging.h>
+
 #include <libsettings/settings_util.h>
 
 #include <internal/setting_data.h>
@@ -88,6 +90,7 @@ void setting_data_destroy(setting_data_t *setting_data)
 settings_write_res_t setting_data_update_value(setting_data_t *setting_data, const char *value)
 {
   if (setting_data->readonly) {
+    log_warn("trying to update read only setting");
     return SETTINGS_WR_READ_ONLY;
   }
 
@@ -99,6 +102,7 @@ settings_write_res_t setting_data_update_value(setting_data_t *setting_data, con
                                             value)) {
     /* Revert value if conversion fails */
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
+    log_error("parsing failed while updating setting value");
     return SETTINGS_WR_PARSE_FAILED;
   }
 
@@ -116,6 +120,7 @@ settings_write_res_t setting_data_update_value(setting_data_t *setting_data, con
 
   if (res != SETTINGS_WR_OK) {
     /* Revert value if notify returns error */
+    log_error("setting value update notify failed");
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
   }
 
