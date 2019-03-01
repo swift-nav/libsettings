@@ -15,6 +15,8 @@
 
 #include <inttypes.h>
 
+#include <internal/setting_declspec.h>
+
 typedef enum settings_tokens_e {
   SETTINGS_TOKENS_INVALID = -1,   /** An error occurred */
   SETTINGS_TOKENS_EMPTY = 0,      /** No tokens found */
@@ -31,12 +33,12 @@ typedef enum settings_tokens_e {
 extern "C" {
 #endif
 
-int settings_format(const char *section,
-                    const char *name,
-                    const char *value,
-                    const char *type,
-                    char *buf,
-                    size_t blen);
+LIBSETTINGS_DECLSPEC int settings_format(const char *section,
+                                         const char *name,
+                                         const char *value,
+                                         const char *type,
+                                         char *buf,
+                                         size_t blen);
 
 /**
  * @brief   Parse setting strings from SBP message buffer
@@ -56,12 +58,12 @@ int settings_format(const char *section,
  *                          5 is found, -1 is returned. See @ settings_tokens_t.
  * @retval -1               An error occurred.
  */
-settings_tokens_t settings_parse(const char *buf,
-                                 size_t blen,
-                                 const char **section,
-                                 const char **name,
-                                 const char **value,
-                                 const char **type);
+LIBSETTINGS_DECLSPEC settings_tokens_t settings_parse(const char *buf,
+                                                      size_t blen,
+                                                      const char **section,
+                                                      const char **name,
+                                                      const char **value,
+                                                      const char **type);
 
 #ifdef __cplusplus
 }
