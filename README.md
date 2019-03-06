@@ -18,6 +18,11 @@ Open source SwiftNav settings API library.
 
 ### Unix
 
+#### Output
+
+* .so can be found under `build/src/`
+* Python distribution package can be found under `dist/`
+
 #### Prerequisities
 
 * Python
@@ -33,81 +38,58 @@ is used.
 #### Commands
 
 ``` sh
+./scripts/sdist-unix.sh
+```
+
+or more explicit:
+
+``` sh
 mkdir build
 cd build
 cmake .. # If you want to speficy python version: 'cmake -D PYTHON=python3 ..'
 make
 cd ..
-# If you want to update python bindings source distribution package:
-python setup.py sdist --dist-dir python/sdist
 ```
 
 ### Windows
 
-#### NOTE
+Architecture (32/64-bit) is determined by conda installation.
 
-In case of virtualenv this process will overwrite <PYTHON_PATH>/Lib/site-packages/virtualenv_path_extensions.pth
-This is a file used by virtualenv and doesn't belong to standard python installation.
-In case you are using virtualenv with other projects you might want to check if this file
-exists in your setup and make a copy of it.
+#### Output
 
-#### Prerequisities for Python 2.7.x or 3.4.x
+* .dll and .lib can be found under `build/src/Release/`
+* Python distribution package can be found under `dist/`
 
-* pip
-* virtualenvwrapper-win (pip install virtualenvwrapper-win)
+#### Prerequisities for Python 2.7.x
 
-You can do without 'virtualenvwrapper-win' but beaware that in this case
-contents of requirements-*.txt should be installed to your Python environment.
+* conda
+
+#### Commands for Python 2.7.x
 
 For MinGW make to work correctly sh.exe must NOT be in your path.
 
-#### Commands for Python 2.7.x or 3.4.x
-
 ``` sh
-mkvirtualenv -r requirements-win-cp27-cp34.txt venv
-md build
-cd build
-# Make sure CMake is using venv/Scripts/gcc.exe as compiler and not some other
-# gcc possibly installed
-cmake .. -G "MinGW Makefiles"
-make
-cd ..
-# If you want to update python bindings source distribution package:
-python setup.py sdist --dist-dir python/sdist
-deactivate # virtualenv
-rmvirtualenv venv
+./scripts/bdist-wheel-win-gcc.bat 2.7
 ```
 
 #### Prerequisities for Python 3.5.x or 3.6.x or 3.7.x
 
-* pip
+* conda
 * Microsoft Visual C++ 14.0, for example from:
   https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017
 
 #### Commands for Python 3.5.x or 3.6.x or 3.7.x
 
-Use 'Native Tools Command Prompt for VS 2017', select x86/x64 based on your Python architecture
-
 ``` sh
-# If you use virtualenv, make sure that the path file is updated accordingly,
-# see python/CMakeLists.txt for details.
-pip install -r requirements-win-cp35-cp36-cp37.txt
-md build
-cd build
-cmake ..
-# settings.dll from C sources
-msbuild libsettings.sln /p:Configuration="Release" /p:Platform="Win32"
-cd ..
-# libsettings.pyd for importing from Python
-python setup.py build_ext --force
-# If you want to update python bindings source distribution package:
-python setup.py sdist --dist-dir python/sdist
+./scripts/bdist-wheel-win-msvc.bat 3.5
+./scripts/bdist-wheel-win-msvc.bat 3.6
+./scripts/bdist-wheel-win-msvc.bat 3.7
 ```
 
-#### Sanity check
+## Sanity check
 
-To test your build you should search for libsettings.pyd under `build/` directory
-and copy it to `python/` directory containing settins_client.py. And then run in `python/`:
+To test your build you should search for the built distribution package under
+dist/ directory. Install it using ´pip´ and then:
 
 ``` sh
 python settings_client.py --tcp -p <piksi_ip>:55555

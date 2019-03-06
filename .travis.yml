@@ -7,8 +7,9 @@ matrix:
   include:
    - os: linux
      script:
-       - git submodule update --init
-       - mkdir build; cd build; cmake ../; make
+       - ./scripts/sdist-unix.sh
+
+
    - os: osx
      osx_image: xcode10
      before_install:
@@ -19,44 +20,93 @@ matrix:
        - export TRAVIS_COMPILER=gcc-6
        - export CC_FOR_BUILD=gcc-6
      script:
-       - git submodule update --init
-       - mkdir build; cd build; cmake ../; make
+       - ./scripts/sdist-unix.sh
+
+
    - os: osx
      osx_image: xcode10.1
      script:
-       - git submodule update --init
-       - mkdir build; cd build; cmake ../; make
+       - ./scripts/sdist-unix.sh
+
+
    - os: windows
      dist: 1803-containers
-     python: "2.7"
+     python: "2.7 32-bit"
      before_install:
-       - choco install python2
-       - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
-       - python -m pip install --upgrade pip wheel
-       - pip install -r requirements-win-cp27-cp34.txt
+       - source ./scripts/install-conda.sh --x86
      script:
-       - git submodule update --init
-       # For MinGW make to work correctly sh.exe must NOT be in your path.
-       - mv "/c/Program Files/Git/usr/bin/sh.exe" "/c/Program Files/Git/usr/bin/hidden_sh.exe"
-       - mkdir build
-       - cd build
-       - cmake -D SKIP_UNIT_TESTS=true .. -G "MinGW Makefiles"
-       - mingw32-make.exe
+       - source ./scripts/bdist-wheel-win-gcc.sh 2.7
+
+
    - os: windows
      dist: 1803-containers
-     python: "3.7"
+     python: "3.5 32-bit"
      before_install:
-       - choco install python3
-       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-       - python -m pip install --upgrade pip wheel
-       - pip install -r requirements-win-cp35-cp36-cp37.txt
+       - source ./scripts/install-conda.sh --x86
      script:
-       - git submodule update --init
-       - mkdir build
-       - cd build
-       - cmake ..
-       - cd ..
-       - python setup.py build_ext --force
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.5 
+
+
+   - os: windows
+     dist: 1803-containers
+     python: "3.6 32-bit"
+     before_install:
+       - source ./scripts/install-conda.sh --x86
+     script:
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+
+
+   - os: windows
+     dist: 1803-containers
+     python: "3.7 32-bit"
+     before_install:
+       - source ./scripts/install-conda.sh --x86
+     script:
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.7
+
+
+   - os: windows
+     dist: 1803-containers
+     python: "2.7 64-bit"
+     before_install:
+       - source ./scripts/install-conda.sh
+     script:
+       - source ./scripts/bdist-wheel-win-gcc.sh 2.7
+
+
+   - os: windows
+     dist: 1803-containers
+     python: "3.5 64-bit"
+     before_install:
+       - source ./scripts/install-conda.sh
+     script:
+       source ./scripts/bdist-wheel-win-msvc.sh 3.5
+
+
+   - os: windows
+     dist: 1803-containers
+     python: "3.6 64-bit"
+     before_install:
+       - source ./scripts/install-conda.sh
+     script:
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+
+
+   - os: windows
+     dist: 1803-containers
+     python: "3.7 64-bit"
+     before_install:
+       - source ./scripts/install-conda.sh
+     script:
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+
+before_script:
+ - git submodule update --init
+
+after_success:
+ - cd dist; pip install --user libsettings-*; cd ..
+ - pip install --user sbp
+ - python -c "from libsettings import Settings" || exit 1
 
 git:
   depth: 1
