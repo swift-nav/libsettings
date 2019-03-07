@@ -27,7 +27,7 @@
 
 #include <libsbp/sbp.h>
 
-#include <internal/setting_declspec.h>
+#include <libsettings/settings_declspec.h>
 
 #ifdef __cplusplus
 extern "C" {

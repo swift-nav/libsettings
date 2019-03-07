@@ -10,8 +10,8 @@
  * WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef LIBSETTINGS_DECLSPEC_H
-#define LIBSETTINGS_DECLSPEC_H
+#ifndef LIBSETTINGS_SETTINGS_DECLSPEC_H
+#define LIBSETTINGS_SETTINGS_DECLSPEC_H
 
 #if defined(_MSC_VER)
 #if defined(settings_EXTENSION)
@@ -28,4 +28,4 @@
 #pragma error Unknown dynamic link import / export semantics.
 #endif /* __GNUC__ */
 
-#endif /* LIBSETTINGS_DECLSPEC_H */
+#endif /* LIBSETTINGS_SETTINGS_DECLSPEC_H */

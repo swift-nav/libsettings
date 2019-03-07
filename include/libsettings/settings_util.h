@@ -15,7 +15,7 @@
 
 #include <inttypes.h>
 
-#include <internal/setting_declspec.h>
+#include <libsettings/settings_declspec.h>
 
 typedef enum settings_tokens_e {
   SETTINGS_TOKENS_INVALID = -1,   /** An error occurred */
