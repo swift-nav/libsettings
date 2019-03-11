@@ -11,7 +11,7 @@
 
 # This file provides index like behavior for pip install git+ under this dir
 import os, sys
-os.system("pip install--no-index --find-links=. libsettings")
+os.system("pip install --no-index --find-links=. libsettings")
 
 
 # Rest is dummy stuff to make pip install git+... happy which wants to run
