@@ -61,5 +61,4 @@ build*/
 libsettings.egg-info
 python/*.c
 setup.py
-dist/
 *.pyc
