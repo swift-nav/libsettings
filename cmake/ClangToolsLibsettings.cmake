@@ -49,15 +49,15 @@ endif()
 
 if (EXISTS ${CLANG_FORMAT_PATH})
     # Format all files .c files (and their headers) in project
-    add_custom_target(clang-format-all
+    add_custom_target(clang-format-all-libsettings
         COMMAND git ls-files -- '../*.[ch]' '../*.cpp'
         | sed 's/^...//' | sed 's\#\^\#${CMAKE_SOURCE_DIR}/\#'
         | xargs clang-format -i)
 
     # Format all staged lines
-    add_custom_target(clang-format-head COMMAND git-clang-format)
+    add_custom_target(clang-format-head-libsettings COMMAND git-clang-format)
 
     # In-place format *.cc files that differ from master, and are not listed as
     # being DELETED.
-    add_custom_target(clang-format-diff COMMAND git-clang-format master)
+    add_custom_target(clang-format-diff-libsettings COMMAND git-clang-format master)
 endif()

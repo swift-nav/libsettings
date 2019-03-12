@@ -168,10 +168,7 @@ static int setting_update_watch_only(settings_t *ctx, const char *msg, uint8_t l
   return 0;
 }
 
-static void setting_read_resp_callback(uint16_t sender_id,
-                                       uint8_t len,
-                                       uint8_t msg[],
-                                       void *context)
+static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
 {
   (void)sender_id;
   assert(msg);
