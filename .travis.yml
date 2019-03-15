@@ -8,6 +8,7 @@ matrix:
    - os: linux
      script:
        - ./scripts/sdist-unix.sh
+       - ls -la ./build/src/libsettings.so || exit 1
 
 
    - os: osx
@@ -21,12 +22,14 @@ matrix:
        - export CC_FOR_BUILD=gcc-6
      script:
        - ./scripts/sdist-unix.sh
+       - ls -la ./build/src/libsettings.dylib || exit 1
 
 
    - os: osx
      osx_image: xcode10.1
      script:
        - ./scripts/sdist-unix.sh
+       - ls -la ./build/src/libsettings.dylib || exit 1
 
 
    - os: windows
@@ -36,6 +39,7 @@ matrix:
        - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-gcc.sh 2.7
+       - ls -la ./build/src/libsettings.dll || exit 1
 
 
    - os: windows
@@ -44,7 +48,8 @@ matrix:
      before_install:
        - source ./scripts/install-conda.sh --x86
      script:
-       - source ./scripts/bdist-wheel-win-msvc.sh 3.5 
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.5
+       - ls -la ./build/src/Release/settings.dll || exit 1
 
 
    - os: windows
@@ -54,6 +59,7 @@ matrix:
        - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+       - ls -la ./build/src/Release/settings.dll || exit 1
 
 
    - os: windows
@@ -63,6 +69,7 @@ matrix:
        - source ./scripts/install-conda.sh --x86
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.7
+       - ls -la ./build/src/Release/settings.dll || exit 1
 
 
    - os: windows
@@ -72,6 +79,7 @@ matrix:
        - source ./scripts/install-conda.sh
      script:
        - source ./scripts/bdist-wheel-win-gcc.sh 2.7
+       - ls -la ./build/src/libsettings.dll || exit 1
 
 
    - os: windows
@@ -81,6 +89,7 @@ matrix:
        - source ./scripts/install-conda.sh
      script:
        source ./scripts/bdist-wheel-win-msvc.sh 3.5
+       - ls -la ./build/src/Release/settings.dll || exit 1
 
 
    - os: windows
@@ -90,6 +99,7 @@ matrix:
        - source ./scripts/install-conda.sh
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+       - ls -la ./build/src/Release/settings.dll || exit 1
 
 
    - os: windows
@@ -98,7 +108,8 @@ matrix:
      before_install:
        - source ./scripts/install-conda.sh
      script:
-       - source ./scripts/bdist-wheel-win-msvc.sh 3.6
+       - source ./scripts/bdist-wheel-win-msvc.sh 3.7
+       - ls -la ./build/src/Release/settings.dll || exit 1
 
 before_script:
  - git submodule update --init
