@@ -14,8 +14,8 @@
 #define LIBSETTINGS_SETTINGS_DECLSPEC_H
 
 #if defined(_MSC_VER)
-#if defined(settings_EXTENSION)
-/* If building Python C extension -> leave empty */
+#if !defined(_WINDLL)
+/* Leave empty when doing non-dll build */
 #define LIBSETTINGS_DECLSPEC
 #elif defined(settings_EXPORTS) /* settings_EXTENSION */
 #define LIBSETTINGS_DECLSPEC __declspec(dllexport)
