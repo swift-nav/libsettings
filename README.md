@@ -95,6 +95,19 @@ dist/ directory. Install it using ´pip´ and then:
 python settings_client.py --tcp -p <piksi_ip>:55555
 ```
 
+## Installing from package managers
+Some bindings are available on package managers:
+
+* [`python`]: available on PyPI: `pip install libsettings`
+
+### Installing development Python versions
+
+To install the Python binding from GitHub repo (using pip) run the following command:
+
+```sh
+pip install git+https://github.com/swift-nav/libsettings.git@branch_name#subdirectory=dist
+```
+
 ## Example usage
 
 TODO. First stage, insert link to PFWP settings client after it's merged..
