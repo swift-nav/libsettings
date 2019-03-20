@@ -49,7 +49,7 @@ if os.name == 'nt':
         ldflags.append("-static-libgcc")
         libraries.append("python{}-gen".format(py_version))
     else:
-        cflags = ['/Dsettings_EXTENSION', '/Dswiftnav_EXTENSION']
+        cflags = []
 
 setup(
     name='libsettings',
