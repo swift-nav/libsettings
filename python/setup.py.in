@@ -53,7 +53,7 @@ if os.name == 'nt':
 
 setup(
     name='libsettings',
-    version="0.1.9",
+    version="0.1.10",
     author="Swift Navigation",
     author_email="dev@swift-nav.com",
     description="Open source SwiftNav settings API library.",

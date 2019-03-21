@@ -112,16 +112,17 @@ matrix:
        - ls -la ./build/src/Release/settings.dll || exit 1
 
 before_script:
- - git submodule update --init
+ # clean the dist folder so we will install the built package
+ - rm -rf ./dist
 
 after_success:
- - cd dist; pip install --user libsettings-*; cd ..
+ - pip install --user --no-index --find-links=./dist libsettings
  - pip install --user sbp
  - python -c "from libsettings import Settings" || exit 1
 
 git:
   depth: 1
-  submodules: false # Don't do recursive init
+  submodules: true
 
 cache:
   apt: true

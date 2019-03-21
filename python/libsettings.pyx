@@ -129,6 +129,7 @@ cdef class Settings:
         self.c_api.ctx = <void *>self
         self.c_api.send = &send_wrapper
         self.c_api.send_from = &send_from_wrapper
+        self.c_api.wait_init = &wait_init_wrapper
         self.c_api.wait = &wait_wrapper
         self.c_api.signal = &signal_wrapper
         self.c_api.register_cb = &register_cb_wrapper
@@ -252,9 +253,12 @@ cdef int send_from_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t
                        payload=payload[:length]))
     return 0
 
-cdef int wait_wrapper(void *ctx, int timeout_ms):
+cdef int wait_init_wrapper(void *ctx):
     settings = <object>ctx
     settings._event = Event()
+
+cdef int wait_wrapper(void *ctx, int timeout_ms):
+    settings = <object>ctx
     res = settings._event.wait(timeout_ms / 1000.0)
 
     if res:
