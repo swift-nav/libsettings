@@ -13,6 +13,8 @@
 
 from __future__ import absolute_import, print_function
 
+from six.moves import input
+
 import time
 
 from sbp.client import Framer, Handler
@@ -22,7 +24,6 @@ from sbp.settings import SBP_MSG_SETTINGS_SAVE, SBP_MSG_SETTINGS_WRITE
 from piksi_tools import serial_link
 
 from libsettings import Settings
-
 
 def send_setting(link, section, name, value):
     link.send(SBP_MSG_SETTINGS_WRITE, '%s\0%s\0%s\0' % (section, name, value))
@@ -88,7 +89,8 @@ def main():
             time.sleep(1)
 
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
-            value = raw_input('Enter new solution.elevation_mask value: ')
+
+            value = input('Enter new solution.elevation_mask value: ')
             s.write("solution", "elevation_mask", value)
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 

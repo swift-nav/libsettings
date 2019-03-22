@@ -148,25 +148,38 @@ cdef class Settings:
     def destroy(self):
         settings_destroy(&self.ctx)
 
-    def write(self, section, name, value):
-        return settings_write_str(self.ctx,
-                                  bytes(section),
-                                  bytes(name),
-                                  bytes(str(value)))
+    def write(self, section, name, value, encoding='ascii'):
+        try:
+            if isinstance(value, str):
+                value = bytearray(value, encoding)
+            elif isinstance(value, int) or isinstance(value, float):
+                # 'ascii' will always be good enough for numeric characters
+                value = bytearray(str(value), 'ascii')
+            elif isinstance(value, unicode):
+                # python2 string can be 'str' or 'unicode'
+                value = bytearray(value, encoding)
+        except:
+            raise TypeError("Unsupported type {} for {}".format(type(value),
+                                                                value))
 
-    def read(self, section, name):
+        return settings_write_str(self.ctx,
+                                  bytearray(section, encoding),
+                                  bytearray(name, encoding),
+                                  value)
+
+    def read(self, section, name, encoding='ascii'):
         cdef char value[SETTINGS_BUFLEN]
         ret = settings_read_str(self.ctx,
-                                bytes(section),
-                                bytes(name),
+                                bytearray(section, encoding),
+                                bytearray(name, encoding),
                                 value,
                                 sizeof(value))
         if (ret == 0):
-            return str(value)
+            return value.decode(encoding)
         else:
             return None
 
-    def read_all(self):
+    def read_all(self, encoding='ascii'):
         cdef char section[SETTINGS_BUFLEN]
         cdef char name[SETTINGS_BUFLEN]
         cdef char value[SETTINGS_BUFLEN]
@@ -193,10 +206,10 @@ cdef class Settings:
                 return []
 
             setting = {
-                           'section': str(section),
-                           'name': str(name),
-                           'value': str(value),
-                           'fmt_type': str(fmt_type),
+                           'section': section.decode(encoding),
+                           'name': name.decode(encoding),
+                           'value': value.decode(encoding),
+                           'fmt_type': fmt_type.decode(encoding),
                       }
 
             settings.append(setting)
