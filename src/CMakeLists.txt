@@ -20,5 +20,5 @@ target_link_libraries(settings swiftnav)
 
 target_include_directories(settings PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-install(TARGETS settings DESTINATION lib)
-install(FILES ${libsettings_HEADERS} DESTINATION include/libsettings)
+install(TARGETS settings DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
+install(FILES ${libsettings_HEADERS} DESTINATION ${CMAKE_INSTALL_FULL_INCLUDEDIR}/libsettings)

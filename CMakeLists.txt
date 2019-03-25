@@ -6,6 +6,7 @@ project(libsettings)
 ################################################################################
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(ClangToolsLibsettings)
+include(GNUInstallDirs)
 
 ################################################################################
 # Build Controls
