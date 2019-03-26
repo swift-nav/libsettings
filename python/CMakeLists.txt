@@ -1,3 +1,6 @@
+include(DoubleIncludeGuard)
+DoubleIncludeGuard(libsettings.so)
+
 set(LIBSETTINGS_VENV "libsettings-venv")
 
 set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")

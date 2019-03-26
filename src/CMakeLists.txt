@@ -1,3 +1,6 @@
+include(DoubleIncludeGuard)
+DoubleIncludeGuard(settings)
+
 set(libsettings_HEADERS
   ${PROJECT_SOURCE_DIR}/include/libsettings/settings.h
   ${PROJECT_SOURCE_DIR}/include/libsettings/settings_declspec.h

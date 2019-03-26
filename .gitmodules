@@ -1,6 +1,9 @@
 [submodule "libsbp"]
-	path = libsbp
+	path = third_party/libsbp
 	url = https://github.com/swift-nav/libsbp.git
 [submodule "libswiftnav"]
-	path = libswiftnav
+	path = third_party/libswiftnav
 	url = https://github.com/swift-nav/libswiftnav.git
+[submodule "third_party/googletest"]
+	path = third_party/googletest
+	url = https://github.com/google/googletest.git

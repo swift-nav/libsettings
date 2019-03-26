@@ -4,9 +4,11 @@ project(libsettings)
 ################################################################################
 # Include Modules
 ################################################################################
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(ClangToolsLibsettings)
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(GNUInstallDirs)
+find_package(sbp REQUIRED)
+find_package(swiftnav REQUIRED)
+find_package(gtest REQUIRED)
 
 ################################################################################
 # Build Controls
@@ -107,19 +109,6 @@ endif ()
 ################################################################################
 # Targets
 ################################################################################
-
-if (LIBSBP_SEARCH_PATH)
-  include_directories("${LIBSBP_SEARCH_PATH}/include")
-else (LIBSBP_SEARCH_PATH)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-    include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
-  endif()
-endif(LIBSBP_SEARCH_PATH)
-
-if(EXISTS ${PROJECT_SOURCE_DIR}/libswiftnav)
-  include_directories("${PROJECT_SOURCE_DIR}/libswiftnav/include")
-  add_subdirectory("${PROJECT_SOURCE_DIR}/libswiftnav")
-endif()
 
 add_subdirectory(src)
 add_subdirectory(python)
