@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <libsettings/settings.h>
@@ -26,7 +27,6 @@
  */
 void request_state_init(request_state_t *state, uint16_t msg_id, const char *data, size_t data_len)
 {
-  /* No multithreading */
   assert(!state->pending);
 
   memset(state, 0, sizeof(request_state_t));
@@ -39,6 +39,7 @@ void request_state_init(request_state_t *state, uint16_t msg_id, const char *dat
   state->compare_data_len = data_len;
   state->match = false;
   state->pending = true;
+  state->status = SETTINGS_WR_TIMEOUT;
 }
 
 /**
@@ -48,28 +49,33 @@ void request_state_init(request_state_t *state, uint16_t msg_id, const char *dat
  * @param data_len: length of payload string
  * @return 0 for match, 1 no comparison pending, -1 for comparison failure
  */
-int request_state_check(request_state_t *state,
-                        settings_api_t *api,
-                        const char *data,
-                        size_t data_len)
+request_state_t *request_state_check(request_state_t *state_list,
+                                     settings_api_t *api,
+                                     const char *data,
+                                     size_t data_len)
 {
   assert(api);
-  assert(state);
+  assert(state_list);
   assert(data);
 
+  request_state_t *state = request_state_lookup(state_list, data, data_len);
+
+  if (NULL == state) {
+    return NULL;
+  }
+
   if (!state->pending) {
-    return 1;
+    return NULL;
   }
 
-  if ((data_len >= state->compare_data_len)
-      && (memcmp(data, state->compare_data, state->compare_data_len) == 0)) {
-    state->match = true;
-    state->pending = false;
+  state->match = true;
+  state->pending = false;
+  if (api->signal_thd && state->event) {
+    api->signal_thd(state->event);
+  } else {
     api->signal(api->ctx);
-    return 0;
   }
-
-  return -1;
+  return state;
 }
 
 /**
@@ -90,7 +96,6 @@ bool request_state_match(const request_state_t *state)
 int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t msg_id)
 {
   assert(state);
-
   if (msg_id != state->msg_id) {
     return -1;
   }
@@ -98,7 +103,11 @@ int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t m
   state->match = true;
   state->pending = false;
 
-  api->signal(api->ctx);
+  if (api->signal_thd && state->event) {
+    api->signal_thd(state->event);
+  } else {
+    api->signal(api->ctx);
+  }
 
   return 0;
 }
@@ -110,4 +119,68 @@ int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t m
 void request_state_deinit(request_state_t *state)
 {
   state->pending = false;
+}
+
+void request_state_append(request_state_t **state_list, request_state_t *state_data)
+{
+  if (*state_list == NULL) {
+    *state_list = state_data;
+  } else {
+    /* Find last element */
+    request_state_t *last = *state_list;
+    while (last->next != NULL) {
+      last = last->next;
+    }
+    last->next = state_data;
+  }
+}
+
+void request_state_remove(request_state_t **state_list, request_state_t *state_data)
+{
+  assert(state_list != NULL);
+  assert(state_data != NULL);
+
+  request_state_t *curr = *state_list;
+  request_state_t *prev = NULL;
+  /* Find element to remove */
+  while (curr != NULL) {
+    if (curr != state_data) {
+      prev = curr;
+      curr = curr->next;
+      continue;
+    }
+
+    if (prev == NULL) {
+      /* This is the first item in the list make next one the new list head */
+      *state_list = curr->next;
+    } else {
+      prev->next = curr->next;
+    }
+    break;
+  }
+}
+
+request_state_t *request_state_lookup(request_state_t *state_list,
+                                      const char *data,
+                                      size_t data_len)
+{
+  while (state_list != NULL) {
+    if ((data_len >= state_list->compare_data_len)
+      && (memcmp(data, state_list->compare_data, state_list->compare_data_len) == 0)) {
+      break;
+    }
+    state_list = state_list->next;
+  }
+  return state_list;
+}
+
+void request_state_free(request_state_t *state_list)
+{
+  /* Free setting data list elements */
+  while (state_list != NULL) {
+    request_state_t *s = state_list;
+    state_list = state_list->next;
+    request_state_deinit(s);
+    free(s);
+  }
 }

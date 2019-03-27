@@ -122,6 +122,56 @@ __attribute__((format(printf, 2, 3))) static void log_preformat(int level, const
   client_log(level, buffer);
 }
 
+static int setting_perform_request_reply_from_thd(settings_t *ctx,
+                                                  void *event,
+                                                  uint16_t message_type,
+                                                  char *message,
+                                                  uint8_t message_length,
+                                                  uint8_t header_length,
+                                                  uint32_t timeout_ms,
+                                                  uint8_t retries,
+                                                  uint16_t sender_id,
+                                                  request_state_t *req_state)
+{
+  request_state_t local_req_state = {0};
+  if (NULL == req_state) {
+    req_state = &local_req_state;
+  }
+  request_state_init(req_state, message_type, message, header_length);
+  req_state->event = event;
+  ctx->client_iface.lock(ctx->client_iface.ctx);
+  request_state_append(&ctx->req_list, req_state);
+  ctx->client_iface.unlock(ctx->client_iface.ctx);
+
+  uint8_t tries = 0;
+  bool success = false;
+
+  do {
+    ctx->client_iface.send_from(ctx->client_iface.ctx,
+                                message_type,
+                                message_length,
+                                (uint8_t *)message,
+                                sender_id);
+
+    if (ctx->client_iface.wait_thd(event, timeout_ms)) {
+      log_warn("Waiting reply for msg id %d timed out", message_type);
+    } else {
+      success = request_state_match(req_state);
+    }
+  } while (!success && (++tries < retries));
+
+  ctx->client_iface.lock(ctx->client_iface.ctx);
+  request_state_remove(&ctx->req_list, req_state);
+  ctx->client_iface.unlock(ctx->client_iface.ctx);
+
+  if (!success) {
+    log_warn("setting req/reply failed after %d retries (msg id: %d)", tries, message_type);
+    return -1;
+  }
+
+  return 0;
+}
+
 /**
  * @brief setting_perform_request_reply_from
  * Performs a synchronous req/reply transation for the provided
@@ -144,9 +194,15 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                                               uint8_t header_length,
                                               uint32_t timeout_ms,
                                               uint8_t retries,
-                                              uint16_t sender_id)
+                                              uint16_t sender_id,
+                                              request_state_t *req_state)
 {
-  request_state_init(&ctx->request_state, message_type, message, header_length);
+  request_state_t local_req_state = {0};
+  if (NULL == req_state) {
+    req_state = &local_req_state;
+  }
+  request_state_init(req_state, message_type, message, header_length);
+  request_state_append(&ctx->req_list, req_state);
 
   uint8_t tries = 0;
   bool success = false;
@@ -164,15 +220,10 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                                 sender_id);
 
     if (ctx->client_iface.wait(ctx->client_iface.ctx, timeout_ms)) {
-      size_t len1 = strlen(message) + 1;
-      log_warn("Waiting reply for msg id %d with %s.%s timed out",
-               message_type,
-               message,
-               message + len1);
+      log_warn("Waiting reply for msg id %d timed out", message_type);
     } else {
-      success = request_state_match(&ctx->request_state);
+      success = request_state_match(req_state);
     }
-
   } while (!success && (++tries < retries));
 
   /* Defuse semaphores etc if applicable */
@@ -180,7 +231,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
     ctx->client_iface.wait_deinit(ctx->client_iface.ctx);
   }
 
-  request_state_deinit(&ctx->request_state);
+  request_state_remove(&ctx->req_list, req_state);
 
   if (!success) {
     log_warn("setting req/reply failed after %d retries (msg id: %d)", tries, message_type);
@@ -208,7 +259,8 @@ static int setting_perform_request_reply(settings_t *ctx,
                                          uint8_t message_length,
                                          uint8_t header_length,
                                          uint16_t timeout_ms,
-                                         uint8_t retries)
+                                         uint8_t retries,
+                                         request_state_t *req_state)
 {
   return setting_perform_request_reply_from(ctx,
                                             message_type,
@@ -217,7 +269,8 @@ static int setting_perform_request_reply(settings_t *ctx,
                                             header_length,
                                             timeout_ms,
                                             retries,
-                                            ctx->sender_id);
+                                            ctx->sender_id,
+                                            req_state);
 }
 
 /**
@@ -244,7 +297,8 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
                                        msg_len,
                                        msg_header_len,
                                        REGISTER_TIMEOUT_MS,
-                                       REGISTER_TRIES);
+                                       REGISTER_TRIES,
+                                       NULL);
 }
 
 /**
@@ -286,7 +340,8 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
                                               msg_len,
                                               WATCH_INIT_TIMEOUT_MS,
                                               WATCH_INIT_TRIES,
-                                              SBP_SENDER_ID);
+                                              SBP_SENDER_ID,
+                                              NULL);
 
   setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
   return result;
@@ -485,9 +540,7 @@ settings_write_res_t settings_write(settings_t *ctx,
     return -1;
   }
 
-  /* This will be updated in the settings_write_resp_callback */
-  ctx->status = SETTINGS_WR_TIMEOUT;
-
+  request_state_t req_state = {0};
   setting_perform_request_reply_from(ctx,
                                      SBP_MSG_SETTINGS_WRITE,
                                      msg,
@@ -495,11 +548,12 @@ settings_write_res_t settings_write(settings_t *ctx,
                                      msg_header_len,
                                      REGISTER_TIMEOUT_MS,
                                      REGISTER_TRIES,
-                                     SBP_SENDER_ID);
+                                     SBP_SENDER_ID,
+                                     &req_state);
 
   setting_data_destroy(setting_data);
 
-  return ctx->status;
+  return req_state.status;
 }
 
 settings_write_res_t settings_write_int(settings_t *ctx,
@@ -561,11 +615,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-  ctx->resp_section[0] = '\0';
-  ctx->resp_name[0] = '\0';
-  ctx->resp_value[0] = '\0';
-  ctx->resp_type[0] = '\0';
-
+  request_state_t req_state = {0};
   int res = setting_perform_request_reply_from(ctx,
                                                SBP_MSG_SETTINGS_READ_REQ,
                                                msg,
@@ -573,7 +623,8 @@ int settings_read(settings_t *ctx,
                                                msg_len,
                                                WATCH_INIT_TIMEOUT_MS,
                                                WATCH_INIT_TRIES,
-                                               SBP_SENDER_ID);
+                                               SBP_SENDER_ID,
+                                               &req_state);
 
   setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
 
@@ -583,10 +634,10 @@ int settings_read(settings_t *ctx,
 
   settings_type_t parsed_type = SETTINGS_TYPE_STRING;
 
-  if (strlen(ctx->resp_type) != 0) {
+  if (strlen(req_state.resp_type) != 0) {
     const char *cmp = "enum:";
-    if (strncmp(ctx->resp_type, cmp, strlen(cmp)) != 0) {
-      parsed_type = strtol(ctx->resp_type, NULL, 10);
+    if (strncmp(req_state.resp_type, cmp, strlen(cmp)) != 0) {
+      parsed_type = strtol(req_state.resp_type, NULL, 10);
     }
   } else {
     parsed_type = type;
@@ -604,7 +655,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-  if (!td->from_string(td->priv, value, value_len, ctx->resp_value)) {
+  if (!td->from_string(td->priv, value, value_len, req_state.resp_value)) {
     log_error("value parsing failed");
     return -1;
   }
@@ -637,6 +688,7 @@ int settings_read_bool(settings_t *ctx, const char *section, const char *name, b
 }
 
 int settings_read_by_idx(settings_t *ctx,
+                         void *event,
                          uint16_t idx,
                          char *section,
                          size_t section_len,
@@ -664,34 +716,31 @@ int settings_read_by_idx(settings_t *ctx,
     goto read_by_idx_cleanup;
   }
 
-  ctx->resp_section[0] = '\0';
-  ctx->resp_name[0] = '\0';
-  ctx->resp_value[0] = '\0';
-  ctx->resp_type[0] = '\0';
-  ctx->read_by_idx_done = false;
-
-  res = setting_perform_request_reply_from(ctx,
-                                           SBP_MSG_SETTINGS_READ_BY_INDEX_REQ,
-                                           (char *)&idx,
-                                           sizeof(uint16_t),
-                                           sizeof(uint16_t),
-                                           WATCH_INIT_TIMEOUT_MS,
-                                           WATCH_INIT_TRIES,
-                                           SBP_SENDER_ID);
+  request_state_t req_state = {0};
+  res = setting_perform_request_reply_from_thd(ctx,
+                                               event,
+                                               SBP_MSG_SETTINGS_READ_BY_INDEX_REQ,
+                                               (char *)&idx,
+                                               sizeof(uint16_t),
+                                               sizeof(uint16_t),
+                                               WATCH_INIT_TIMEOUT_MS,
+                                               WATCH_INIT_TRIES,
+                                               SBP_SENDER_ID,
+                                               &req_state);
 
   if (res != 0) {
     log_error("read by idx request failed");
     goto read_by_idx_cleanup;
   }
 
-  strncpy(section, ctx->resp_section, section_len);
-  strncpy(name, ctx->resp_name, name_len);
-  strncpy(value, ctx->resp_value, value_len);
-  strncpy(type, ctx->resp_type, type_len);
+  strncpy(section, req_state.resp_section, section_len);
+  strncpy(name, req_state.resp_name, name_len);
+  strncpy(value, req_state.resp_value, value_len);
+  strncpy(type, req_state.resp_type, type_len);
 
 read_by_idx_cleanup:
-  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
-  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE);
+  //setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
+  //setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE);
 
   /* Error */
   if (res != 0) {
@@ -699,7 +748,7 @@ read_by_idx_cleanup:
   }
 
   /* Last index was read */
-  if (ctx->read_by_idx_done) {
+  if (req_state.read_by_idx_done) {
     return 1;
   }
 
@@ -736,7 +785,7 @@ settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface)
   ctx->setting_data_list = NULL;
   ctx->sbp_cb_list = NULL;
 
-  ctx->request_state.pending = false;
+  ctx->req_list = NULL;
 
   /* Register standard types */
   settings_type_t type;

@@ -53,11 +53,11 @@ TEST(test_request_state, check)
 
   request_state_init(&state, 9, test_data, strlen(test_data));
 
-  EXPECT_EQ(-1, request_state_check(&state, &api, test_data, strlen(test_data) - 1));
+  EXPECT_EQ(NULL, request_state_check(&state, &api, test_data, strlen(test_data) - 1));
 
   EXPECT_DEATH(request_state_check(&state, &api, test_data, strlen(test_data)), "");
 
   state.pending = false;
 
-  EXPECT_EQ(1, request_state_check(&state, &api, test_data, strlen(test_data)));
+  EXPECT_EQ(NULL, request_state_check(&state, &api, test_data, strlen(test_data)));
 }

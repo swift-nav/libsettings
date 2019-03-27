@@ -94,6 +94,12 @@ typedef int (*settings_wait_t)(void *ctx, int timeout_ms);
 typedef int (*settings_wait_deinit_t)(void *ctx);
 typedef void (*settings_signal_t)(void *ctx);
 
+typedef int (*settings_wait_thd_t)(void *event, int timeout_ms);
+typedef void (*settings_signal_thd_t)(void *event);
+
+typedef void (*settings_lock_t)(void *ctx);
+typedef void (*settings_unlock_t)(void *ctx);
+
 typedef int (*settings_reg_cb_t)(void *ctx,
                                  uint16_t msg_type,
                                  sbp_msg_callback_t cb,
@@ -111,6 +117,10 @@ typedef struct settings_api_s {
   settings_wait_t wait;
   settings_wait_deinit_t wait_deinit; /* Optional, needed if wait uses semaphores etc */
   settings_signal_t signal;
+  settings_wait_t wait_thd;
+  settings_signal_t signal_thd;
+  settings_lock_t lock;
+  settings_unlock_t unlock;
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
@@ -463,6 +473,7 @@ LIBSETTINGS_DECLSPEC int settings_read_bool(settings_t *ctx,
  * @retval >0               Last index was read successfully. There are no more indexes to read.
  */
 LIBSETTINGS_DECLSPEC int settings_read_by_idx(settings_t *ctx,
+                                              void *event,
                                               uint16_t idx,
                                               char *section,
                                               size_t section_len,

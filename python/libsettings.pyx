@@ -16,7 +16,9 @@ from libc.stdint cimport uintptr_t
 
 from sbp.msg import SBP, SENDER_ID
 
-from threading import Event
+from threading import Event, Lock
+
+from multiprocessing.pool import ThreadPool
 
 cpdef enum SettingsWriteResponseCodes:
     SETTINGS_WR_OK = 0
@@ -55,6 +57,12 @@ cdef extern from "../include/libsettings/settings.h":
     ctypedef int (*settings_wait_deinit_t)(void *ctx)
     ctypedef void (*settings_signal_t)(void *ctx)
 
+    ctypedef int (*settings_wait_thd_t)(void *event, int timeout_ms)
+    ctypedef void (*settings_signal_thd_t)(void *event)
+
+    ctypedef void (*settings_lock_t)(void *ctx)
+    ctypedef void (*settings_unlock_t)(void *ctx)
+
     ctypedef int (*settings_reg_cb_t)(void *ctx,
                                       uint16_t msg_type,
                                       sbp_msg_callback_t cb,
@@ -72,6 +80,10 @@ cdef extern from "../include/libsettings/settings.h":
         settings_wait_t wait
         settings_wait_deinit_t wait_deinit
         settings_signal_t signal
+        settings_wait_thd_t wait_thd
+        settings_signal_thd_t signal_thd
+        settings_lock_t lock
+        settings_unlock_t unlock
         settings_reg_cb_t register_cb
         settings_unreg_cb_t unregister_cb
         settings_log_t log
@@ -105,6 +117,7 @@ cdef extern from "../include/libsettings/settings.h":
                           size_t str_len)
 
     int settings_read_by_idx(settings_t *ctx,
+                             void *event,
                              uint16_t idx,
                              char *section,
                              size_t section_len,
@@ -124,6 +137,7 @@ cdef class Settings:
     cdef public object _event
     cdef readonly object _link
     cdef readonly object _debug
+    cdef readonly object _lock
 
     def __init__(self, link, sender_id=SENDER_ID, debug=False):
         self.c_api.ctx = <void *>self
@@ -132,6 +146,10 @@ cdef class Settings:
         self.c_api.wait_init = &wait_init_wrapper
         self.c_api.wait = &wait_wrapper
         self.c_api.signal = &signal_wrapper
+        self.c_api.wait_thd = &wait_thd_wrapper
+        self.c_api.signal_thd = &signal_thd_wrapper
+        self.c_api.lock = &lock_wrapper
+        self.c_api.unlock = &unlock_wrapper
         self.c_api.register_cb = &register_cb_wrapper
         self.c_api.unregister_cb = &unregister_cb_wrapper
         self.c_api.log = log_wrapper
@@ -142,6 +160,8 @@ cdef class Settings:
         self._link = link
 
         self._debug = debug
+
+        self._lock = Lock()
 
         self._callbacks = {}
 
@@ -179,43 +199,57 @@ cdef class Settings:
         else:
             return None
 
-    def read_all(self, encoding='ascii'):
+    def _read_by_index(self, idx, encoding='ascii'):
         cdef char section[SETTINGS_BUFLEN]
         cdef char name[SETTINGS_BUFLEN]
         cdef char value[SETTINGS_BUFLEN]
         cdef char fmt_type[SETTINGS_BUFLEN]
-        cdef uint16_t idx = 0
+        e = Event()
 
+        ret = settings_read_by_idx(self.ctx,
+                                   <void*>e,
+                                   idx,
+                                   section,
+                                   sizeof(section),
+                                   name,
+                                   sizeof(name),
+                                   value,
+                                   sizeof(value),
+                                   fmt_type,
+                                   sizeof(fmt_type))
+
+        setting = {
+                      'section': section.decode(encoding),
+                      'name': name.decode(encoding),
+                      'value': value.decode(encoding),
+                      'fmt_type': fmt_type.decode(encoding),
+                  }
+
+        return (ret, setting)
+
+    def read_all(self, encoding='ascii', workers=10):
         settings = []
+        cdef uint16_t idx = 0
+        pool = ThreadPool(workers)
 
         while (True):
-            ret = settings_read_by_idx(self.ctx,
-                                       idx,
-                                       section,
-                                       sizeof(section),
-                                       name,
-                                       sizeof(name),
-                                       value,
-                                       sizeof(value),
-                                       fmt_type,
-                                       sizeof(fmt_type))
+            tasks = [(i, encoding) for i in range(idx, idx + workers)]
+            results = [pool.apply_async(self._read_by_index, t) for t in tasks]
+            if not results:
+                return settings
+            for result in results:
+                res = result.get()
+                if (res[0] > 0):
+                    pool.close()
+                    pool.join()
+                    return settings
+                elif (res[0] < 0):
+                    pool.close()
+                    pool.join()
+                    return []
 
-            if (ret > 0):
-                break
-            elif (ret < 0):
-                return []
-
-            setting = {
-                           'section': section.decode(encoding),
-                           'name': name.decode(encoding),
-                           'value': value.decode(encoding),
-                           'fmt_type': fmt_type.decode(encoding),
-                      }
-
-            settings.append(setting)
-            idx += 1
-
-        return settings
+                settings.append(res[1])
+            idx += workers
 
     def _callback_broker(self, sbp_msg, **metadata):
         if self._debug:
@@ -282,6 +316,27 @@ cdef int wait_wrapper(void *ctx, int timeout_ms):
 cdef void signal_wrapper(void *ctx):
     settings = <object>ctx
     settings._event.set()
+
+cdef int wait_thd_wrapper(void *event, int timeout_ms):
+    e = <object>event
+    res = e.wait(timeout_ms / 1000.0)
+
+    if res:
+        return 0
+    else:
+        return -1
+
+cdef void signal_thd_wrapper(void *event):
+    e = <object>event
+    e.set()
+
+cdef void lock_wrapper(void *ctx):
+    settings = <object>ctx
+    settings._lock.acquire()
+
+cdef void unlock_wrapper(void *ctx):
+    settings = <object>ctx
+    settings._lock.release()
 
 cdef int register_cb_wrapper(void *ctx,
                              uint16_t msg_type,

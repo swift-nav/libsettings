@@ -94,7 +94,7 @@ def main():
             s.write("solution", "elevation_mask", value)
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
-            l = s.read_all()
+            l = s.read_all(workers=10)
 
             for setting in l:
                 print(setting)
