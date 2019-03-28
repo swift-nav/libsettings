@@ -42,21 +42,20 @@ typedef struct request_state_s {
 extern "C" {
 #endif
 
-void request_state_init(request_state_t *state, uint16_t msg_id, const char *data, size_t data_len);
-request_state_t *request_state_check(request_state_t *state_list,
-                                     settings_api_t *api,
-                                     const char *data,
-                                     size_t data_len);
+void request_state_init(request_state_t *state,
+                        void *event,
+                        uint16_t msg_id,
+                        const char *data,
+                        size_t data_len);
+request_state_t *request_state_check(settings_t *ctx, const char *data, size_t data_len);
 bool request_state_match(const request_state_t *state);
 int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t msg_id);
 void request_state_deinit(request_state_t *state);
 
 /* List functions */
-void request_state_append(request_state_t **state_list, request_state_t *state_data);
-void request_state_remove(request_state_t **state_list, request_state_t *state_data);
-request_state_t *request_state_lookup(request_state_t *state_list,
-                                      const char *data,
-                                      size_t data_len);
+void request_state_append(settings_t *ctx, request_state_t *state_data);
+void request_state_remove(settings_t *ctx, request_state_t *state_data);
+request_state_t *request_state_lookup(settings_t *ctx, const char *data, size_t data_len);
 void request_state_free(request_state_t *state_list);
 
 #ifdef __cplusplus

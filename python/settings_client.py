@@ -86,13 +86,13 @@ def main():
             print("Creating Settings")
             s = Settings(link)
 
-            time.sleep(1)
+            #time.sleep(1)
 
-            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            #print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
-            value = input('Enter new solution.elevation_mask value: ')
-            s.write("solution", "elevation_mask", value)
-            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            #value = input('Enter new solution.elevation_mask value: ')
+            #s.write("solution", "elevation_mask", value)
+            #print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
             l = s.read_all(workers=10)
 

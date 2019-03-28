@@ -122,88 +122,15 @@ __attribute__((format(printf, 2, 3))) static void log_preformat(int level, const
   client_log(level, buffer);
 }
 
-static int setting_perform_request_reply_from_thd(settings_t *ctx,
-                                                  void *event,
-                                                  uint16_t message_type,
-                                                  char *message,
-                                                  uint8_t message_length,
-                                                  uint8_t header_length,
-                                                  uint32_t timeout_ms,
-                                                  uint8_t retries,
-                                                  uint16_t sender_id,
-                                                  request_state_t *req_state)
+static int send_single_thd(settings_t *ctx,
+                           uint16_t message_type,
+                           char *message,
+                           uint8_t message_length,
+                           uint32_t timeout_ms,
+                           uint8_t retries,
+                           uint16_t sender_id,
+                           request_state_t *req_state)
 {
-  request_state_t local_req_state = {0};
-  if (NULL == req_state) {
-    req_state = &local_req_state;
-  }
-  request_state_init(req_state, message_type, message, header_length);
-  req_state->event = event;
-  ctx->client_iface.lock(ctx->client_iface.ctx);
-  request_state_append(&ctx->req_list, req_state);
-  ctx->client_iface.unlock(ctx->client_iface.ctx);
-
-  uint8_t tries = 0;
-  bool success = false;
-
-  do {
-    ctx->client_iface.send_from(ctx->client_iface.ctx,
-                                message_type,
-                                message_length,
-                                (uint8_t *)message,
-                                sender_id);
-
-    if (ctx->client_iface.wait_thd(event, timeout_ms)) {
-      log_warn("Waiting reply for msg id %d timed out", message_type);
-    } else {
-      success = request_state_match(req_state);
-    }
-  } while (!success && (++tries < retries));
-
-  ctx->client_iface.lock(ctx->client_iface.ctx);
-  request_state_remove(&ctx->req_list, req_state);
-  ctx->client_iface.unlock(ctx->client_iface.ctx);
-
-  if (!success) {
-    log_warn("setting req/reply failed after %d retries (msg id: %d)", tries, message_type);
-    return -1;
-  }
-
-  return 0;
-}
-
-/**
- * @brief setting_perform_request_reply_from
- * Performs a synchronous req/reply transation for the provided
- * message using the compare structure to match the header in callbacks.
- * Uses an explicit sender_id to allow for settings interactions with manager.
- * @param ctx: settings context
- * @param message_type: sbp message to use when sending the message
- * @param message: sbp message payload
- * @param message_length: length of payload
- * @param header_length: length of the substring to match during compare
- * @param timeout_ms: timeout between retries
- * @param retries: number of times to retry the transaction
- * @param sender_id: sender_id to use for outgoing message
- * @return zero on success, -1 the transaction failed to complete
- */
-static int setting_perform_request_reply_from(settings_t *ctx,
-                                              uint16_t message_type,
-                                              char *message,
-                                              uint8_t message_length,
-                                              uint8_t header_length,
-                                              uint32_t timeout_ms,
-                                              uint8_t retries,
-                                              uint16_t sender_id,
-                                              request_state_t *req_state)
-{
-  request_state_t local_req_state = {0};
-  if (NULL == req_state) {
-    req_state = &local_req_state;
-  }
-  request_state_init(req_state, message_type, message, header_length);
-  request_state_append(&ctx->req_list, req_state);
-
   uint8_t tries = 0;
   bool success = false;
 
@@ -219,9 +146,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                                 (uint8_t *)message,
                                 sender_id);
 
-    if (ctx->client_iface.wait(ctx->client_iface.ctx, timeout_ms)) {
-      log_warn("Waiting reply for msg id %d timed out", message_type);
-    } else {
+    if (0 == ctx->client_iface.wait(ctx->client_iface.ctx, timeout_ms)) {
       success = request_state_match(req_state);
     }
   } while (!success && (++tries < retries));
@@ -231,20 +156,111 @@ static int setting_perform_request_reply_from(settings_t *ctx,
     ctx->client_iface.wait_deinit(ctx->client_iface.ctx);
   }
 
-  request_state_remove(&ctx->req_list, req_state);
+  return success ? 0 : -1;
+}
 
-  if (!success) {
-    log_warn("setting req/reply failed after %d retries (msg id: %d)", tries, message_type);
-    return -1;
+static int send_multi_thd(settings_t *ctx,
+                          void *event,
+                          uint16_t message_type,
+                          char *message,
+                          uint8_t message_length,
+                          uint32_t timeout_ms,
+                          uint8_t retries,
+                          uint16_t sender_id,
+                          request_state_t *req_state)
+{
+  assert(event);
+  assert(ctx->client_iface.wait_thd);
+
+  uint8_t tries = 0;
+  bool success = false;
+
+  do {
+    ctx->client_iface.send_from(ctx->client_iface.ctx,
+                                message_type,
+                                message_length,
+                                (uint8_t *)message,
+                                sender_id);
+    if (0 == ctx->client_iface.wait_thd(event, timeout_ms)) {
+      success = request_state_match(req_state);
+    }
+  } while (!success && (++tries < retries));
+
+  return success ? 0 : -1;
+}
+
+/**
+ * @brief setting_perform_request_reply_from
+ * Performs a synchronous req/reply transation for the provided
+ * message using the compare structure to match the header in callbacks.
+ * Uses an explicit sender_id to allow for settings interactions with manager.
+ * @param ctx: settings context
+ * @param event: event object in case of multithreading
+ * @param message_type: sbp message to use when sending the message
+ * @param message: sbp message payload
+ * @param message_length: length of payload
+ * @param header_length: length of the substring to match during compare
+ * @param timeout_ms: timeout between retries
+ * @param retries: number of times to retry the transaction
+ * @param sender_id: sender_id to use for outgoing message
+ * @return zero on success, -1 the transaction failed to complete
+ */
+static int setting_perform_request_reply_from(settings_t *ctx,
+                                              void *event,
+                                              uint16_t message_type,
+                                              char *message,
+                                              uint8_t message_length,
+                                              uint8_t header_length,
+                                              uint32_t timeout_ms,
+                                              uint8_t retries,
+                                              uint16_t sender_id,
+                                              request_state_t *req_state)
+{
+  request_state_t local_req_state = {0};
+  if (NULL == req_state) {
+    req_state = &local_req_state;
   }
 
-  return 0;
+  request_state_init(req_state, event, message_type, message, header_length);
+  request_state_append(ctx, req_state);
+
+  int res = 0;
+
+  if (event) {
+    res = send_multi_thd(ctx,
+                         event,
+                         message_type,
+                         message,
+                         message_length,
+                         timeout_ms,
+                         retries,
+                         sender_id,
+                         req_state);
+  } else {
+    res = send_single_thd(ctx,
+                          message_type,
+                          message,
+                          message_length,
+                          timeout_ms,
+                          retries,
+                          sender_id,
+                          req_state);
+  }
+
+  request_state_remove(ctx, req_state);
+
+  if (res) {
+    log_warn("setting req/reply failed after %d retries (msg id: %d)", retries, message_type);
+  }
+
+  return res;
 }
 
 /**
  * @brief setting_perform_request_reply - same as above but with implicit
  * sender_id
  * @param ctx: settings context
+ * @param event: event object in case of multithreading
  * @param message_type: sbp message to use when sending the message
  * @param message: sbp message payload
  * @param message_length: length of payload
@@ -254,6 +270,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
  * @return zero on success, -1 the transaction failed to complete
  */
 static int setting_perform_request_reply(settings_t *ctx,
+                                         void *event,
                                          uint16_t message_type,
                                          char *message,
                                          uint8_t message_length,
@@ -263,6 +280,7 @@ static int setting_perform_request_reply(settings_t *ctx,
                                          request_state_t *req_state)
 {
   return setting_perform_request_reply_from(ctx,
+                                            event,
                                             message_type,
                                             message,
                                             message_length,
@@ -292,6 +310,7 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
   }
 
   return setting_perform_request_reply(ctx,
+                                       NULL,
                                        SBP_MSG_SETTINGS_REGISTER,
                                        msg,
                                        msg_len,
@@ -334,6 +353,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
   }
 
   result = setting_perform_request_reply_from(ctx,
+                                              NULL,
                                               SBP_MSG_SETTINGS_READ_REQ,
                                               msg,
                                               msg_len,
@@ -542,6 +562,7 @@ settings_write_res_t settings_write(settings_t *ctx,
 
   request_state_t req_state = {0};
   setting_perform_request_reply_from(ctx,
+                                     NULL,
                                      SBP_MSG_SETTINGS_WRITE,
                                      msg,
                                      msg_len,
@@ -617,6 +638,7 @@ int settings_read(settings_t *ctx,
 
   request_state_t req_state = {0};
   int res = setting_perform_request_reply_from(ctx,
+                                               NULL,
                                                SBP_MSG_SETTINGS_READ_REQ,
                                                msg,
                                                msg_len,
@@ -708,49 +730,44 @@ int settings_read_by_idx(settings_t *ctx,
 
   if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP) < 0) {
     log_error("error registering settings read by idx resp callback");
-    goto read_by_idx_cleanup;
+    return res;
   }
 
   if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE) < 0) {
+    setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
     log_error("error registering settings read by idx done callback");
-    goto read_by_idx_cleanup;
+    return res;
   }
 
   request_state_t req_state = {0};
-  res = setting_perform_request_reply_from_thd(ctx,
-                                               event,
-                                               SBP_MSG_SETTINGS_READ_BY_INDEX_REQ,
-                                               (char *)&idx,
-                                               sizeof(uint16_t),
-                                               sizeof(uint16_t),
-                                               WATCH_INIT_TIMEOUT_MS,
-                                               WATCH_INIT_TRIES,
-                                               SBP_SENDER_ID,
-                                               &req_state);
+  res = setting_perform_request_reply_from(ctx,
+                                           event,
+                                           SBP_MSG_SETTINGS_READ_BY_INDEX_REQ,
+                                           (char *)&idx,
+                                           sizeof(uint16_t),
+                                           sizeof(uint16_t),
+                                           WATCH_INIT_TIMEOUT_MS,
+                                           WATCH_INIT_TRIES,
+                                           SBP_SENDER_ID,
+                                           &req_state);
 
-  if (res != 0) {
+  /* Error */
+  if (res < 0) {
     log_error("read by idx request failed");
-    goto read_by_idx_cleanup;
+    return res;
+  }
+
+  /* Last index was read */
+  if (req_state.read_by_idx_done) {
+    setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
+    setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE);
+    return 1;
   }
 
   strncpy(section, req_state.resp_section, section_len);
   strncpy(name, req_state.resp_name, name_len);
   strncpy(value, req_state.resp_value, value_len);
   strncpy(type, req_state.resp_type, type_len);
-
-read_by_idx_cleanup:
-  //setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_RESP);
-  //setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_BY_INDEX_DONE);
-
-  /* Error */
-  if (res != 0) {
-    return res;
-  }
-
-  /* Last index was read */
-  if (req_state.read_by_idx_done) {
-    return 1;
-  }
 
   /* No errors, next index to be read */
   return 0;

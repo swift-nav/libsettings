@@ -17,6 +17,7 @@
 #include <libsettings/settings.h>
 
 #include <internal/request_state.h>
+#include <internal/setting_def.h>
 
 /**
  * @brief request_state_init - set up compare structure for synchronous req/reply
@@ -25,7 +26,11 @@
  * @param data: formatted settings header string to match with incoming messages
  * @param data_len: length of match string
  */
-void request_state_init(request_state_t *state, uint16_t msg_id, const char *data, size_t data_len)
+void request_state_init(request_state_t *state,
+                        void *event,
+                        uint16_t msg_id,
+                        const char *data,
+                        size_t data_len)
 {
   assert(!state->pending);
 
@@ -40,6 +45,7 @@ void request_state_init(request_state_t *state, uint16_t msg_id, const char *dat
   state->match = false;
   state->pending = true;
   state->status = SETTINGS_WR_TIMEOUT;
+  state->event = event;
 }
 
 /**
@@ -49,16 +55,13 @@ void request_state_init(request_state_t *state, uint16_t msg_id, const char *dat
  * @param data_len: length of payload string
  * @return 0 for match, 1 no comparison pending, -1 for comparison failure
  */
-request_state_t *request_state_check(request_state_t *state_list,
-                                     settings_api_t *api,
-                                     const char *data,
-                                     size_t data_len)
+request_state_t *request_state_check(settings_t *ctx, const char *data, size_t data_len)
 {
-  assert(api);
-  assert(state_list);
+  assert(ctx);
   assert(data);
+  assert(data_len > 0);
 
-  request_state_t *state = request_state_lookup(state_list, data, data_len);
+  request_state_t *state = request_state_lookup(ctx, data, data_len);
 
   if (NULL == state) {
     return NULL;
@@ -70,10 +73,10 @@ request_state_t *request_state_check(request_state_t *state_list,
 
   state->match = true;
   state->pending = false;
-  if (api->signal_thd && state->event) {
-    api->signal_thd(state->event);
+  if (ctx->client_iface.signal_thd && state->event) {
+    ctx->client_iface.signal_thd(state->event);
   } else {
-    api->signal(api->ctx);
+    ctx->client_iface.signal(ctx->client_iface.ctx);
   }
   return state;
 }
@@ -121,26 +124,38 @@ void request_state_deinit(request_state_t *state)
   state->pending = false;
 }
 
-void request_state_append(request_state_t **state_list, request_state_t *state_data)
+void request_state_append(settings_t *ctx, request_state_t *state_data)
 {
-  if (*state_list == NULL) {
-    *state_list = state_data;
+  if (ctx->client_iface.lock) {
+    ctx->client_iface.lock(ctx->client_iface.ctx);
+  }
+
+  if (ctx->req_list == NULL) {
+    ctx->req_list = state_data;
   } else {
     /* Find last element */
-    request_state_t *last = *state_list;
+    request_state_t *last = ctx->req_list;
     while (last->next != NULL) {
       last = last->next;
     }
     last->next = state_data;
   }
+
+  if (ctx->client_iface.unlock) {
+    ctx->client_iface.unlock(ctx->client_iface.ctx);
+  }
 }
 
-void request_state_remove(request_state_t **state_list, request_state_t *state_data)
+void request_state_remove(settings_t *ctx, request_state_t *state_data)
 {
-  assert(state_list != NULL);
+  assert(ctx != NULL);
   assert(state_data != NULL);
 
-  request_state_t *curr = *state_list;
+  if (ctx->client_iface.lock) {
+    ctx->client_iface.lock(ctx->client_iface.ctx);
+  }
+
+  request_state_t *curr = ctx->req_list;
   request_state_t *prev = NULL;
   /* Find element to remove */
   while (curr != NULL) {
@@ -152,25 +167,37 @@ void request_state_remove(request_state_t **state_list, request_state_t *state_d
 
     if (prev == NULL) {
       /* This is the first item in the list make next one the new list head */
-      *state_list = curr->next;
+      ctx->req_list = curr->next;
     } else {
       prev->next = curr->next;
     }
     break;
   }
+
+  if (ctx->client_iface.unlock) {
+    ctx->client_iface.unlock(ctx->client_iface.ctx);
+  }
 }
 
-request_state_t *request_state_lookup(request_state_t *state_list,
-                                      const char *data,
-                                      size_t data_len)
+request_state_t *request_state_lookup(settings_t *ctx, const char *data, size_t data_len)
 {
+  if (ctx->client_iface.lock) {
+    ctx->client_iface.lock(ctx->client_iface.ctx);
+  }
+
+  request_state_t *state_list = ctx->req_list;
   while (state_list != NULL) {
     if ((data_len >= state_list->compare_data_len)
-      && (memcmp(data, state_list->compare_data, state_list->compare_data_len) == 0)) {
+        && (memcmp(data, state_list->compare_data, state_list->compare_data_len) == 0)) {
       break;
     }
     state_list = state_list->next;
   }
+
+  if (ctx->client_iface.unlock) {
+    ctx->client_iface.unlock(ctx->client_iface.ctx);
+  }
+
   return state_list;
 }
 

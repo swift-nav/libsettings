@@ -107,10 +107,7 @@ static void setting_register_resp_callback(uint16_t sender_id,
   }
 
   /* Check for a response to a pending registration request */
-  request_state_t *state = request_state_check(ctx->req_list,
-                                               &ctx->client_iface,
-                                               resp->setting,
-                                               len - sizeof(resp->status));
+  request_state_t *state = request_state_check(ctx, resp->setting, len - sizeof(resp->status));
 
   if (NULL == state) {
     /* No pending registration request or no pending request and the response
@@ -174,8 +171,7 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
   const msg_settings_read_resp_t *read_response = (msg_settings_read_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  request_state_t *state =
-      request_state_check(ctx->req_list, &ctx->client_iface, read_response->setting, len);
+  request_state_t *state = request_state_check(ctx, read_response->setting, len);
 
   if (NULL == state) {
     return;
@@ -211,10 +207,8 @@ static void setting_write_resp_callback(uint16_t sender_id,
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  request_state_t *state = request_state_check(ctx->req_list,
-                                               &ctx->client_iface,
-                                               write_response->setting,
-                                               len - sizeof(write_response->status));
+  request_state_t *state =
+    request_state_check(ctx, write_response->setting, len - sizeof(write_response->status));
 
   if (NULL == state) {
     return;
@@ -242,8 +236,7 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
   msg_settings_read_by_index_resp_t *resp = (msg_settings_read_by_index_resp_t *)msg;
 
   /* Check for a response to a pending request */
-  request_state_t *state =
-      request_state_check(ctx->req_list, &ctx->client_iface, (char *)msg, sizeof(resp->index));
+  request_state_t *state = request_state_check(ctx, (char *)msg, sizeof(resp->index));
 
   if (NULL == state) {
     return;
@@ -283,9 +276,7 @@ static void setting_read_by_index_done_callback(uint16_t sender_id,
   request_state_t *state = ctx->req_list;
   while (state != NULL) {
     state->read_by_idx_done = true;
-    int ret = request_state_signal(state,
-                                   &ctx->client_iface,
-                                   SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
+    int ret = request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
 
     if (ret != 0) {
       log_warn("Signaling request state failed with code: %d", ret);

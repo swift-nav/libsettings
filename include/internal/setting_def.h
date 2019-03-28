@@ -15,6 +15,9 @@
 
 #include <libsettings/settings.h>
 
+#include <internal/setting_data.h>
+#include <internal/setting_type.h>
+
 typedef struct setting_sbp_cb_s setting_sbp_cb_t;
 
 /**

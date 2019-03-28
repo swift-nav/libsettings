@@ -218,12 +218,14 @@ cdef class Settings:
                                    fmt_type,
                                    sizeof(fmt_type))
 
-        setting = {
-                      'section': section.decode(encoding),
-                      'name': name.decode(encoding),
-                      'value': value.decode(encoding),
-                      'fmt_type': fmt_type.decode(encoding),
-                  }
+        setting = None
+        if (0 == ret):
+            setting = {
+                          'section': section.decode(encoding),
+                          'name': name.decode(encoding),
+                          'value': value.decode(encoding),
+                          'fmt_type': fmt_type.decode(encoding),
+                      }
 
         return (ret, setting)
 
@@ -231,25 +233,31 @@ cdef class Settings:
         settings = []
         cdef uint16_t idx = 0
         pool = ThreadPool(workers)
+        ret = None
 
-        while (True):
+        while (ret is None):
             tasks = [(i, encoding) for i in range(idx, idx + workers)]
             results = [pool.apply_async(self._read_by_index, t) for t in tasks]
+
             if not results:
-                return settings
+                ret = settings
+
             for result in results:
                 res = result.get()
                 if (res[0] > 0):
-                    pool.close()
-                    pool.join()
-                    return settings
+                    ret = settings
+                    break
                 elif (res[0] < 0):
-                    pool.close()
-                    pool.join()
-                    return []
+                    ret = []
+                    break
 
                 settings.append(res[1])
             idx += workers
+
+        pool.close()
+        pool.join()
+
+        return ret
 
     def _callback_broker(self, sbp_msg, **metadata):
         if self._debug:
