@@ -96,16 +96,8 @@ cdef extern from "../include/libsettings/settings.h":
     ctypedef int settings_type_t
     ctypedef int (*settings_notify_fn)(void *ctx)
 
-    int settings_register_setting(settings_t *ctx,
-                                  const char *section,
-                                  const char *name,
-                                  void *var,
-                                  size_t var_len,
-                                  settings_type_t stype,
-                                  settings_notify_fn notify,
-                                  void *notify_context)
-
     int settings_write_str(settings_t *ctx,
+                           void *event,
                            const char *section,
                            const char *name,
                            const char *str)
@@ -168,7 +160,7 @@ cdef class Settings:
     def destroy(self):
         settings_destroy(&self.ctx)
 
-    def write(self, section, name, value, encoding='ascii'):
+    def write(self, section, name, value, encoding='ascii', multithread=False):
         try:
             if isinstance(value, str):
                 value = bytearray(value, encoding)
@@ -182,10 +174,37 @@ cdef class Settings:
             raise TypeError("Unsupported type {} for {}".format(type(value),
                                                                 value))
 
-        return settings_write_str(self.ctx,
-                                  bytearray(section, encoding),
-                                  bytearray(name, encoding),
-                                  value)
+        if multithread:
+            e = Event()
+            ret = settings_write_str(self.ctx,
+                                     <void*>e,
+                                     bytearray(section, encoding),
+                                     bytearray(name, encoding),
+                                     value)
+        else:
+            ret = settings_write_str(self.ctx,
+                                     NULL,
+                                     bytearray(section, encoding),
+                                     bytearray(name, encoding),
+                                     value)
+
+        return (ret, section, name, value.decode(encoding))
+
+    def write_all(self, settings, encoding='ascii', workers=10):
+        pool = ThreadPool(workers)
+
+        tasks = [(s['section'], s['name'], s['value'], encoding, True) for s in settings]
+        results = [pool.apply_async(self.write, t) for t in tasks]
+
+        ret = []
+
+        for result in results:
+            ret.append(result.get())
+
+        pool.close()
+        pool.join()
+
+        return ret
 
     def read(self, section, name, encoding='ascii'):
         cdef char value[SETTINGS_BUFLEN]

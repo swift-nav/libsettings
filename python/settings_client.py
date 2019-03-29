@@ -62,6 +62,13 @@ def get_args():
     return parser.parse_args()
 
 
+class Setting():
+    def __init__(self, section, name, value):
+        self.section = section
+        self.name = name
+        self.value = value
+
+
 def main():
     """
     Get configuration, get driver, and build handler and start it.
@@ -86,13 +93,19 @@ def main():
             print("Creating Settings")
             s = Settings(link)
 
-            #time.sleep(1)
+            time.sleep(1)
 
-            #print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            slist = [{"section": "solution", "name": "correction_age_max", "value": "7"),
+                     {"section": "solution", "name": "elevation_mask", "value": "5")]
 
-            #value = input('Enter new solution.elevation_mask value: ')
-            #s.write("solution", "elevation_mask", value)
-            #print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+            if s.write_all(slist, workers=10):
+                print("write_all failed")
+
+            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
+
+            value = input('Enter new solution.elevation_mask value: ')
+            s.write("solution", "elevation_mask", value)
+            print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
             l = s.read_all(workers=10)
 

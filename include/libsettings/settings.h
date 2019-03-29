@@ -117,10 +117,10 @@ typedef struct settings_api_s {
   settings_wait_t wait;
   settings_wait_deinit_t wait_deinit; /* Optional, needed if wait uses semaphores etc */
   settings_signal_t signal;
-  settings_wait_t wait_thd;
-  settings_signal_t signal_thd;
-  settings_lock_t lock;
-  settings_unlock_t unlock;
+  settings_wait_t wait_thd; /* Required for multithreading */
+  settings_signal_t signal_thd; /* Required for multithreading */
+  settings_lock_t lock; /* Required for multithreading */
+  settings_unlock_t unlock; /* Required for multithreading */
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
@@ -265,8 +265,13 @@ LIBSETTINGS_DECLSPEC int settings_register_watch(settings_t *ctx,
 /**
  * @brief   Write a new value for registered setting.
  * @details Call will block until write response or internal timeout.
+ *          In case of multithreading, caller shall provide event object
+ *          that shall be used for waiting in wait_thd API function and
+ *          signaled in signal_thd API function. Also lock and unlock API
+ *          function implementations are mandatory when multithreading.
  *
  * @param[in] ctx           Pointer to the context to use.
+ * @param[in] event         Request specific event object.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
  * @param[in] value         Address of the value variable.
@@ -279,6 +284,7 @@ LIBSETTINGS_DECLSPEC int settings_register_watch(settings_t *ctx,
  * @retval >0               Response returned an error @see settings_write_res_t
  */
 LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(settings_t *ctx,
+                                                         void *event,
                                                          const char *section,
                                                          const char *name,
                                                          const void *value,
@@ -288,8 +294,13 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(settings_t *ctx,
 /**
  * @brief   Write a new value for registered setting of type int.
  * @details Call will block until write response or internal timeout.
+ *          In case of multithreading, caller shall provide event object
+ *          that shall be used for waiting in wait_thd API function and
+ *          signaled in signal_thd API function. Also lock and unlock API
+ *          function implementations are mandatory when multithreading.
  *
  * @param[in] ctx           Pointer to the context to use.
+ * @param[in] event         Request specific event object.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
  * @param[in] value         Value to be written.
@@ -300,6 +311,7 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(settings_t *ctx,
  * @retval >0               Response returned an error @see settings_write_res_t
  */
 LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_int(settings_t *ctx,
+                                                             void *event,
                                                              const char *section,
                                                              const char *name,
                                                              int value);
@@ -307,8 +319,13 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_int(settings_t *ctx,
 /**
  * @brief   Write a new value for registered setting of type float.
  * @details Call will block until write response or internal timeout.
+ *          In case of multithreading, caller shall provide event object
+ *          that shall be used for waiting in wait_thd API function and
+ *          signaled in signal_thd API function. Also lock and unlock API
+ *          function implementations are mandatory when multithreading.
  *
  * @param[in] ctx           Pointer to the context to use.
+ * @param[in] event         Request specific event object.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
  * @param[in] value         Value to be written.
@@ -319,6 +336,7 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_int(settings_t *ctx,
  * @retval >0               Response returned an error @see settings_write_res_t
  */
 LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_float(settings_t *ctx,
+                                                               void *event,
                                                                const char *section,
                                                                const char *name,
                                                                float value);
@@ -326,8 +344,13 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_float(settings_t *ctx,
 /**
  * @brief   Write a new value for registered setting of type str.
  * @details Call will block until write response or internal timeout.
+ *          In case of multithreading, caller shall provide event object
+ *          that shall be used for waiting in wait_thd API function and
+ *          signaled in signal_thd API function. Also lock and unlock API
+ *          function implementations are mandatory when multithreading.
  *
  * @param[in] ctx           Pointer to the context to use.
+ * @param[in] event         Request specific event object.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
  * @param[in] str           Value to be written.
@@ -338,6 +361,7 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_float(settings_t *ctx,
  * @retval >0               Response returned an error @see settings_write_res_t
  */
 LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_str(settings_t *ctx,
+                                                             void *event,
                                                              const char *section,
                                                              const char *name,
                                                              const char *str);
@@ -345,8 +369,13 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_str(settings_t *ctx,
 /**
  * @brief   Write a new value for registered setting of type bool.
  * @details Call will block until write response or internal timeout.
+ *          In case of multithreading, caller shall provide event object
+ *          that shall be used for waiting in wait_thd API function and
+ *          signaled in signal_thd API function. Also lock and unlock API
+ *          function implementations are mandatory when multithreading.
  *
  * @param[in] ctx           Pointer to the context to use.
+ * @param[in] event         Request specific event object.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
  * @param[in] value         Value to be written.
@@ -357,6 +386,7 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_str(settings_t *ctx,
  * @retval >0               Response returned an error @see settings_write_res_t
  */
 LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_bool(settings_t *ctx,
+                                                              void *event,
                                                               const char *section,
                                                               const char *name,
                                                               bool value);

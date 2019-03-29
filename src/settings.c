@@ -523,6 +523,7 @@ int settings_register_watch(settings_t *ctx,
 }
 
 settings_write_res_t settings_write(settings_t *ctx,
+                                    void *event,
                                     const char *section,
                                     const char *name,
                                     const void *value,
@@ -562,7 +563,7 @@ settings_write_res_t settings_write(settings_t *ctx,
 
   request_state_t req_state = {0};
   setting_perform_request_reply_from(ctx,
-                                     NULL,
+                                     event,
                                      SBP_MSG_SETTINGS_WRITE,
                                      msg,
                                      msg_len,
@@ -578,35 +579,39 @@ settings_write_res_t settings_write(settings_t *ctx,
 }
 
 settings_write_res_t settings_write_int(settings_t *ctx,
+                                        void *event,
                                         const char *section,
                                         const char *name,
                                         int value)
 {
-  return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_INT);
+  return settings_write(ctx, event, section, name, &value, sizeof(value), SETTINGS_TYPE_INT);
 }
 
 settings_write_res_t settings_write_float(settings_t *ctx,
+                                          void *event,
                                           const char *section,
                                           const char *name,
                                           float value)
 {
-  return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_FLOAT);
+  return settings_write(ctx, event, section, name, &value, sizeof(value), SETTINGS_TYPE_FLOAT);
 }
 
 settings_write_res_t settings_write_str(settings_t *ctx,
+                                        void *event,
                                         const char *section,
                                         const char *name,
                                         const char *str)
 {
-  return settings_write(ctx, section, name, str, strlen(str), SETTINGS_TYPE_STRING);
+  return settings_write(ctx, event, section, name, str, strlen(str), SETTINGS_TYPE_STRING);
 }
 
 settings_write_res_t settings_write_bool(settings_t *ctx,
+                                         void *event,
                                          const char *section,
                                          const char *name,
                                          bool value)
 {
-  return settings_write(ctx, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
+  return settings_write(ctx, event, section, name, &value, sizeof(value), SETTINGS_TYPE_BOOL);
 }
 
 int settings_read(settings_t *ctx,
