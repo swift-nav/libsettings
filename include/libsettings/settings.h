@@ -487,6 +487,7 @@ LIBSETTINGS_DECLSPEC int settings_read_bool(settings_t *ctx,
  * @details Call will block until read_by_idx response or internal timeout.
  *
  * @param[in] ctx           Pointer to the context to use.
+ * @param[in] event         Request specific event object.
  * @param[in] idx           Index to read.
  * @param[out] section      String describing the setting section.
  * @param[in] section_len   Section str buffer size.
