@@ -847,6 +847,7 @@ static void members_destroy(settings_t *ctx)
 {
   type_data_free(ctx->type_data_list);
   setting_data_free(ctx->setting_data_list);
+  request_state_free(ctx);
 }
 
 void settings_destroy(settings_t **ctx)

@@ -19,6 +19,20 @@
 #include <internal/request_state.h>
 #include <internal/setting_def.h>
 
+#define LIBSETTINGS_LOCK(ctx)                               \
+  do {                                                      \
+    if ((ctx)->client_iface.lock) {                         \
+      (ctx)->client_iface.lock((ctx)->client_iface.ctx);    \
+    }                                                       \
+  } while (0)
+
+#define LIBSETTINGS_UNLOCK(ctx)                             \
+  do {                                                      \
+    if ((ctx)->client_iface.unlock) {                       \
+      (ctx)->client_iface.unlock((ctx)->client_iface.ctx);  \
+    }                                                       \
+  } while (0)
+
 /**
  * @brief request_state_init - set up compare structure for synchronous req/reply
  * @param ctx: settings context
@@ -126,9 +140,7 @@ void request_state_deinit(request_state_t *state)
 
 void request_state_append(settings_t *ctx, request_state_t *state_data)
 {
-  if (ctx->client_iface.lock) {
-    ctx->client_iface.lock(ctx->client_iface.ctx);
-  }
+  LIBSETTINGS_LOCK(ctx);
 
   if (ctx->req_list == NULL) {
     ctx->req_list = state_data;
@@ -141,9 +153,7 @@ void request_state_append(settings_t *ctx, request_state_t *state_data)
     last->next = state_data;
   }
 
-  if (ctx->client_iface.unlock) {
-    ctx->client_iface.unlock(ctx->client_iface.ctx);
-  }
+  LIBSETTINGS_UNLOCK(ctx);
 }
 
 void request_state_remove(settings_t *ctx, request_state_t *state_data)
@@ -151,9 +161,7 @@ void request_state_remove(settings_t *ctx, request_state_t *state_data)
   assert(ctx != NULL);
   assert(state_data != NULL);
 
-  if (ctx->client_iface.lock) {
-    ctx->client_iface.lock(ctx->client_iface.ctx);
-  }
+  LIBSETTINGS_LOCK(ctx);
 
   request_state_t *curr = ctx->req_list;
   request_state_t *prev = NULL;
@@ -174,16 +182,12 @@ void request_state_remove(settings_t *ctx, request_state_t *state_data)
     break;
   }
 
-  if (ctx->client_iface.unlock) {
-    ctx->client_iface.unlock(ctx->client_iface.ctx);
-  }
+  LIBSETTINGS_UNLOCK(ctx);
 }
 
 request_state_t *request_state_lookup(settings_t *ctx, const char *data, size_t data_len)
 {
-  if (ctx->client_iface.lock) {
-    ctx->client_iface.lock(ctx->client_iface.ctx);
-  }
+  LIBSETTINGS_LOCK(ctx);
 
   request_state_t *state_list = ctx->req_list;
   while (state_list != NULL) {
@@ -194,15 +198,17 @@ request_state_t *request_state_lookup(settings_t *ctx, const char *data, size_t 
     state_list = state_list->next;
   }
 
-  if (ctx->client_iface.unlock) {
-    ctx->client_iface.unlock(ctx->client_iface.ctx);
-  }
+  LIBSETTINGS_UNLOCK(ctx);
 
   return state_list;
 }
 
-void request_state_free(request_state_t *state_list)
+void request_state_free(settings_t *ctx)
 {
+  LIBSETTINGS_LOCK(ctx);
+
+  request_state_t *state_list = ctx->req_list;
+
   /* Free setting data list elements */
   while (state_list != NULL) {
     request_state_t *s = state_list;
@@ -210,4 +216,8 @@ void request_state_free(request_state_t *state_list)
     request_state_deinit(s);
     free(s);
   }
+
+  ctx->req_list = NULL;
+
+  LIBSETTINGS_UNLOCK(ctx);
 }
