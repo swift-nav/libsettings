@@ -48,6 +48,7 @@ else ()
     src/test_setting_type_int.cpp
     src/test_setting_type_str.cpp
     src/test_settings_util.cpp
+    src/test_stubs.cpp
     ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging.c
     ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging_common.c
     ${PROJECT_SOURCE_DIR}/src/request_state.c
@@ -62,6 +63,7 @@ else ()
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
   add_dependencies(test_libsettings gtest)
   include_directories(${PROJECT_SOURCE_DIR}/include)
+  include_directories(${PROJECT_SOURCE_DIR}/tests/include)
   target_link_libraries(test_libsettings gtest_main)
 
   if (WIN32)

@@ -10,114 +10,13 @@
  * WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-
 #include "gtest/gtest.h"
 
 #include <libsettings/settings.h>
 
 #include <internal/request_state.h>
 
-static void log_dummy(int priority, const char *format, ...)
-{
-  va_list args;
-  va_start(args, format);
-
-  vprintf(format, args);
-
-  va_end(args);
-}
-
-static int send_dummy(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload)
-{
-  (void)ctx;
-  (void)msg_type;
-  (void)len;
-  (void)payload;
-  return 0;
-}
-
-static int send_from_dummy(void *ctx,
-                           uint16_t msg_type,
-                           uint8_t len,
-                           uint8_t *payload,
-                           uint16_t sbp_sender_id)
-{
-  (void)ctx;
-  (void)msg_type;
-  (void)len;
-  (void)payload;
-  (void)sbp_sender_id;
-  return 0;
-}
-
-static int wait_init_dummy(void *ctx)
-{
-  (void)ctx;
-  return 0;
-}
-
-static int wait_dummy(void *ctx, int timeout_ms)
-{
-  (void)ctx;
-  (void)timeout_ms;
-  return 0;
-}
-
-static int wait_deinit_dummy(void *ctx)
-{
-  (void)ctx;
-  return 0;
-}
-
-static void signal_dummy(void *ctx)
-{
-  (void)ctx;
-}
-
-static int wait_thd_dummy(void *ctx, int timeout_ms)
-{
-  (void)ctx;
-  (void)timeout_ms;
-  return 0;
-}
-
-static void signal_thd_dummy(void *ctx)
-{
-  (void)ctx;
-}
-
-static void lock_dummy(void *ctx)
-{
-  (void)ctx;
-}
-
-static void unlock_dummy(void *ctx)
-{
-  (void)ctx;
-}
-
-static int reg_cb_dummy(void *ctx,
-                        uint16_t msg_type,
-                        sbp_msg_callback_t cb,
-                        void *cb_context,
-                        sbp_msg_callbacks_node_t **node)
-{
-  (void)ctx;
-  (void)msg_type;
-  (void)cb;
-  (void)cb_context;
-  (void)node;
-  return 0;
-}
-
-static int unreg_cb_dummy(void *ctx, sbp_msg_callbacks_node_t **node)
-{
-  (void)ctx;
-  (void)node;
-  return 0;
-}
+#include <test_stubs.hh>
 
 TEST(test_request_state, init_deinit)
 {
@@ -176,9 +75,15 @@ TEST(test_request_state, check)
 
   request_state_init(&state, NULL, 9, test_data, strlen(test_data));
 
-  EXPECT_EQ(NULL, request_state_check(settings, test_data, strlen(test_data) - 1));
+  EXPECT_EQ(NULL, request_state_check(settings, test_data, strlen(test_data)));
 
-  // EXPECT_DEATH(request_state_check(settings, test_data, strlen(test_data)), "");
+  request_state_append(settings, &state);
+
+  EXPECT_EQ(&state, request_state_check(settings, test_data, strlen(test_data)));
+
+  request_state_remove(settings, &state);
+
+  EXPECT_EQ(NULL, request_state_check(settings, test_data, strlen(test_data)));
 
   state.pending = false;
 
