@@ -249,10 +249,6 @@ static int setting_perform_request_reply_from(settings_t *ctx,
 
   request_state_remove(ctx, req_state);
 
-  if (res) {
-    log_warn("setting req/reply failed after %d retries (msg id: %d)", retries, message_type);
-  }
-
   return res;
 }
 
@@ -758,7 +754,6 @@ int settings_read_by_idx(settings_t *ctx,
 
   /* Error */
   if (res < 0) {
-    log_error("read by idx request failed");
     return res;
   }
 
