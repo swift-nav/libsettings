@@ -22,7 +22,11 @@ cmake ..
 CALL msbuild libsettings.sln /p:Configuration="Release" /p:Platform="Win32"
 cd ..
 python setup.py bdist_wheel
+pip install --no-index --find-links=./dist libsettings
+pip install sbp
+for /f %%i in ('python -c "from libsettings import Settings"') do set RET=%%i
 CALL deactivate
 CALL rmvirtualenv venv
 CALL conda deactivate
 CALL conda remove -y --name py%1 --all
+EXIT /B %RET%

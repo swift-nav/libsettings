@@ -9,6 +9,10 @@ matrix:
      script:
        - ./scripts/sdist-unix.sh
        - ls -la ./build/src/libsettings.so || exit 1
+     after_success:
+       - pip install --user --no-index --find-links=./dist libsettings
+       - pip install --user sbp
+       - python -c "from libsettings import Settings" || exit 1
 
 
    - os: osx
@@ -23,6 +27,10 @@ matrix:
      script:
        - ./scripts/sdist-unix.sh
        - ls -la ./build/src/libsettings.dylib || exit 1
+     after_success:
+       - pip install --user --no-index --find-links=./dist libsettings
+       - pip install --user sbp
+       - python -c "from libsettings import Settings" || exit 1
 
 
    - os: osx
@@ -30,6 +38,10 @@ matrix:
      script:
        - ./scripts/sdist-unix.sh
        - ls -la ./build/src/libsettings.dylib || exit 1
+     after_success:
+       - pip install --user --no-index --find-links=./dist libsettings
+       - pip install --user sbp
+       - python -c "from libsettings import Settings" || exit 1
 
 
    - os: windows
@@ -114,11 +126,6 @@ matrix:
 before_script:
  # clean the dist folder so we will install the built package
  - rm -rf ./dist
-
-after_success:
- - pip install --user --no-index --find-links=./dist libsettings
- - pip install --user sbp
- - python -c "from libsettings import Settings" || exit 1
 
 git:
   depth: 1

@@ -15,6 +15,9 @@
 
 #include <libsettings/settings.h>
 
+#include <internal/setting_data.h>
+#include <internal/setting_type.h>
+
 typedef struct setting_sbp_cb_s setting_sbp_cb_t;
 
 /**
@@ -28,17 +31,10 @@ typedef struct setting_sbp_cb_s setting_sbp_cb_t;
 struct settings_s {
   type_data_t *type_data_list;
   setting_data_t *setting_data_list;
-  request_state_t request_state;
+  request_state_t *req_list;
   setting_sbp_cb_t *sbp_cb_list;
   settings_api_t client_iface;
   uint16_t sender_id;
-  /* TODO: make independent structure of these */
-  char resp_section[SETTINGS_BUFLEN];
-  char resp_name[SETTINGS_BUFLEN];
-  char resp_value[SETTINGS_BUFLEN];
-  char resp_type[SETTINGS_BUFLEN];
-  bool read_by_idx_done;
-  settings_write_res_t status;
 };
 
 #endif /* LIBSETTINGS_SETTING_DEF_H */

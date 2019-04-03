@@ -62,6 +62,13 @@ def get_args():
     return parser.parse_args()
 
 
+class Setting():
+    def __init__(self, section, name, value):
+        self.section = section
+        self.name = name
+        self.value = value
+
+
 def main():
     """
     Get configuration, get driver, and build handler and start it.
@@ -88,13 +95,22 @@ def main():
 
             time.sleep(1)
 
+            slist = [{"section": "solution", "name": "correction_age_max", "value": "7"},
+                     {"section": "solution", "name": "elevation_mask", "value": "5"}]
+
+            results = s.write_all(slist, workers=10)
+
+            for (res, section, name, value) in results:
+                if res:
+                    print("write_all failed for {}.{} with error value {}".format(section, name, res))
+
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
             value = input('Enter new solution.elevation_mask value: ')
             s.write("solution", "elevation_mask", value)
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
-            l = s.read_all()
+            l = s.read_all(workers=10)
 
             for setting in l:
                 print(setting)
