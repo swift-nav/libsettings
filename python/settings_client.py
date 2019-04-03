@@ -95,11 +95,14 @@ def main():
 
             time.sleep(1)
 
-            slist = [{"section": "solution", "name": "correction_age_max", "value": "7"),
-                     {"section": "solution", "name": "elevation_mask", "value": "5")]
+            slist = [{"section": "solution", "name": "correction_age_max", "value": "7"},
+                     {"section": "solution", "name": "elevation_mask", "value": "5"}]
 
-            if s.write_all(slist, workers=10):
-                print("write_all failed")
+            results = s.write_all(slist, workers=10)
+
+            for (res, section, name, value) in results:
+                if res:
+                    print("write_all failed for {}.{} with error value {}".format(section, name, res))
 
             print("solution.elevation_mask =", s.read("solution", "elevation_mask"))
 
