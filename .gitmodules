@@ -1,6 +1,0 @@
-[submodule "libsbp"]
-	path = libsbp
-	url = https://github.com/swift-nav/libsbp.git
-[submodule "libswiftnav"]
-	path = libswiftnav
-	url = https://github.com/swift-nav/libswiftnav.git

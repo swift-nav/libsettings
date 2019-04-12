@@ -16,7 +16,7 @@
 
 #include <libsbp/settings.h>
 
-#include <swiftnav/logging.h>
+#include <libswiftnav/logging.h>
 
 #include <libsettings/settings_util.h>
 

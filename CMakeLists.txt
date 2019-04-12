@@ -1,18 +1,36 @@
-cmake_minimum_required(VERSION 2.8.7)
-project(libsettings)
+cmake_minimum_required(VERSION 3.2)
+
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL https://github.com/woodfell/hunter/archive/v1.0.3.tar.gz
+    SHA1 cf2c679d59dbf934fbc6fa7c6ba204a6e72e850f
+  )
+
+include("cmake/VersionFromGit.cmake")
+version_from_git()
+message(STATUS "Building libsettings version ${VERSION}")
+
+project(libsettings LANGUAGES C CXX VERSION ${VERSION})
+
+hunter_add_package(libsbp)
+find_package(libsbp CONFIG REQUIRED)
+hunter_add_package(libswiftnav)
+find_package(libswiftnav CONFIG REQUIRED)
+hunter_add_package(GTest)
+find_package(GTest CONFIG REQUIRED)
+  if (NOT TARGET GTest::main)
+  message(FATAL_ERROR "no gtest")
+  endif()
 
 ################################################################################
 # Include Modules
 ################################################################################
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(ClangToolsLibsettings)
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(GNUInstallDirs)
 
 ################################################################################
 # Build Controls
 ################################################################################
-# When not explicitly provided, default to building shared libraries where possible.
-set(BUILD_SHARED_LIBS ON CACHE BOOL "If set, build shared libraries where possible.")
 # When not explicitly provided, default to debug release build.
 #
 # NOTE: CMake project generation sets the cache variable to the empty string on
@@ -22,10 +40,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
         "Choose one: None Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
-# Enable Clang auto-formatting, defaults to on.
-option(ENABLE_AUTOFORMAT "Enable automatic formatting and replacement with clang-format." ON)
-# Enable Clang auto-linting, defaults to off.
-option(ENABLE_AUTOLINT "Enable automatic linting and warning with clang-tidy. " OFF)
 # Enable static stack analyzer, defaults to off.
 option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 
@@ -68,22 +82,6 @@ mark_as_advanced(
     CMAKE_EXE_LINKER_FLAGS_COVERAGE
     CMAKE_SHARED_LINKER_FLAGS_COVERAGE)
 
-# Set project version using Git tag and hash.
-execute_process(
-  COMMAND git describe --dirty --tags --always
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  RESULT_VARIABLE GIT_VERSION_FOUND
-  ERROR_QUIET
-  OUTPUT_VARIABLE GIT_VERSION
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-if (GIT_VERSION_FOUND)
-  set(VERSION "unknown")
-else (GIT_VERSION_FOUND)
-  set(VERSION ${GIT_VERSION})
-endif (GIT_VERSION_FOUND)
-
 # Some compiler options used globally
 if (NOT MSVC)
   set(CMAKE_C_FLAGS
@@ -108,19 +106,5 @@ endif ()
 # Targets
 ################################################################################
 
-if (LIBSBP_SEARCH_PATH)
-  include_directories("${LIBSBP_SEARCH_PATH}/include")
-else (LIBSBP_SEARCH_PATH)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-    include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
-  endif()
-endif(LIBSBP_SEARCH_PATH)
-
-if(EXISTS ${PROJECT_SOURCE_DIR}/libswiftnav)
-  include_directories("${PROJECT_SOURCE_DIR}/libswiftnav/include")
-  add_subdirectory("${PROJECT_SOURCE_DIR}/libswiftnav")
-endif()
-
 add_subdirectory(src)
-add_subdirectory(python)
 add_subdirectory(tests)
