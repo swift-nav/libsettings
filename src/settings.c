@@ -348,6 +348,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
     return -1;
   }
 
+  request_state_t req_state = {0};
   result = setting_perform_request_reply_from(ctx,
                                               NULL,
                                               SBP_MSG_SETTINGS_READ_REQ,
@@ -357,7 +358,11 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
                                               WATCH_INIT_TIMEOUT_MS,
                                               WATCH_INIT_TRIES,
                                               SBP_SENDER_ID,
-                                              NULL);
+                                              &req_state);
+
+  if (0 == result && strlen(req_state.resp_value) > 0) {
+    setting_data_update_value(setting_data, req_state.resp_value);
+  }
 
   setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
   return result;

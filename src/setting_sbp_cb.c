@@ -170,6 +170,9 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
     return;
   }
 
+  state->resp_value[0] = '\0';
+  state->resp_type[0] = '\0';
+
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   settings_tokens_t tokens =
     settings_parse(read_response->setting, len, &section, &name, &value, &type);
@@ -180,14 +183,10 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
     if (type) {
       strncpy(state->resp_type, type, sizeof(state->resp_type));
     }
-    /* Update watchers, no need for filter as wathers shall not be read-only */
-    setting_value_update(ctx, read_response->setting, len, UPDATE_FILTER_NONE);
   } else if (tokens == SETTINGS_TOKENS_NAME) {
     log_debug("setting %s.%s not found", section, name);
   } else {
     log_warn("read response parsing failed");
-    state->resp_value[0] = '\0';
-    state->resp_type[0] = '\0';
   }
 }
 
