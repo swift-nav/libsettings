@@ -1,42 +1,3 @@
-if (CMAKE_CROSSCOMPILING)
-  message(STATUS "Skipping unit tests, cross compiling")
-elseif (MSVC)
-  message(STATUS "Skipping unit tests, MSVC detected")
-elseif (SKIP_UNIT_TESTS)
-  message(STATUS "Skipping unit tests requested")
-else ()
-  # Download and unpack googletest at configure time
-  configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-  execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-  if(result)
-    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-  endif()
-  execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    RESULT_VARIABLE result
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-  if(result)
-    message(FATAL_ERROR "Build step for googletest failed: ${result}")
-  endif()
-
-  # Prevent overriding the parent project's compiler/linker
-  # settings on Windows
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-  # Add googletest directly to our build. This defines
-  # the gtest and gtest_main targets.
-  add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
-                   ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
-                   EXCLUDE_FROM_ALL)
-
-  # The gtest/gtest_main targets carry header search path
-  # dependencies automatically when using CMake 2.8.11 or
-  # later. Otherwise we have to add them here ourselves.
-  if (CMAKE_VERSION VERSION_LESS 2.8.11)
-    include_directories("${gtest_SOURCE_DIR}/include")
-  endif()
-
   # Now simply link against gtest or gtest_main as needed. Eg
   add_executable(
     test_libsettings
@@ -49,8 +10,6 @@ else ()
     src/test_setting_type_str.cpp
     src/test_settings_util.cpp
     src/test_stubs.cpp
-    ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging.c
-    ${PROJECT_SOURCE_DIR}/libswiftnav/src/logging_common.c
     ${PROJECT_SOURCE_DIR}/src/request_state.c
     ${PROJECT_SOURCE_DIR}/src/setting_data.c
     ${PROJECT_SOURCE_DIR}/src/setting_sbp_cb.c
@@ -61,10 +20,15 @@ else ()
     ${PROJECT_SOURCE_DIR}/src/setting_type_str.c
     ${PROJECT_SOURCE_DIR}/src/settings.c
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
-  add_dependencies(test_libsettings gtest)
-  include_directories(${PROJECT_SOURCE_DIR}/include)
-  include_directories(${PROJECT_SOURCE_DIR}/tests/include)
-  target_link_libraries(test_libsettings gtest_main)
+
+  target_include_directories(test_libsettings
+      PRIVATE
+      ${PROJECT_SOURCE_DIR}/include
+      ${PROJECT_SOURCE_DIR}/tests/include
+      $<TARGET_PROPERTY:sbp,INCLUDE_DIRECTORIES>
+      )
+
+  target_link_libraries(test_libsettings swiftnav gtest_main)
 
   if (WIN32)
     add_custom_command(
@@ -82,4 +46,3 @@ else ()
     )
   endif (WIN32)
 
-endif ()

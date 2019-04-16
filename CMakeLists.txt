@@ -4,7 +4,7 @@ project(libsettings)
 ################################################################################
 # Include Modules
 ################################################################################
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/common")
 include(ClangToolsLibsettings)
 include(GNUInstallDirs)
 
@@ -29,6 +29,16 @@ option(ENABLE_AUTOLINT "Enable automatic linting and warning with clang-tidy. " 
 # Enable static stack analyzer, defaults to off.
 option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 
+if (CMAKE_CROSSCOMPILING)
+  message(STATUS "Skipping unit tests, cross compiling")
+elseif (MSVC)
+  message(STATUS "Skipping unit tests, MSVC detected")
+elseif (SKIP_UNIT_TESTS)
+  message(STATUS "Skipping unit tests requested")
+else ()
+  set(ENABLE_UNIT_TESTS TRUE)
+endif()
+
 ################################################################################
 # Source Code Configuration
 ################################################################################
@@ -36,6 +46,9 @@ option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 ################################################################################
 # Third party.
 ################################################################################
+if(ENABLE_UNIT_TESTS)
+  find_package(Googletest REQUIRED)
+endif()
 
 ################################################################################
 # Compilation Settings
@@ -108,19 +121,12 @@ endif ()
 # Targets
 ################################################################################
 
-if (LIBSBP_SEARCH_PATH)
-  include_directories("${LIBSBP_SEARCH_PATH}/include")
-else (LIBSBP_SEARCH_PATH)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-    include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
-  endif()
-endif(LIBSBP_SEARCH_PATH)
-
-if(EXISTS ${PROJECT_SOURCE_DIR}/libswiftnav)
-  include_directories("${PROJECT_SOURCE_DIR}/libswiftnav/include")
-  add_subdirectory("${PROJECT_SOURCE_DIR}/libswiftnav")
-endif()
+find_package(Sbp REQUIRED)
+find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(python)
-add_subdirectory(tests)
+
+if(ENABLE_UNIT_TESTS)
+  add_subdirectory(tests)
+endif()
