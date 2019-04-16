@@ -117,10 +117,10 @@ typedef struct settings_api_s {
   settings_wait_t wait;
   settings_wait_deinit_t wait_deinit; /* Optional, needed if wait uses semaphores etc */
   settings_signal_t signal;
-  settings_wait_t wait_thd; /* Required for multithreading */
+  settings_wait_t wait_thd;     /* Required for multithreading */
   settings_signal_t signal_thd; /* Required for multithreading */
-  settings_lock_t lock; /* Required for multithreading */
-  settings_unlock_t unlock; /* Required for multithreading */
+  settings_lock_t lock;         /* Required for multithreading */
+  settings_unlock_t unlock;     /* Required for multithreading */
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
@@ -310,11 +310,8 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_int(settings_t *ctx,
-                                                             void *event,
-                                                             const char *section,
-                                                             const char *name,
-                                                             int value);
+LIBSETTINGS_DECLSPEC settings_write_res_t
+settings_write_int(settings_t *ctx, void *event, const char *section, const char *name, int value);
 
 /**
  * @brief   Write a new value for registered setting of type float.

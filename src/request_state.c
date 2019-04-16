@@ -19,18 +19,18 @@
 #include <internal/request_state.h>
 #include <internal/setting_def.h>
 
-#define LIBSETTINGS_LOCK(ctx)                               \
-  do {                                                      \
-    if ((ctx)->client_iface.lock) {                         \
-      (ctx)->client_iface.lock((ctx)->client_iface.ctx);    \
-    }                                                       \
+#define LIBSETTINGS_LOCK(ctx)                            \
+  do {                                                   \
+    if ((ctx)->client_iface.lock) {                      \
+      (ctx)->client_iface.lock((ctx)->client_iface.ctx); \
+    }                                                    \
   } while (0)
 
-#define LIBSETTINGS_UNLOCK(ctx)                             \
-  do {                                                      \
-    if ((ctx)->client_iface.unlock) {                       \
-      (ctx)->client_iface.unlock((ctx)->client_iface.ctx);  \
-    }                                                       \
+#define LIBSETTINGS_UNLOCK(ctx)                            \
+  do {                                                     \
+    if ((ctx)->client_iface.unlock) {                      \
+      (ctx)->client_iface.unlock((ctx)->client_iface.ctx); \
+    }                                                      \
   } while (0)
 
 /**

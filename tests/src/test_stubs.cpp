@@ -35,10 +35,10 @@ int send_dummy(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload)
 }
 
 int send_from_dummy(void *ctx,
-                           uint16_t msg_type,
-                           uint8_t len,
-                           uint8_t *payload,
-                           uint16_t sbp_sender_id)
+                    uint16_t msg_type,
+                    uint8_t len,
+                    uint8_t *payload,
+                    uint16_t sbp_sender_id)
 {
   (void)ctx;
   (void)msg_type;
@@ -95,10 +95,10 @@ void unlock_dummy(void *ctx)
 }
 
 int reg_cb_dummy(void *ctx,
-                        uint16_t msg_type,
-                        sbp_msg_callback_t cb,
-                        void *cb_context,
-                        sbp_msg_callbacks_node_t **node)
+                 uint16_t msg_type,
+                 sbp_msg_callback_t cb,
+                 void *cb_context,
+                 sbp_msg_callbacks_node_t **node)
 {
   (void)ctx;
   (void)msg_type;
@@ -114,4 +114,3 @@ int unreg_cb_dummy(void *ctx, sbp_msg_callbacks_node_t **node)
   (void)node;
   return 0;
 }
-
