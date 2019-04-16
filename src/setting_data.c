@@ -90,7 +90,7 @@ void setting_data_destroy(setting_data_t *setting_data)
 settings_write_res_t setting_data_update_value(setting_data_t *setting_data, const char *value)
 {
   if (setting_data->readonly) {
-    log_warn("trying to update read only setting");
+    log_warn("trying to update read only setting %s.%s", setting_data->section, setting_data->name);
     return SETTINGS_WR_READ_ONLY;
   }
 

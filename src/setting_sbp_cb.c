@@ -25,6 +25,10 @@
 #include <internal/setting_def.h>
 #include <internal/setting_sbp_cb.h>
 
+#define UPDATE_FILTER_NONE 0x0
+#define UPDATE_FILTER_READONLY 0x1
+#define UPDATE_FILTER_WATCHONLY 0x2
+
 /**
  * @brief setting_send_write_response
  * @param write_response: pre-formatted write response sbp message
@@ -59,7 +63,7 @@ static int setting_send_write_response(settings_t *ctx,
   return 0;
 }
 
-static void setting_value_update(settings_t *ctx, const char *msg, uint8_t len, bool watchonly)
+static void setting_value_update(settings_t *ctx, const char *msg, uint8_t len, uint32_t filter)
 {
   /* Extract parameters from message:
    * 4 null terminated strings: section, name, value and type.
@@ -77,7 +81,11 @@ static void setting_value_update(settings_t *ctx, const char *msg, uint8_t len, 
     return;
   }
 
-  if (watchonly != setting_data->watchonly) {
+  if ((filter & UPDATE_FILTER_WATCHONLY) && setting_data->watchonly) {
+    return;
+  }
+
+  if ((filter & UPDATE_FILTER_READONLY) && setting_data->readonly) {
     return;
   }
 
@@ -120,8 +128,14 @@ static void setting_register_resp_callback(uint16_t sender_id,
     return;
   }
 
-  setting_value_update(ctx, resp->setting, len - sizeof(resp->status), false);
-  setting_value_update(ctx, resp->setting, len - sizeof(resp->status), true);
+  /* Update the actual setting. In case of readonly, trust the initialized value. */
+  setting_value_update(ctx,
+                       resp->setting,
+                       len - sizeof(resp->status),
+                       UPDATE_FILTER_WATCHONLY | UPDATE_FILTER_READONLY);
+
+  /* Update watchers, no need for filter as wathers shall not be read-only */
+  setting_value_update(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_NONE);
 }
 
 static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
@@ -136,13 +150,11 @@ static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg
 
   msg_settings_write_t *request = (msg_settings_write_t *)msg;
 
-  setting_value_update(ctx, request->setting, len, false);
+  /* Update value, ignore watchers, they are updated from setting_write_resp_callback() */
+  setting_value_update(ctx, request->setting, len, UPDATE_FILTER_WATCHONLY);
 }
 
-static void setting_read_resp_callback(uint16_t sender_id,
-                                       uint8_t len,
-                                       uint8_t *msg,
-                                       void *context)
+static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
 {
   (void)sender_id;
   assert(msg);
@@ -159,7 +171,8 @@ static void setting_read_resp_callback(uint16_t sender_id,
   }
 
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
-  settings_tokens_t tokens = settings_parse(read_response->setting, len, &section, &name, &value, &type);
+  settings_tokens_t tokens =
+    settings_parse(read_response->setting, len, &section, &name, &value, &type);
   if (tokens >= SETTINGS_TOKENS_VALUE) {
     if (value) {
       strncpy(state->resp_value, value, sizeof(state->resp_value));
@@ -167,7 +180,8 @@ static void setting_read_resp_callback(uint16_t sender_id,
     if (type) {
       strncpy(state->resp_type, type, sizeof(state->resp_type));
     }
-    setting_value_update(ctx, read_response->setting, len, true);
+    /* Update watchers, no need for filter as wathers shall not be read-only */
+    setting_value_update(ctx, read_response->setting, len, UPDATE_FILTER_NONE);
   } else if (tokens == SETTINGS_TOKENS_NAME) {
     log_debug("setting %s.%s not found", section, name);
   } else {
@@ -200,7 +214,11 @@ static void setting_write_resp_callback(uint16_t sender_id,
     return;
   }
 
-  setting_value_update(ctx, write_response->setting, len - sizeof(write_response->status), true);
+  /* Update watchers, no need for filter as wathers shall not be read-only */
+  setting_value_update(ctx,
+                       write_response->setting,
+                       len - sizeof(write_response->status),
+                       UPDATE_FILTER_NONE);
 }
 
 static void setting_read_by_index_resp_callback(uint16_t sender_id,
