@@ -26,8 +26,10 @@
 #include <internal/setting_sbp_cb.h>
 
 #define UPDATE_FILTER_NONE 0x0
-#define UPDATE_FILTER_READONLY 0x1
-#define UPDATE_FILTER_WATCHONLY 0x2
+#define UPDATE_FILTER_READONLY (0x1 << 1)
+#define UPDATE_FILTER_WATCHONLY (0x1 << 2)
+
+#define update_filter_check(filter_mask, filter_enum) (0 == (filter_mask & filter_enum))
 
 /**
  * @brief setting_send_write_response
@@ -81,11 +83,11 @@ static void setting_update_value(settings_t *ctx, const char *msg, uint8_t len, 
     return;
   }
 
-  if ((filter & UPDATE_FILTER_WATCHONLY) && setting_data->watchonly) {
+  if (update_filter_check(filter, UPDATE_FILTER_WATCHONLY) && setting_data->watchonly) {
     return;
   }
 
-  if ((filter & UPDATE_FILTER_READONLY) && setting_data->readonly) {
+  if (update_filter_check(filter, UPDATE_FILTER_READONLY) && setting_data->readonly) {
     return;
   }
 
@@ -128,14 +130,9 @@ static void setting_register_resp_callback(uint16_t sender_id,
     return;
   }
 
-  /* Update the actual setting. In case of readonly, trust the initialized value. */
-  setting_update_value(ctx,
-                       resp->setting,
-                       len - sizeof(resp->status),
-                       UPDATE_FILTER_WATCHONLY | UPDATE_FILTER_READONLY);
-
-  /* Update watchers, no need for filter as watchers shall not be read-only */
-  setting_update_value(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_NONE);
+  /* In case of readonly, trust the initialized value.
+   * Watchers shall not be readonly. */
+  setting_update_value(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_READONLY);
 }
 
 static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
