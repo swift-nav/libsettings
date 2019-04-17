@@ -26,6 +26,7 @@
 #include <internal/setting_sbp_cb.h>
 
 #define UPDATE_FILTER_NONE 0x0
+#define UPDATE_FILTER_BASIC (0x1 << 3)
 #define UPDATE_FILTER_READONLY (0x1 << 1)
 #define UPDATE_FILTER_WATCHONLY (0x1 << 2)
 
@@ -88,6 +89,11 @@ static void setting_update_value(settings_t *ctx, const char *msg, uint8_t len, 
   }
 
   if (update_filter_check(filter, UPDATE_FILTER_READONLY) && setting_data->readonly) {
+    return;
+  }
+
+  if (update_filter_check(filter, UPDATE_FILTER_BASIC) && !setting_data->readonly
+      && !setting_data->watchonly) {
     return;
   }
 
@@ -212,11 +218,12 @@ static void setting_write_resp_callback(uint16_t sender_id,
     return;
   }
 
-  /* Update watchers, no need for filter as watchers shall not be read-only */
+  /* Update watchers, do not update the actual setting since it's already done
+   * in setting_write_callback() */
   setting_update_value(ctx,
                        write_response->setting,
                        len - sizeof(write_response->status),
-                       UPDATE_FILTER_NONE);
+                       UPDATE_FILTER_BASIC);
 }
 
 static void setting_read_by_index_resp_callback(uint16_t sender_id,
