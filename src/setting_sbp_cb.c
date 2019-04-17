@@ -170,6 +170,7 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
     return;
   }
 
+  state->resp_value_valid = false;
   state->resp_value[0] = '\0';
   state->resp_type[0] = '\0';
 
@@ -179,6 +180,7 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
   if (tokens >= SETTINGS_TOKENS_VALUE) {
     if (value) {
       strncpy(state->resp_value, value, sizeof(state->resp_value));
+      state->resp_value_valid = true;
     }
     if (type) {
       strncpy(state->resp_type, type, sizeof(state->resp_type));
@@ -236,8 +238,13 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
     return;
   }
 
-  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
+  state->resp_value_valid = false;
+  state->resp_section[0] = '\0';
+  state->resp_name[0] = '\0';
+  state->resp_value[0] = '\0';
+  state->resp_type[0] = '\0';
 
+  const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
   if (settings_parse(resp->setting, len - sizeof(resp->index), &section, &name, &value, &type)
       > 0) {
     if (section) {
@@ -248,6 +255,7 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
     }
     if (value) {
       strncpy(state->resp_value, value, sizeof(state->resp_value));
+      state->resp_value_valid = true;
     }
     if (type) {
       strncpy(state->resp_type, type, sizeof(state->resp_type));

@@ -321,7 +321,10 @@ static int setting_register(settings_t *ctx, setting_data_t *setting_data)
  * req/reply
  * @param ctx: setting context
  * @param setting_data: setting to read from settings daemon
- * @return zero on success, -1 the transaction failed to complete
+ *
+ * @retval  0 success
+ * @retval -1 transaction failed to complete
+ * @retval  1 setting is not yet registered
  */
 static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_data)
 {
@@ -360,11 +363,17 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
                                               SBP_SENDER_ID,
                                               &req_state);
 
-  if (0 == result && strlen(req_state.resp_value) > 0) {
+  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
+
+  if (0 == result) {
+    if (!req_state.resp_value_valid) {
+      /* Valid response was received but didn't contain value data, indicating
+       * that setting is not yet registered */
+      return 1;
+    }
     setting_data_update_value(setting_data, req_state.resp_value);
   }
 
-  setting_sbp_cb_unregister(ctx, SBP_MSG_SETTINGS_READ_RESP);
   return result;
 }
 
@@ -443,7 +452,7 @@ static int settings_add_setting(settings_t *ctx,
     if (setting_sbp_cb_register(ctx, SBP_MSG_SETTINGS_WRITE_RESP) < 0) {
       log_error("error registering settings write resp callback");
     }
-    if (setting_read_watched_value(ctx, setting_data) != 0) {
+    if (setting_read_watched_value(ctx, setting_data) < 0) {
       log_warn("Unable to read watched setting to initial value (%s.%s)", section, name);
     }
   } else {
