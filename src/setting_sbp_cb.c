@@ -139,6 +139,8 @@ static void setting_register_resp_callback(uint16_t sender_id,
   /* In case of readonly, trust the initialized value.
    * Watchers shall not be readonly. */
   setting_update_value(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_READONLY);
+
+  request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_REGISTER);
 }
 
 static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
@@ -193,6 +195,8 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
   } else {
     log_warn("read response parsing failed");
   }
+
+  request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_REQ);
 }
 
 static void setting_write_resp_callback(uint16_t sender_id,
@@ -214,16 +218,16 @@ static void setting_write_resp_callback(uint16_t sender_id,
 
   state->status = write_response->status;
 
-  if (write_response->status != SETTINGS_WR_OK) {
-    return;
+  if (write_response->status == SETTINGS_WR_OK) {
+    /* Update watchers, do not update the actual setting since it's already done
+     * in setting_write_callback() */
+    setting_update_value(ctx,
+                         write_response->setting,
+                         len - sizeof(write_response->status),
+                         UPDATE_FILTER_BASIC);
   }
 
-  /* Update watchers, do not update the actual setting since it's already done
-   * in setting_write_callback() */
-  setting_update_value(ctx,
-                       write_response->setting,
-                       len - sizeof(write_response->status),
-                       UPDATE_FILTER_BASIC);
+  request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_WRITE);
 }
 
 static void setting_read_by_index_resp_callback(uint16_t sender_id,
@@ -265,6 +269,8 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
       strncpy(state->resp_type, type, sizeof(state->resp_type));
     }
   }
+
+  request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
 }
 
 static void setting_read_by_index_done_callback(uint16_t sender_id,
@@ -282,11 +288,7 @@ static void setting_read_by_index_done_callback(uint16_t sender_id,
   request_state_t *state = ctx->req_list;
   while (state != NULL) {
     state->read_by_idx_done = true;
-    int ret = request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
-
-    if (ret != 0) {
-      log_warn("Signaling request state failed with code: %d", ret);
-    }
+    request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
     state = state->next;
   }
 }

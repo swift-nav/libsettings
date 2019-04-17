@@ -85,13 +85,6 @@ request_state_t *request_state_check(settings_t *ctx, const char *data, size_t d
     return NULL;
   }
 
-  state->match = true;
-  state->pending = false;
-  if (ctx->client_iface.signal_thd && state->event) {
-    ctx->client_iface.signal_thd(state->event);
-  } else {
-    ctx->client_iface.signal(ctx->client_iface.ctx);
-  }
   return state;
 }
 
@@ -114,6 +107,7 @@ int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t m
 {
   assert(state);
   if (msg_id != state->msg_id) {
+    log_warn("message id mismatch");
     return -1;
   }
 
