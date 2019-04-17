@@ -120,7 +120,9 @@ settings_write_res_t setting_data_update_value(setting_data_t *setting_data, con
 
   if (res != SETTINGS_WR_OK) {
     /* Revert value if notify returns error */
-    log_error("setting value update notify failed");
+    log_error("setting value update notify failed for %s.%s",
+              setting_data->section,
+              setting_data->name);
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
   }
 
