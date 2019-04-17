@@ -63,7 +63,7 @@ static int setting_send_write_response(settings_t *ctx,
   return 0;
 }
 
-static void setting_value_update(settings_t *ctx, const char *msg, uint8_t len, uint32_t filter)
+static void setting_update_value(settings_t *ctx, const char *msg, uint8_t len, uint32_t filter)
 {
   /* Extract parameters from message:
    * 4 null terminated strings: section, name, value and type.
@@ -129,13 +129,13 @@ static void setting_register_resp_callback(uint16_t sender_id,
   }
 
   /* Update the actual setting. In case of readonly, trust the initialized value. */
-  setting_value_update(ctx,
+  setting_update_value(ctx,
                        resp->setting,
                        len - sizeof(resp->status),
                        UPDATE_FILTER_WATCHONLY | UPDATE_FILTER_READONLY);
 
   /* Update watchers, no need for filter as watchers shall not be read-only */
-  setting_value_update(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_NONE);
+  setting_update_value(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_NONE);
 }
 
 static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
@@ -151,7 +151,7 @@ static void setting_write_callback(uint16_t sender_id, uint8_t len, uint8_t *msg
   msg_settings_write_t *request = (msg_settings_write_t *)msg;
 
   /* Update value, ignore watchers, they are updated from setting_write_resp_callback() */
-  setting_value_update(ctx, request->setting, len, UPDATE_FILTER_WATCHONLY);
+  setting_update_value(ctx, request->setting, len, UPDATE_FILTER_WATCHONLY);
 }
 
 static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t *msg, void *context)
@@ -216,7 +216,7 @@ static void setting_write_resp_callback(uint16_t sender_id,
   }
 
   /* Update watchers, no need for filter as watchers shall not be read-only */
-  setting_value_update(ctx,
+  setting_update_value(ctx,
                        write_response->setting,
                        len - sizeof(write_response->status),
                        UPDATE_FILTER_NONE);
