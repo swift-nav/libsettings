@@ -134,7 +134,7 @@ static void setting_register_resp_callback(uint16_t sender_id,
                        len - sizeof(resp->status),
                        UPDATE_FILTER_WATCHONLY | UPDATE_FILTER_READONLY);
 
-  /* Update watchers, no need for filter as wathers shall not be read-only */
+  /* Update watchers, no need for filter as watchers shall not be read-only */
   setting_value_update(ctx, resp->setting, len - sizeof(resp->status), UPDATE_FILTER_NONE);
 }
 
@@ -213,7 +213,7 @@ static void setting_write_resp_callback(uint16_t sender_id,
     return;
   }
 
-  /* Update watchers, no need for filter as wathers shall not be read-only */
+  /* Update watchers, no need for filter as watchers shall not be read-only */
   setting_value_update(ctx,
                        write_response->setting,
                        len - sizeof(write_response->status),
