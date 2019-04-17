@@ -93,7 +93,7 @@ request_state_t *request_state_check(settings_t *ctx, const char *data, size_t d
  * This is used as the value to block on until the comparison has been matched
  * successfully or until (based on implementation) a number of retries or a
  * timeout has expired.
- * @param ctx: settings context
+ * @param state: request state
  * @return true if response was matched, false if not response has been received
  */
 bool request_state_match(const request_state_t *state)
@@ -103,13 +103,18 @@ bool request_state_match(const request_state_t *state)
   return state->match;
 }
 
+/**
+ * @brief request_state_signal - signals request done
+ * @param state: request state
+ * @param api: client API
+ * @param msg_id: message id of the request to be signaled
+ * @retval  0 success
+ * @retval -1 failure
+ */
 int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t msg_id)
 {
   assert(state);
-  if (msg_id != state->msg_id) {
-    log_warn("message id mismatch");
-    return -1;
-  }
+  assert(msg_id == state->msg_id);
 
   state->match = true;
   state->pending = false;
@@ -125,7 +130,7 @@ int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t m
 
 /**
  * @brief request_state_deinit - clean up compare structure after transaction
- * @param ctx: settings context
+ * @param state: request state
  */
 void request_state_deinit(request_state_t *state)
 {
