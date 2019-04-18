@@ -30,7 +30,7 @@
 #define UPDATE_FILTER_READONLY (0x1 << 1)
 #define UPDATE_FILTER_WATCHONLY (0x1 << 2)
 
-#define update_filter_check(filter_mask, filter_enum) (0 == (filter_mask & filter_enum))
+#define update_filter_check(filter_mask, filter_enum) (filter_mask & filter_enum)
 
 /**
  * @brief setting_send_write_response
