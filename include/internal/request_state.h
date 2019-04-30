@@ -32,6 +32,8 @@ typedef struct request_state_s {
   char resp_name[SETTINGS_BUFLEN];
   char resp_value[SETTINGS_BUFLEN];
   char resp_type[SETTINGS_BUFLEN];
+  /* Since an empty string can be a valid value.. */
+  bool resp_value_valid;
   bool read_by_idx_done;
   settings_write_res_t status;
   void *event;
