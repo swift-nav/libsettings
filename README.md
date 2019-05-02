@@ -38,17 +38,17 @@ is used.
 #### Commands
 
 ``` sh
-./scripts/sdist-unix.sh
-```
-
-or more explicit:
-
-``` sh
 mkdir build
 cd build
 cmake .. # If you want to speficy python version: 'cmake -D PYTHON=python3 ..'
 make
 cd ..
+```
+
+#### Source distribution package creation
+
+``` sh
+./scripts/sdist-unix.sh
 ```
 
 ### Windows
@@ -85,6 +85,11 @@ For MinGW make to work correctly sh.exe must NOT be in your path.
 ./scripts/bdist-wheel-win-msvc.bat 3.6
 ./scripts/bdist-wheel-win-msvc.bat 3.7
 ```
+
+#### Prebuilt wheels creation
+
+Check prerequisities from above. Under Anaconda prompt run `scripts\bdist-wheel-win.bat`.
+You need to repeat this in both 32 and 64-bit Anaconda prompts.
 
 ## Sanity check
 
