@@ -121,6 +121,7 @@ endif ()
 ################################################################################
 
 option(libsbp_BUILD_TESTS "Disable libsbp unit tests" OFF)
+option(libsbp_BUILD_DOCS "" OFF)
 find_package(Sbp REQUIRED)
 option(libswiftnav_BUILD_TESTS "Disable libswiftnav unit tests" OFF)
 find_package(Swiftnav REQUIRED)
