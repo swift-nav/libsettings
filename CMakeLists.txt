@@ -5,8 +5,8 @@ project(libsettings)
 # Include Modules
 ################################################################################
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/common")
-include(ClangToolsLibsettings)
 include(GNUInstallDirs)
+include(SwiftCmakeOptions)
 
 ################################################################################
 # Build Controls
@@ -22,21 +22,20 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
         "Choose one: None Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
-# Enable Clang auto-formatting, defaults to on.
-option(ENABLE_AUTOFORMAT "Enable automatic formatting and replacement with clang-format." ON)
-# Enable Clang auto-linting, defaults to off.
-option(ENABLE_AUTOLINT "Enable automatic linting and warning with clang-tidy. " OFF)
 # Enable static stack analyzer, defaults to off.
 option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 
-if (CMAKE_CROSSCOMPILING)
-  message(STATUS "Skipping unit tests, cross compiling")
-elseif (MSVC)
-  message(STATUS "Skipping unit tests, MSVC detected")
-elseif (SKIP_UNIT_TESTS)
-  message(STATUS "Skipping unit tests requested")
-else ()
-  set(ENABLE_UNIT_TESTS TRUE)
+if(libsettings_BUILD_TESTS)
+  set(ENABLE_UNIT_TESTS FALSE)
+  if (CMAKE_CROSSCOMPILING)
+    message(STATUS "Skipping unit tests, cross compiling")
+  elseif (MSVC)
+    message(STATUS "Skipping unit tests, MSVC detected")
+  elseif (SKIP_UNIT_TESTS)
+    message(STATUS "Skipping unit tests requested")
+  else ()
+    set(ENABLE_UNIT_TESTS TRUE)
+  endif()
 endif()
 
 ################################################################################
@@ -121,7 +120,9 @@ endif ()
 # Targets
 ################################################################################
 
+option(libsbp_BUILD_TESTS "Disable libsbp unit tests" OFF)
 find_package(Sbp REQUIRED)
+option(libswiftnav_BUILD_TESTS "Disable libswiftnav unit tests" OFF)
 find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
