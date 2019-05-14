@@ -1,4 +1,3 @@
-  # Now simply link against gtest or gtest_main as needed. Eg
   add_executable(
     test_libsettings
     src/test_request_state.cpp

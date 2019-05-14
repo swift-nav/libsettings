@@ -8,6 +8,17 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURC
 include(GNUInstallDirs)
 include(SwiftCmakeOptions)
 
+if(MSVC)
+  message(STATUS "Skipping unit tests, MSVC detected")
+  set(build_tests OFF)
+elseif(SKIP_UNIT_TESTS)
+  message(STATUS "Skipping unit tests requested")
+  set(build_tests OFF)
+else()
+  set(build_tests ON)
+endif()
+swift_create_project_options(TESTS ${build_tests} TEST_PACKAGES "Googletest")
+
 ################################################################################
 # Build Controls
 ################################################################################
@@ -25,19 +36,6 @@ endif(NOT CMAKE_BUILD_TYPE)
 # Enable static stack analyzer, defaults to off.
 option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 
-if(libsettings_BUILD_TESTS)
-  set(ENABLE_UNIT_TESTS FALSE)
-  if (CMAKE_CROSSCOMPILING)
-    message(STATUS "Skipping unit tests, cross compiling")
-  elseif (MSVC)
-    message(STATUS "Skipping unit tests, MSVC detected")
-  elseif (SKIP_UNIT_TESTS)
-    message(STATUS "Skipping unit tests requested")
-  else ()
-    set(ENABLE_UNIT_TESTS TRUE)
-  endif()
-endif()
-
 ################################################################################
 # Source Code Configuration
 ################################################################################
@@ -45,9 +43,6 @@ endif()
 ################################################################################
 # Third party.
 ################################################################################
-if(ENABLE_UNIT_TESTS)
-  find_package(Googletest REQUIRED)
-endif()
 
 ################################################################################
 # Compilation Settings
@@ -120,15 +115,16 @@ endif ()
 # Targets
 ################################################################################
 
-option(libsbp_BUILD_TESTS "Disable libsbp unit tests" OFF)
+option(libsbp_BUILD_TESTS "" OFF)
 option(libsbp_BUILD_DOCS "" OFF)
 find_package(Sbp REQUIRED)
-option(libswiftnav_BUILD_TESTS "Disable libswiftnav unit tests" OFF)
+
+option(libswiftnav_BUILD_TESTS "" OFF)
 find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(python)
 
-if(ENABLE_UNIT_TESTS)
+if(libsettings_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
