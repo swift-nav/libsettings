@@ -10,14 +10,19 @@ include(SwiftCmakeOptions)
 
 if(MSVC)
   message(STATUS "Skipping unit tests, MSVC detected")
-  set(build_tests OFF)
+  set(disable_tests TRUE)
 elseif(SKIP_UNIT_TESTS)
   message(STATUS "Skipping unit tests requested")
-  set(build_tests OFF)
+  set(disable_tests TRUE)
 else()
-  set(build_tests ON)
+  set(disable_tests FALSE)
 endif()
-swift_create_project_options(TESTS ${build_tests} TEST_PACKAGES "Googletest")
+
+swift_create_project_options(
+    HAS_TESTS
+    DISABLE_TEST_COMPONENTS ${disable_tests}
+    TEST_PACKAGES "Googletest"
+    )
 
 ################################################################################
 # Build Controls
@@ -115,11 +120,11 @@ endif ()
 # Targets
 ################################################################################
 
-option(libsbp_BUILD_TESTS "" OFF)
-option(libsbp_BUILD_DOCS "" OFF)
+option(libsbp_ENABLE_TESTS "" OFF)
+option(libsbp_ENABLE_DOCS "" OFF)
 find_package(Sbp REQUIRED)
 
-option(libswiftnav_BUILD_TESTS "" OFF)
+option(libswiftnav_ENABLE_TESTS "" OFF)
 find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
