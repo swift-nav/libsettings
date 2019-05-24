@@ -24,6 +24,9 @@ swift_create_project_options(
     TEST_PACKAGES "Googletest"
     )
 
+include(ClangFormat)
+swift_setup_clang_format()
+
 ################################################################################
 # Build Controls
 ################################################################################
