@@ -27,6 +27,8 @@ swift_create_project_options(
 include(ClangFormat)
 swift_setup_clang_format()
 
+include(ClangTidy)
+
 ################################################################################
 # Build Controls
 ################################################################################
@@ -136,3 +138,5 @@ add_subdirectory(python)
 if(libsettings_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
+
+swift_setup_clang_tidy()
