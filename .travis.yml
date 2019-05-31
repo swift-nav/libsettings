@@ -11,7 +11,7 @@ matrix:
       - mkdir build
       - cd build
       - cmake ..
-      - make clang-tidy-all-libsettings
+      - make clang-tidy-all
       - if [ -e ../fixes.yaml ]; then exit 1;  fi
 
 
