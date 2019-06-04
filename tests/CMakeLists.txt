@@ -24,10 +24,9 @@
       PRIVATE
       ${PROJECT_SOURCE_DIR}/include
       ${PROJECT_SOURCE_DIR}/tests/include
-      $<TARGET_PROPERTY:sbp,INCLUDE_DIRECTORIES>
       )
 
-  target_link_libraries(test_libsettings swiftnav gtest_main)
+  target_link_libraries(test_libsettings libswiftnav::swiftnav libsbp::sbp gtest_main)
 
   if (WIN32)
     add_custom_command(

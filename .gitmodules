@@ -1,9 +1,3 @@
-[submodule "libsbp"]
-	path = third_party/libsbp
-	url = https://github.com/swift-nav/libsbp.git
-[submodule "libswiftnav"]
-	path = third_party/libswiftnav
-	url = https://github.com/swift-nav/libswiftnav.git
 [submodule "common-cmake"]
 	path = cmake/common
 	url = https://github.com/swift-nav/cmake.git

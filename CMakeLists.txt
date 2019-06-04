@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.7)
-project(libsettings)
+cmake_minimum_required(VERSION 3.2)
+project(libsettings LANGUAGES C CXX VERSION 0.1.8)
 
 ################################################################################
 # Include Modules
@@ -8,6 +8,12 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURC
 include(GNUInstallDirs)
 include(CCache)
 include(SwiftCmakeOptions)
+
+include(SwiftDependencyHelpers)
+find_dependencies()
+
+option(INSTALL_GTEST "" OFF)
+add_subdirectory(third_party/googletest)
 
 if(MSVC)
   message(STATUS "Skipping unit tests, MSVC detected")
@@ -22,7 +28,7 @@ endif()
 swift_create_project_options(
     HAS_TESTS
     DISABLE_TEST_COMPONENTS ${disable_tests}
-    TEST_PACKAGES "Googletest"
+    TEST_DEPENDENCIES "gtest"
     )
 
 include(ClangFormat)
@@ -30,6 +36,8 @@ swift_setup_clang_format()
 
 include(ClangTidy)
 swift_setup_clang_tidy(PATTERNS "src/*.c")
+
+include(SwiftPackageHelpers)
 
 ################################################################################
 # Build Controls
@@ -126,13 +134,6 @@ endif ()
 ################################################################################
 # Targets
 ################################################################################
-
-option(libsbp_ENABLE_TESTS "" OFF)
-option(libsbp_ENABLE_DOCS "" OFF)
-find_package(Sbp REQUIRED)
-
-option(libswiftnav_ENABLE_TESTS "" OFF)
-find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(python)

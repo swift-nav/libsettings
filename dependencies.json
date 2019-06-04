@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    {
+      "package": "libsbp"
+    },
+    {
+      "package": "libswiftnav"
+    }
+    ]
+}
