@@ -4,9 +4,32 @@ project(libsettings)
 ################################################################################
 # Include Modules
 ################################################################################
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(ClangToolsLibsettings)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/common")
 include(GNUInstallDirs)
+include(CCache)
+include(SwiftCmakeOptions)
+
+if(MSVC)
+  message(STATUS "Skipping unit tests, MSVC detected")
+  set(disable_tests TRUE)
+elseif(SKIP_UNIT_TESTS)
+  message(STATUS "Skipping unit tests requested")
+  set(disable_tests TRUE)
+else()
+  set(disable_tests FALSE)
+endif()
+
+swift_create_project_options(
+    HAS_TESTS
+    DISABLE_TEST_COMPONENTS ${disable_tests}
+    TEST_PACKAGES "Googletest"
+    )
+
+include(ClangFormat)
+swift_setup_clang_format()
+
+include(ClangTidy)
+swift_setup_clang_tidy(PATTERNS "src/*.c")
 
 ################################################################################
 # Build Controls
@@ -22,10 +45,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
         "Choose one: None Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
-# Enable Clang auto-formatting, defaults to on.
-option(ENABLE_AUTOFORMAT "Enable automatic formatting and replacement with clang-format." ON)
-# Enable Clang auto-linting, defaults to off.
-option(ENABLE_AUTOLINT "Enable automatic linting and warning with clang-tidy. " OFF)
 # Enable static stack analyzer, defaults to off.
 option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
 
@@ -108,19 +127,17 @@ endif ()
 # Targets
 ################################################################################
 
-if (LIBSBP_SEARCH_PATH)
-  include_directories("${LIBSBP_SEARCH_PATH}/include")
-else (LIBSBP_SEARCH_PATH)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/libsbp/c)
-    include_directories("${PROJECT_SOURCE_DIR}/libsbp/c/include")
-  endif()
-endif(LIBSBP_SEARCH_PATH)
+option(libsbp_ENABLE_TESTS "" OFF)
+option(libsbp_ENABLE_DOCS "" OFF)
+find_package(Sbp REQUIRED)
 
-if(EXISTS ${PROJECT_SOURCE_DIR}/libswiftnav)
-  include_directories("${PROJECT_SOURCE_DIR}/libswiftnav/include")
-  add_subdirectory("${PROJECT_SOURCE_DIR}/libswiftnav")
-endif()
+option(libswiftnav_ENABLE_TESTS "" OFF)
+find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(python)
-add_subdirectory(tests)
+
+if(libsettings_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
+

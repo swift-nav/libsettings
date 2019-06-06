@@ -115,7 +115,9 @@ __attribute__((format(printf, 2, 3))) static void log_preformat(int level, const
   if (ret < 0) {
     client_log(LOG_ERROR, "log_preformat encoding error");
     return;
-  } else if ((size_t)ret >= sizeof(buffer)) {
+  } else if ((size_t)ret >= sizeof(buffer))
+
+  {
     client_log(LOG_WARN, "log_preformat too long message");
   }
 

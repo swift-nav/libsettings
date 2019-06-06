@@ -35,8 +35,8 @@ PLATFORMS = [
   'win32',
 ]
 
-include_dirs = ["include", "libsbp/c/include", "libswiftnav/include"]
-sources = glob("python/*.pyx") + glob("src/*.c") + glob("libswiftnav/src/logging*.c") 
+include_dirs = ["include", "${x_sbp_IncludeDir}", "${x_swiftnav_IncludeDir}"]
+sources = glob("python/*.pyx") + glob("src/*.c") + glob("third_party/libswiftnav/src/logging*.c") 
 
 py_version = '{}{}'.format(sys.version_info[0], sys.version_info[1])
 

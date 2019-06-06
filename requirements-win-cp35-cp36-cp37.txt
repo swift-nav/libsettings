@@ -1,2 +1,2 @@
 cmake
-cython
+cython==0.29.8
