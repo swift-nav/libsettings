@@ -141,7 +141,9 @@ option(libswiftnav_ENABLE_TESTS "" OFF)
 find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
-add_subdirectory(python)
+if(libsettings_ENABLE_PYTHON)
+  add_subdirectory(python)
+endif()
 
 if(libsettings_BUILD_TESTS)
   add_subdirectory(tests)
