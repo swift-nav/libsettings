@@ -16,6 +16,15 @@ matrix:
 
 
    - os: linux
+     env: CLANG="format"
+     script:
+       - mkdir build
+       - cd build
+       - cmake ..
+       - make clang-format-all
+       - if [[ $(git --no-pager diff --name-only HEAD) ]]; then exit 1; fi
+
+   - os: linux
      script:
        - ./scripts/sdist-unix.sh
        - ls -la ./build/src/libsettings.so || exit 1
