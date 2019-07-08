@@ -6,6 +6,27 @@ language: c
 matrix:
   include:
    - os: linux
+     env: CLANG="tidy"
+     script:
+      - mkdir build
+      - cd build
+      - cmake ..
+      - make clang-tidy-all
+      - if [ -e ../fixes.yaml ]; then exit 1;  fi
+
+
+   - os: linux
+     env: CLANG="format"
+     script:
+       - git checkout -- dist
+       - mkdir build
+       - cd build
+       - cmake ..
+       - make clang-format-all
+       - git --no-pager diff --name-only HEAD
+       - if [[ $(git --no-pager diff --name-only HEAD) ]]; then exit 1; fi
+
+   - os: linux
      script:
        - ./scripts/sdist-unix.sh
        - ls -la ./build/src/libsettings.so || exit 1
