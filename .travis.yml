@@ -18,6 +18,7 @@ matrix:
    - os: linux
      env: CLANG="format"
      script:
+       - git checkout -- dist
        - mkdir build
        - cd build
        - cmake ..
