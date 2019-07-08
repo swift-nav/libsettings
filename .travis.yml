@@ -22,6 +22,7 @@ matrix:
        - cd build
        - cmake ..
        - make clang-format-all
+       - git --no-pager diff --name-only HEAD
        - if [[ $(git --no-pager diff --name-only HEAD) ]]; then exit 1; fi
 
    - os: linux
