@@ -109,7 +109,7 @@ __attribute__((format(printf, 2, 3))) static void log_preformat(int level, const
   char buffer[SETTINGS_BUFLEN];
   va_list args;
   va_start(args, fmt);
-  int ret = vsnprintf(buffer, sizeof(buffer), fmt, args);
+  int ret = vsnprintf(buffer, sizeof(buffer), fmt, args); /* NOLINT */
   va_end(args);
 
   if (ret < 0) {
@@ -218,10 +218,7 @@ static int setting_perform_request_reply_from(settings_t *ctx,
                                               uint16_t sender_id,
                                               request_state_t *req_state)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  request_state_t local_req_state = {0};
-#pragma GCC diagnostic pop
+  request_state_t local_req_state;
   if (NULL == req_state) {
     req_state = &local_req_state;
   }
@@ -356,10 +353,7 @@ static int setting_read_watched_value(settings_t *ctx, setting_data_t *setting_d
     return -1;
   }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  request_state_t req_state = {0};
-#pragma GCC diagnostic pop
+  request_state_t req_state;
   result = setting_perform_request_reply_from(ctx,
                                               NULL,
                                               SBP_MSG_SETTINGS_READ_REQ,
@@ -579,10 +573,7 @@ settings_write_res_t settings_write(settings_t *ctx,
     return -1;
   }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  request_state_t req_state = {0};
-#pragma GCC diagnostic pop
+  request_state_t req_state;
   setting_perform_request_reply_from(ctx,
                                      event,
                                      SBP_MSG_SETTINGS_WRITE,
@@ -662,10 +653,7 @@ int settings_read(settings_t *ctx,
     return -1;
   }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  request_state_t req_state = {0};
-#pragma GCC diagnostic pop
+  request_state_t req_state;
   int res = setting_perform_request_reply_from(ctx,
                                                NULL,
                                                SBP_MSG_SETTINGS_READ_REQ,
@@ -768,11 +756,7 @@ int settings_read_by_idx(settings_t *ctx,
     return res;
   }
 
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  request_state_t req_state = {0};
-#pragma GCC diagnostic pop
+  request_state_t req_state;
   res = setting_perform_request_reply_from(ctx,
                                            event,
                                            SBP_MSG_SETTINGS_READ_BY_INDEX_REQ,
