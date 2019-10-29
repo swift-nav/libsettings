@@ -138,6 +138,7 @@ option(libsbp_ENABLE_DOCS "" OFF)
 find_package(Sbp REQUIRED)
 
 option(libswiftnav_ENABLE_TESTS "" OFF)
+option(libswiftnav_ENABLE_TEST_LIBS "" OFF)
 find_package(Swiftnav REQUIRED)
 
 add_subdirectory(src)
