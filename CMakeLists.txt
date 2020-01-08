@@ -2,6 +2,29 @@ cmake_minimum_required(VERSION 2.8.7)
 project(libsettings)
 
 ################################################################################
+# Build Controls
+################################################################################
+# Only apply defaults when this is the top level project
+################################################################################
+if(${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
+  # When not explicitly provided, default to building shared libraries where possible.
+  set(BUILD_SHARED_LIBS ON CACHE BOOL "If set, build shared libraries where possible.")
+  # When not explicitly provided, default to debug release build.
+  #
+  # NOTE: CMake project generation sets the cache variable to the empty string on
+  #       initialization. In order to account for this, it is  necessary to use the
+  #       explicit 'if' statement in conjunction with the 'FORCE' directive.
+  if(NOT CMAKE_BUILD_TYPE)
+      set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+          "Choose one: None Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
+  endif(NOT CMAKE_BUILD_TYPE)
+  # Enable static stack analyzer, defaults to off.
+  option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
+  # Selectively enable python support, defaults to on.
+  option(libsettings_ENABLE_PYTHON "Enable building of python module" ON)
+endif()
+
+################################################################################
 # Include Modules
 ################################################################################
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/common")
@@ -30,29 +53,6 @@ swift_setup_clang_format()
 
 include(ClangTidy)
 swift_setup_clang_tidy(PATTERNS "src/*.c")
-
-################################################################################
-# Build Controls
-################################################################################
-# Only apply defaults when this is the top level project
-################################################################################
-if(${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
-  # When not explicitly provided, default to building shared libraries where possible.
-  set(BUILD_SHARED_LIBS ON CACHE BOOL "If set, build shared libraries where possible.")
-  # When not explicitly provided, default to debug release build.
-  #
-  # NOTE: CMake project generation sets the cache variable to the empty string on
-  #       initialization. In order to account for this, it is  necessary to use the
-  #       explicit 'if' statement in conjunction with the 'FORCE' directive.
-  if(NOT CMAKE_BUILD_TYPE)
-      set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-          "Choose one: None Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
-  endif(NOT CMAKE_BUILD_TYPE)
-  # Enable static stack analyzer, defaults to off.
-  option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
-  # Selectively enable python support, defaults to on.
-  option(libsettings_ENABLE_PYTHON "Enable building of python module" ON)
-endif()
 
 ################################################################################
 # Source Code Configuration
