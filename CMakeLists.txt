@@ -7,7 +7,6 @@ project(libsettings)
 # Only apply defaults when this is the top level project
 ################################################################################
 if(${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
-  message(STATUS "Setting defaults for libsettings standalone build")
   # When not explicitly provided, default to building shared libraries where possible.
   set(BUILD_SHARED_LIBS ON CACHE BOOL "If set, build shared libraries where possible.")
   # When not explicitly provided, default to debug release build.
@@ -23,8 +22,6 @@ if(${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
   option(ENABLE_STACK_ANALYSIS "Enable stack analysis. Requires gcc." OFF)
   # Selectively enable python support, defaults to on.
   option(libsettings_ENABLE_PYTHON "Enable building of python module" ON)
-else()
-  message(STATUS "*NOT* setting defaults for libsettings standalone build: ${PROJECT_NAME} != ${CMAKE_PROJECT_NAME}")
 endif()
 
 ################################################################################

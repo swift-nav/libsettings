@@ -28,7 +28,6 @@ matrix:
    - os: linux
      script:
        - ./scripts/sdist-unix.sh
-       - find build
        - ls -la ./build/src/libsettings.so || exit 1
      after_success:
        - pip install --user --no-index --find-links=./dist libsettings
