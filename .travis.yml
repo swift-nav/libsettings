@@ -14,7 +14,6 @@ matrix:
       - make clang-tidy-all
       - if [ -e ../fixes.yaml ]; then exit 1;  fi
 
-
    - os: linux
      env: CLANG="format"
      script:
@@ -29,12 +28,12 @@ matrix:
    - os: linux
      script:
        - ./scripts/sdist-unix.sh
+       - find build
        - ls -la ./build/src/libsettings.so || exit 1
      after_success:
        - pip install --user --no-index --find-links=./dist libsettings
        - pip install --user sbp
        - python -c "from libsettings import Settings" || exit 1
-
 
    - os: osx
      osx_image: xcode10
@@ -53,7 +52,6 @@ matrix:
        - pip install --user sbp
        - python -c "from libsettings import Settings" || exit 1
 
-
    - os: osx
      osx_image: xcode10.1
      script:
@@ -64,7 +62,6 @@ matrix:
        - pip install --user sbp
        - python -c "from libsettings import Settings" || exit 1
 
-
    - os: windows
      dist: 1803-containers
      python: "2.7 32-bit"
@@ -73,7 +70,6 @@ matrix:
      script:
        - source ./scripts/bdist-wheel-win-gcc.sh 2.7
        - ls -la ./build/src/libsettings.dll || exit 1
-
 
    - os: windows
      dist: 1803-containers
@@ -84,7 +80,6 @@ matrix:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.5
        - ls -la ./build/src/Release/settings.dll || exit 1
 
-
    - os: windows
      dist: 1803-containers
      python: "3.6 32-bit"
@@ -93,7 +88,6 @@ matrix:
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
        - ls -la ./build/src/Release/settings.dll || exit 1
-
 
    - os: windows
      dist: 1803-containers
@@ -104,7 +98,6 @@ matrix:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.7
        - ls -la ./build/src/Release/settings.dll || exit 1
 
-
    - os: windows
      dist: 1803-containers
      python: "2.7 64-bit"
@@ -113,7 +106,6 @@ matrix:
      script:
        - source ./scripts/bdist-wheel-win-gcc.sh 2.7
        - ls -la ./build/src/libsettings.dll || exit 1
-
 
    - os: windows
      dist: 1803-containers
@@ -124,7 +116,6 @@ matrix:
        source ./scripts/bdist-wheel-win-msvc.sh 3.5
        - ls -la ./build/src/Release/settings.dll || exit 1
 
-
    - os: windows
      dist: 1803-containers
      python: "3.6 64-bit"
@@ -133,7 +124,6 @@ matrix:
      script:
        - source ./scripts/bdist-wheel-win-msvc.sh 3.6
        - ls -la ./build/src/Release/settings.dll || exit 1
-
 
    - os: windows
      dist: 1803-containers
