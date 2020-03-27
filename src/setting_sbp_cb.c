@@ -208,6 +208,15 @@ static void setting_write_resp_callback(uint16_t sender_id,
   settings_t *ctx = (settings_t *)context;
   msg_settings_write_resp_t *write_response = (msg_settings_write_resp_t *)msg;
 
+  if (write_response->status == SETTINGS_WR_OK) {
+    /* Update watchers, do not update the actual setting since it's already done
+     * in setting_write_callback() */
+    setting_update_value(ctx,
+                         write_response->setting,
+                         len - sizeof(write_response->status),
+                         UPDATE_FILTER_BASIC);
+  }
+
   /* Check for a response to a pending request */
   request_state_t *state =
     request_state_check(ctx, write_response->setting, len - sizeof(write_response->status));
@@ -217,15 +226,6 @@ static void setting_write_resp_callback(uint16_t sender_id,
   }
 
   state->status = write_response->status;
-
-  if (write_response->status == SETTINGS_WR_OK) {
-    /* Update watchers, do not update the actual setting since it's already done
-     * in setting_write_callback() */
-    setting_update_value(ctx,
-                         write_response->setting,
-                         len - sizeof(write_response->status),
-                         UPDATE_FILTER_BASIC);
-  }
 
   request_state_signal(state, &ctx->client_iface, SBP_MSG_SETTINGS_WRITE);
 }
