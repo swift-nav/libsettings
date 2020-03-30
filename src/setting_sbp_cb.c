@@ -121,20 +121,17 @@ static void setting_register_resp_callback(uint16_t sender_id,
   msg_settings_register_resp_t *resp = (msg_settings_register_resp_t *)msg;
 
   switch ((settings_reg_res_t)resp->status) {
-    case SETTINGS_REG_PARSE_FAILED:
+  case SETTINGS_REG_PARSE_FAILED:
     /* In case the request was corrupted during transfer, let the timeout trigger
      * and request be sent again, parse error is printed in sbp_settings_daemon */
     return;
 
-    /* Use the returned value to update in all cases */
-    case SETTINGS_REG_OK:
-    case SETTINGS_REG_OK_PERM:
-    case SETTINGS_REG_REGISTERED:
-    break;
+  /* Use the returned value to update in all cases */
+  case SETTINGS_REG_OK:
+  case SETTINGS_REG_OK_PERM:
+  case SETTINGS_REG_REGISTERED: break;
 
-    default:
-    log_error("invalid reg resp return code %d", resp->status);
-    return;
+  default: log_error("invalid reg resp return code %d", resp->status); return;
   }
 
   /* Check for a response to a pending registration request */
