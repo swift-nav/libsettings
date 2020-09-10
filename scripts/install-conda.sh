@@ -3,7 +3,7 @@ if [ -z "$1" ]
     choco install miniconda3
 elif [ "$1" == "--x86" ]
   then
-    choco install miniconda3 --x86 --checksum 7C30778941D2BBA03531BA269A78A108B01FA366530290376E7C3B467F3C66BA
+    choco install miniconda3 --x86
 else
   exit 1
 fi
