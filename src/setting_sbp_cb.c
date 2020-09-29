@@ -192,11 +192,13 @@ static void setting_read_resp_callback(uint16_t sender_id, uint8_t len, uint8_t 
     settings_parse(read_response->setting, len, &section, &name, &value, &type);
   if (tokens >= SETTINGS_TOKENS_VALUE) {
     if (value) {
-      strncpy(state->resp_value, value, sizeof(state->resp_value));
+      strncpy(state->resp_value, value, sizeof(state->resp_value) - 1);
+      state->resp_value[sizeof(state->resp_value) - 1] = '\0';
       state->resp_value_valid = true;
     }
     if (type) {
-      strncpy(state->resp_type, type, sizeof(state->resp_type));
+      strncpy(state->resp_type, type, sizeof(state->resp_type) - 1);
+      state->resp_type[sizeof(state->resp_type) - 1] = '\0';
     }
   } else if (tokens == SETTINGS_TOKENS_NAME) {
     log_debug("setting %s.%s not found", section, name);
@@ -264,17 +266,22 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
   if (settings_parse(resp->setting, len - sizeof(resp->index), &section, &name, &value, &type)
       > 0) {
     if (section) {
-      strncpy(state->resp_section, section, sizeof(state->resp_section));
+      strncpy(state->resp_section, section, sizeof(state->resp_section) - 1);
+      state->resp_section[sizeof(state->resp_section) - 1] = '\0';
+
     }
     if (name) {
-      strncpy(state->resp_name, name, sizeof(state->resp_name));
+      strncpy(state->resp_name, name, sizeof(state->resp_name) - 1);
+      state->resp_name[sizeof(state->resp_name) - 1] = '\0';
     }
     if (value) {
-      strncpy(state->resp_value, value, sizeof(state->resp_value));
+      strncpy(state->resp_value, value, sizeof(state->resp_value) - 1);
+      state->resp_value[sizeof(state->resp_value) - 1] = '\0';
       state->resp_value_valid = true;
     }
     if (type) {
-      strncpy(state->resp_type, type, sizeof(state->resp_type));
+      strncpy(state->resp_type, type, sizeof(state->resp_type) - 1);
+      state->resp_type[sizeof(state->resp_type) - 1] = '\0';
     }
   }
 

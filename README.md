@@ -40,7 +40,7 @@ is used.
 ``` sh
 mkdir build
 cd build
-cmake .. # If you want to speficy python version: 'cmake -D PYTHON=python3 ..'
+cmake .. # If you want to specify python version: 'cmake -D PYTHON=python3 ..'
 make
 cd ..
 ```
