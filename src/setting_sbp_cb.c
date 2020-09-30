@@ -268,7 +268,6 @@ static void setting_read_by_index_resp_callback(uint16_t sender_id,
     if (section) {
       strncpy(state->resp_section, section, sizeof(state->resp_section) - 1);
       state->resp_section[sizeof(state->resp_section) - 1] = '\0';
-
     }
     if (name) {
       strncpy(state->resp_name, name, sizeof(state->resp_name) - 1);
