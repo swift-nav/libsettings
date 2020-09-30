@@ -66,7 +66,7 @@ setting_data_t *setting_data_create(type_data_t *type_list,
   } else {
     strncpy(setting_data->section, section, section_len - 1);
     setting_data->section[section_len - 1] = '\0';
-    strcpy(setting_data->name, name, name_len - 1);
+    strncpy(setting_data->name, name, name_len - 1);
     setting_data->name[name_len - 1] = '\0';
   }
 
