@@ -12,7 +12,7 @@ WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
 
 Open source SwiftNav settings API library.
 
-`libsettings` aims to provide standardized settings framework for projects accessing Piksi settings.
+`libsettings` aims to provide a standardized settings framework for projects accessing Piksi settings.
 
 ## Building
 
