@@ -34,23 +34,23 @@ matrix:
        - pip install --user sbp
        - python -c "from libsettings import Settings" || exit 1
 
-   - os: osx
-     osx_image: xcode10
-     before_install:
-       - brew update
-       - brew install gcc@6
-       - export CC=gcc-6
-       - export CXX=g++-6
-       - export TRAVIS_COMPILER=gcc-6
-       - export CC_FOR_BUILD=gcc-6
-     script:
-       - ./scripts/sdist-unix.sh
-       - ls -la ./build/src/libsettings.dylib || exit 1
-     after_success:
-       - pip install --user --no-index --find-links=./dist libsettings
-       - pip install --user sbp
-       - python -c "from libsettings import Settings" || exit 1
-
+#   - os: osx
+#     osx_image: xcode10
+#     before_install:
+#       - brew update
+#       - brew install gcc@6
+#       - export CC=gcc-6
+#       - export CXX=g++-6
+#       - export TRAVIS_COMPILER=gcc-6
+#       - export CC_FOR_BUILD=gcc-6
+#     script:
+#       - ./scripts/sdist-unix.sh
+#       - ls -la ./build/src/libsettings.dylib || exit 1
+#     after_success:
+#       - pip install --user --no-index --find-links=./dist libsettings
+#       - pip install --user sbp
+#       - python -c "from libsettings import Settings" || exit 1
+#
    - os: osx
      osx_image: xcode10.1
      script:
