@@ -41,12 +41,12 @@ setting_data_t *setting_data_create(type_data_t *type_list,
     return NULL;
   }
 
-  size_t section_len = strlen(section) + 1;
-  size_t name_len = strlen(name) + 1;
+  size_t section_len = strlen(section);
+  size_t name_len = strlen(name);
 
   *setting_data = (setting_data_t){
-    .section = malloc(section_len),
-    .name = malloc(name_len),
+    .section = malloc(section_len + 1),
+    .name = malloc(name_len + 1),
     .var = var,
     .var_len = var_len,
     .var_copy = malloc(var_len),
@@ -64,10 +64,8 @@ setting_data_t *setting_data_create(type_data_t *type_list,
     free(setting_data);
     setting_data = NULL;
   } else {
-    strncpy(setting_data->section, section, section_len - 1);
-    setting_data->section[section_len - 1] = '\0';
-    strncpy(setting_data->name, name, name_len - 1);
-    setting_data->name[name_len - 1] = '\0';
+    memcpy(setting_data->section, section, section_len + 1);
+    memcpy(setting_data->name, name, name_len + 1);
   }
 
   return setting_data;
