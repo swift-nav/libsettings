@@ -1,5 +1,5 @@
 --extra-index-url https://pypi.anaconda.org/carlkl/simple
 cmake
-cython==0.29.8
+cython==0.29
 mingwpy
 pywin32
