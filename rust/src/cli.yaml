@@ -1,0 +1,42 @@
+name: Treadmill
+version: "0.1.0"
+author: Swift Navigation <dev@swift-nav.com>
+about: Treadmill UAT automation tool
+args:
+    - target:
+        short: t
+        long: target
+        value_name: ADDRESS
+        help: The target device to connect
+        takes_value: true
+        required: true
+subcommands:
+    - settings-write:
+        about: Write a setting to the remote host
+        version: "0.1.0"
+        args:
+            - section:
+                short: 's'
+                long: section
+                help: the section or group of the setting
+                value_name: SECTION 
+                takes_value: true
+                required: true
+                display_order: 1
+            - name:
+                short: 'n'
+                long: name
+                help: the name of the setting
+                value_name: NAME
+                takes_value: true
+                required: true
+                display_order: 2
+            - value:
+                short: e
+                long: value
+                help: the name of the setting
+                value_name: VALUE
+                takes_value: true
+                required: true
+                display_order: 3
+

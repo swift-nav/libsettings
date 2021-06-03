@@ -53,6 +53,7 @@ dkms.conf
 
 # IDE files
 .vscode/
+.idea/
 
 # build
 build*/
@@ -62,3 +63,6 @@ libsettings.egg-info
 python/*.c
 setup.py
 *.pyc
+
+# Rust
+target/
