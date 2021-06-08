@@ -34,18 +34,15 @@
   } while (0)
 
 /**
- * @brief request_state_init - set up compare structure for synchronous req/reply
+ * @brief request_state_init - set up compare structure for synchronous
+ * req/reply
  * @param ctx: settings context
  * @param msg_id: pending request type
  * @param data: formatted settings header string to match with incoming messages
  * @param data_len: length of match string
  */
-void request_state_init(request_state_t *state,
-                        void *event,
-                        uint16_t msg_id,
-                        const char *data,
-                        size_t data_len)
-{
+void request_state_init(request_state_t *state, void *event, uint16_t msg_id,
+                        const char *data, size_t data_len) {
   memset(state, 0, sizeof(request_state_t));
 
   assert(data_len <= sizeof(state->compare_data));
@@ -67,8 +64,8 @@ void request_state_init(request_state_t *state,
  * @param data_len: length of payload string
  * @return 0 for match, 1 no comparison pending, -1 for comparison failure
  */
-request_state_t *request_state_check(settings_t *ctx, const char *data, size_t data_len)
-{
+request_state_t *request_state_check(settings_t *ctx, const char *data,
+                                     size_t data_len) {
   assert(ctx);
   assert(data);
   assert(data_len > 0);
@@ -94,8 +91,7 @@ request_state_t *request_state_check(settings_t *ctx, const char *data, size_t d
  * @param state: request state
  * @return true if response was matched, false if not response has been received
  */
-bool request_state_match(const request_state_t *state)
-{
+bool request_state_match(const request_state_t *state) {
   assert(state);
 
   return state->match;
@@ -109,8 +105,8 @@ bool request_state_match(const request_state_t *state)
  * @retval  0 success
  * @retval -1 failure
  */
-int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t msg_id)
-{
+int request_state_signal(request_state_t *state, settings_api_t *api,
+                         uint16_t msg_id) {
   assert(state);
   assert(msg_id == state->msg_id);
 
@@ -130,13 +126,9 @@ int request_state_signal(request_state_t *state, settings_api_t *api, uint16_t m
  * @brief request_state_deinit - clean up compare structure after transaction
  * @param state: request state
  */
-void request_state_deinit(request_state_t *state)
-{
-  state->pending = false;
-}
+void request_state_deinit(request_state_t *state) { state->pending = false; }
 
-void request_state_append(settings_t *ctx, request_state_t *state_data)
-{
+void request_state_append(settings_t *ctx, request_state_t *state_data) {
   LIBSETTINGS_LOCK(ctx);
 
   if (ctx->req_list == NULL) {
@@ -153,8 +145,7 @@ void request_state_append(settings_t *ctx, request_state_t *state_data)
   LIBSETTINGS_UNLOCK(ctx);
 }
 
-void request_state_remove(settings_t *ctx, request_state_t *state_data)
-{
+void request_state_remove(settings_t *ctx, request_state_t *state_data) {
   assert(ctx != NULL);
   assert(state_data != NULL);
 
@@ -182,14 +173,15 @@ void request_state_remove(settings_t *ctx, request_state_t *state_data)
   LIBSETTINGS_UNLOCK(ctx);
 }
 
-request_state_t *request_state_lookup(settings_t *ctx, const char *data, size_t data_len)
-{
+request_state_t *request_state_lookup(settings_t *ctx, const char *data,
+                                      size_t data_len) {
   LIBSETTINGS_LOCK(ctx);
 
   request_state_t *state_list = ctx->req_list;
   while (state_list != NULL) {
-    if ((data_len >= state_list->compare_data_len)
-        && (memcmp(data, state_list->compare_data, state_list->compare_data_len) == 0)) {
+    if ((data_len >= state_list->compare_data_len) &&
+        (memcmp(data, state_list->compare_data, state_list->compare_data_len) ==
+         0)) {
       break;
     }
     state_list = state_list->next;
@@ -200,8 +192,7 @@ request_state_t *request_state_lookup(settings_t *ctx, const char *data, size_t 
   return state_list;
 }
 
-void request_state_free(settings_t *ctx)
-{
+void request_state_free(settings_t *ctx) {
   LIBSETTINGS_LOCK(ctx);
 
   request_state_t *state_list = ctx->req_list;

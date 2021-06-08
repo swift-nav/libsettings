@@ -22,7 +22,8 @@
 extern "C" {
 #endif
 
-int float_to_string(const void *priv, char *str, int slen, const void *blob, int blen);
+int float_to_string(const void *priv, char *str, int slen, const void *blob,
+                    int blen);
 bool float_from_string(const void *priv, void *blob, int blen, const char *str);
 
 #ifdef __cplusplus

@@ -63,9 +63,11 @@ enum {
  * @brief Settings register error codes
  */
 typedef enum settings_reg_res_e {
-  SETTINGS_REG_OK = 0,      /**< Setting registered, requested value used */
-  SETTINGS_REG_OK_PERM = 1, /**< Setting registered, permanent storage value found and returned */
-  SETTINGS_REG_REGISTERED = 2,   /**< Setting is already registered, value from memory returned */
+  SETTINGS_REG_OK = 0, /**< Setting registered, requested value used */
+  SETTINGS_REG_OK_PERM =
+      1, /**< Setting registered, permanent storage value found and returned */
+  SETTINGS_REG_REGISTERED =
+      2, /**< Setting is already registered, value from memory returned */
   SETTINGS_REG_PARSE_FAILED = 3, /**< Could not parse setting */
 } settings_reg_res_t;
 
@@ -84,12 +86,10 @@ typedef enum settings_write_res_e {
   SETTINGS_WR_TIMEOUT = 7,         /**< Request wasn't replied in time */
 } settings_write_res_t;
 
-typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len, uint8_t *payload);
-typedef int (*settings_send_from_t)(void *ctx,
-                                    uint16_t msg_type,
-                                    uint8_t len,
-                                    uint8_t *payload,
-                                    uint16_t sbp_sender_id);
+typedef int (*settings_send_t)(void *ctx, uint16_t msg_type, uint8_t len,
+                               uint8_t *payload);
+typedef int (*settings_send_from_t)(void *ctx, uint16_t msg_type, uint8_t len,
+                                    uint8_t *payload, uint16_t sbp_sender_id);
 
 typedef int (*settings_wait_init_t)(void *ctx);
 typedef int (*settings_wait_t)(void *ctx, int timeout_ms);
@@ -102,10 +102,8 @@ typedef void (*settings_signal_thd_t)(void *event);
 typedef void (*settings_lock_t)(void *ctx);
 typedef void (*settings_unlock_t)(void *ctx);
 
-typedef int (*settings_reg_cb_t)(void *ctx,
-                                 uint16_t msg_type,
-                                 sbp_msg_callback_t cb,
-                                 void *cb_context,
+typedef int (*settings_reg_cb_t)(void *ctx, uint16_t msg_type,
+                                 sbp_msg_callback_t cb, void *cb_context,
                                  sbp_msg_callbacks_node_t **node);
 typedef int (*settings_unreg_cb_t)(void *ctx, sbp_msg_callbacks_node_t **node);
 
@@ -115,9 +113,11 @@ typedef struct settings_api_s {
   void *ctx;
   settings_send_t send;
   settings_send_from_t send_from;
-  settings_wait_init_t wait_init; /* Optional, needed if wait uses semaphores etc */
+  settings_wait_init_t
+      wait_init; /* Optional, needed if wait uses semaphores etc */
   settings_wait_t wait;
-  settings_wait_deinit_t wait_deinit; /* Optional, needed if wait uses semaphores etc */
+  settings_wait_deinit_t
+      wait_deinit; /* Optional, needed if wait uses semaphores etc */
   settings_signal_t signal;
   settings_wait_t wait_thd;     /* Required for multithreading */
   settings_signal_t signal_thd; /* Required for multithreading */
@@ -153,7 +153,8 @@ typedef int (*settings_notify_fn)(void *context);
  * @return                  Pointer to the created context, or NULL if the
  *                          operation failed.
  */
-LIBSETTINGS_DECLSPEC settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl);
+LIBSETTINGS_DECLSPEC settings_t *settings_create(uint16_t sender_id,
+                                                 settings_api_t *api_impl);
 
 /**
  * @brief   Destroy a settings context.
@@ -204,14 +205,10 @@ LIBSETTINGS_DECLSPEC int settings_register_enum(settings_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-LIBSETTINGS_DECLSPEC int settings_register_setting(settings_t *ctx,
-                                                   const char *section,
-                                                   const char *name,
-                                                   void *var,
-                                                   size_t var_len,
-                                                   settings_type_t type,
-                                                   settings_notify_fn notify,
-                                                   void *notify_context);
+LIBSETTINGS_DECLSPEC int settings_register_setting(
+    settings_t *ctx, const char *section, const char *name, void *var,
+    size_t var_len, settings_type_t type, settings_notify_fn notify,
+    void *notify_context);
 
 /**
  * @brief   Register a read-only setting.
@@ -229,12 +226,9 @@ LIBSETTINGS_DECLSPEC int settings_register_setting(settings_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-LIBSETTINGS_DECLSPEC int settings_register_readonly(settings_t *ctx,
-                                                    const char *section,
-                                                    const char *name,
-                                                    const void *var,
-                                                    size_t var_len,
-                                                    settings_type_t type);
+LIBSETTINGS_DECLSPEC int settings_register_readonly(
+    settings_t *ctx, const char *section, const char *name, const void *var,
+    size_t var_len, settings_type_t type);
 
 /**
  * @brief   Create and add a watch only setting.
@@ -255,14 +249,10 @@ LIBSETTINGS_DECLSPEC int settings_register_readonly(settings_t *ctx,
  * @retval 0                The setting was registered successfully.
  * @retval -1               An error occurred.
  */
-LIBSETTINGS_DECLSPEC int settings_register_watch(settings_t *ctx,
-                                                 const char *section,
-                                                 const char *name,
-                                                 void *var,
-                                                 size_t var_len,
-                                                 settings_type_t type,
-                                                 settings_notify_fn notify,
-                                                 void *notify_context);
+LIBSETTINGS_DECLSPEC int settings_register_watch(
+    settings_t *ctx, const char *section, const char *name, void *var,
+    size_t var_len, settings_type_t type, settings_notify_fn notify,
+    void *notify_context);
 
 /**
  * @brief   Write a new value for registered setting.
@@ -285,13 +275,9 @@ LIBSETTINGS_DECLSPEC int settings_register_watch(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(settings_t *ctx,
-                                                         void *event,
-                                                         const char *section,
-                                                         const char *name,
-                                                         const void *value,
-                                                         size_t value_len,
-                                                         settings_type_t type);
+LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(
+    settings_t *ctx, void *event, const char *section, const char *name,
+    const void *value, size_t value_len, settings_type_t type);
 
 /**
  * @brief   Write a new value for registered setting of type int.
@@ -313,7 +299,8 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write(settings_t *ctx,
  * @retval >0               Response returned an error @see settings_write_res_t
  */
 LIBSETTINGS_DECLSPEC settings_write_res_t
-settings_write_int(settings_t *ctx, void *event, const char *section, const char *name, int value);
+settings_write_int(settings_t *ctx, void *event, const char *section,
+                   const char *name, int value);
 
 /**
  * @brief   Write a new value for registered setting of type float.
@@ -334,11 +321,9 @@ settings_write_int(settings_t *ctx, void *event, const char *section, const char
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_float(settings_t *ctx,
-                                                               void *event,
-                                                               const char *section,
-                                                               const char *name,
-                                                               float value);
+LIBSETTINGS_DECLSPEC settings_write_res_t
+settings_write_float(settings_t *ctx, void *event, const char *section,
+                     const char *name, float value);
 
 /**
  * @brief   Write a new value for registered setting of type str.
@@ -359,11 +344,9 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_float(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_str(settings_t *ctx,
-                                                             void *event,
-                                                             const char *section,
-                                                             const char *name,
-                                                             const char *str);
+LIBSETTINGS_DECLSPEC settings_write_res_t
+settings_write_str(settings_t *ctx, void *event, const char *section,
+                   const char *name, const char *str);
 
 /**
  * @brief   Write a new value for registered setting of type bool.
@@ -384,11 +367,9 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_str(settings_t *ctx,
  * @retval 0                The setting was written successfully.
  * @retval >0               Response returned an error @see settings_write_res_t
  */
-LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_bool(settings_t *ctx,
-                                                              void *event,
-                                                              const char *section,
-                                                              const char *name,
-                                                              bool value);
+LIBSETTINGS_DECLSPEC settings_write_res_t
+settings_write_bool(settings_t *ctx, void *event, const char *section,
+                    const char *name, bool value);
 
 /**
  * @brief   Read value of registered setting.
@@ -397,19 +378,17 @@ LIBSETTINGS_DECLSPEC settings_write_res_t settings_write_bool(settings_t *ctx,
  * @param[in] ctx           Pointer to the context to use.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
- * @param[in] value         Address of the variable where the read value shall be written.
+ * @param[in] value         Address of the variable where the read value shall
+ * be written.
  * @param[in] value_len     Size of the value variable.
  * @param[in] type          Type of the setting.
  *
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-LIBSETTINGS_DECLSPEC int settings_read(settings_t *ctx,
-                                       const char *section,
-                                       const char *name,
-                                       void *value,
-                                       size_t value_len,
-                                       settings_type_t type);
+LIBSETTINGS_DECLSPEC int settings_read(settings_t *ctx, const char *section,
+                                       const char *name, void *value,
+                                       size_t value_len, settings_type_t type);
 
 /**
  * @brief   Read value of registered setting of type int.
@@ -418,15 +397,14 @@ LIBSETTINGS_DECLSPEC int settings_read(settings_t *ctx,
  * @param[in] ctx           Pointer to the context to use.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
- * @param[out] value        Address of the variable where the read value shall be written.
+ * @param[out] value        Address of the variable where the read value shall
+ * be written.
  *
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-LIBSETTINGS_DECLSPEC int settings_read_int(settings_t *ctx,
-                                           const char *section,
-                                           const char *name,
-                                           int *value);
+LIBSETTINGS_DECLSPEC int settings_read_int(settings_t *ctx, const char *section,
+                                           const char *name, int *value);
 
 /**
  * @brief   Read value of registered setting of type float.
@@ -435,15 +413,15 @@ LIBSETTINGS_DECLSPEC int settings_read_int(settings_t *ctx,
  * @param[in] ctx           Pointer to the context to use.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
- * @param[out] value        Address of the variable where the read value shall be written.
+ * @param[out] value        Address of the variable where the read value shall
+ * be written.
  *
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
 LIBSETTINGS_DECLSPEC int settings_read_float(settings_t *ctx,
                                              const char *section,
-                                             const char *name,
-                                             float *value);
+                                             const char *name, float *value);
 
 /**
  * @brief   Read value of registered setting of type str.
@@ -452,16 +430,15 @@ LIBSETTINGS_DECLSPEC int settings_read_float(settings_t *ctx,
  * @param[in] ctx           Pointer to the context to use.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
- * @param[out] str          Address of the variable where the read value shall be written.
+ * @param[out] str          Address of the variable where the read value shall
+ * be written.
  * @param[in] str_len       Size of the str buffer.
  *
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
-LIBSETTINGS_DECLSPEC int settings_read_str(settings_t *ctx,
-                                           const char *section,
-                                           const char *name,
-                                           char *str,
+LIBSETTINGS_DECLSPEC int settings_read_str(settings_t *ctx, const char *section,
+                                           const char *name, char *str,
                                            size_t str_len);
 
 /**
@@ -471,15 +448,15 @@ LIBSETTINGS_DECLSPEC int settings_read_str(settings_t *ctx,
  * @param[in] ctx           Pointer to the context to use.
  * @param[in] section       String describing the setting section.
  * @param[in] name          String describing the setting name.
- * @param[out] value        Address of the variable where the read value shall be written.
+ * @param[out] value        Address of the variable where the read value shall
+ * be written.
  *
  * @return                  The operation result.
  * @retval 0                The setting was read successfully. Error otherwise.
  */
 LIBSETTINGS_DECLSPEC int settings_read_bool(settings_t *ctx,
                                             const char *section,
-                                            const char *name,
-                                            bool *value);
+                                            const char *name, bool *value);
 
 /**
  * @brief   Read value of registered setting based on index.
@@ -498,20 +475,17 @@ LIBSETTINGS_DECLSPEC int settings_read_bool(settings_t *ctx,
  * @param[in] type_len      Type str buffer size.
  *
  * @return                  The operation result.
- * @retval 0                The setting was read successfully. Next index is ready to be read.
+ * @retval 0                The setting was read successfully. Next index is
+ * ready to be read.
  * @retval <0               Error.
- * @retval >0               Last index was read successfully. There are no more indexes to read.
+ * @retval >0               Last index was read successfully. There are no more
+ * indexes to read.
  */
-LIBSETTINGS_DECLSPEC int settings_read_by_idx(settings_t *ctx,
-                                              void *event,
-                                              uint16_t idx,
-                                              char *section,
-                                              size_t section_len,
-                                              char *name,
-                                              size_t name_len,
-                                              char *value,
-                                              size_t value_len,
-                                              char *type,
+LIBSETTINGS_DECLSPEC int settings_read_by_idx(settings_t *ctx, void *event,
+                                              uint16_t idx, char *section,
+                                              size_t section_len, char *name,
+                                              size_t name_len, char *value,
+                                              size_t value_len, char *type,
                                               size_t type_len);
 
 #ifdef __cplusplus

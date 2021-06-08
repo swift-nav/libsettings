@@ -14,29 +14,25 @@
 
 #include <internal/setting_type_str.h>
 
-static void check_to_string(const char *blob_str)
-{
+static void check_to_string(const char *blob_str) {
   char str[255] = {0};
   int res = str_to_string(NULL, str, sizeof(str), blob_str, 0);
   EXPECT_EQ(strlen(blob_str), res);
   EXPECT_STREQ(blob_str, str);
 }
 
-TEST(test_setting_type_str, to_string)
-{
+TEST(test_setting_type_str, to_string) {
   check_to_string("test");
   check_to_string("");
 }
 
-static void check_from_string(const char *str)
-{
+static void check_from_string(const char *str) {
   char blob_str[255] = {0};
   EXPECT_TRUE(str_from_string(NULL, blob_str, sizeof(blob_str), str));
   EXPECT_STREQ(str, blob_str);
 }
 
-TEST(test_setting_type_str, from_string)
-{
+TEST(test_setting_type_str, from_string) {
   check_from_string("test");
   check_from_string("");
 }

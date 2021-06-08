@@ -14,14 +14,14 @@
 
 #include <libsettings/settings_util.h>
 
-TEST(test_settings_util, parse)
-{
+TEST(test_settings_util, parse) {
   const char *section = NULL, *name = NULL, *value = NULL, *type = NULL;
 
   char msg[1] = {1};
   EXPECT_EQ(SETTINGS_TOKENS_INVALID,
             settings_parse(msg, sizeof(msg), &section, &name, &value, &type));
-  EXPECT_EQ(SETTINGS_TOKENS_EMPTY, settings_parse(msg, 0, &section, &name, &value, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_EMPTY,
+            settings_parse(msg, 0, &section, &name, &value, &type));
 
   char msg1[1] = {'\0'};
   EXPECT_EQ(SETTINGS_TOKENS_SECTION,
@@ -38,10 +38,14 @@ TEST(test_settings_util, parse)
   char msg4[4] = {'\0', '\0', '\0', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_TYPE,
             settings_parse(msg4, sizeof(msg4), &section, &name, &value, &type));
-  EXPECT_EQ(SETTINGS_TOKENS_TYPE, settings_parse(msg4, sizeof(msg4), NULL, &name, &value, &type));
-  EXPECT_EQ(SETTINGS_TOKENS_TYPE, settings_parse(msg4, sizeof(msg4), NULL, NULL, &value, &type));
-  EXPECT_EQ(SETTINGS_TOKENS_TYPE, settings_parse(msg4, sizeof(msg4), NULL, NULL, NULL, &type));
-  EXPECT_EQ(SETTINGS_TOKENS_TYPE, settings_parse(msg4, sizeof(msg4), NULL, NULL, NULL, NULL));
+  EXPECT_EQ(SETTINGS_TOKENS_TYPE,
+            settings_parse(msg4, sizeof(msg4), NULL, &name, &value, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_TYPE,
+            settings_parse(msg4, sizeof(msg4), NULL, NULL, &value, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_TYPE,
+            settings_parse(msg4, sizeof(msg4), NULL, NULL, NULL, &type));
+  EXPECT_EQ(SETTINGS_TOKENS_TYPE,
+            settings_parse(msg4, sizeof(msg4), NULL, NULL, NULL, NULL));
 
   char msg5[5] = {'\0', '\0', '\0', '\0', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_EXTRA_NULL,
@@ -61,61 +65,54 @@ TEST(test_settings_util, parse)
 
   char sect_name[10] = {'s', 'e', 'c', 't', '\0', 'n', 'a', 'm', 'e', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_NAME,
-            settings_parse(sect_name, sizeof(sect_name), &section, &name, &value, &type));
+            settings_parse(sect_name, sizeof(sect_name), &section, &name,
+                           &value, &type));
   EXPECT_STREQ("sect", section);
   EXPECT_STREQ("name", name);
   EXPECT_EQ(NULL, value);
   EXPECT_EQ(NULL, type);
 
-  char sect_name_val[16] =
-    {'s', 'e', 'c', 't', '\0', 'n', 'a', 'm', 'e', '\0', 'v', 'a', 'l', 'u', 'e', '\0'};
+  char sect_name_val[16] = {'s', 'e',  'c', 't', '\0', 'n', 'a', 'm',
+                            'e', '\0', 'v', 'a', 'l',  'u', 'e', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_VALUE,
-            settings_parse(sect_name_val, sizeof(sect_name_val), &section, &name, &value, &type));
+            settings_parse(sect_name_val, sizeof(sect_name_val), &section,
+                           &name, &value, &type));
   EXPECT_STREQ("sect", section);
   EXPECT_STREQ("name", name);
   EXPECT_STREQ("value", value);
   EXPECT_EQ(NULL, type);
 
-  char sect_name_val_type[21] = {'s', 'e', 'c', 't', '\0', 'n', 'a', 'm', 'e', '\0', 'v',
-                                 'a', 'l', 'u', 'e', '\0', 't', 'y', 'p', 'e', '\0'};
+  char sect_name_val_type[21] = {'s', 'e',  'c',  't', '\0', 'n', 'a',
+                                 'm', 'e',  '\0', 'v', 'a',  'l', 'u',
+                                 'e', '\0', 't',  'y', 'p',  'e', '\0'};
   EXPECT_EQ(SETTINGS_TOKENS_TYPE,
-            settings_parse(sect_name_val_type,
-                           sizeof(sect_name_val_type),
-                           &section,
-                           &name,
-                           &value,
-                           &type));
+            settings_parse(sect_name_val_type, sizeof(sect_name_val_type),
+                           &section, &name, &value, &type));
   EXPECT_STREQ("sect", section);
   EXPECT_STREQ("name", name);
   EXPECT_STREQ("value", value);
   EXPECT_STREQ("type", type);
 
   /* Backwards compatibility */
-  char sect_name_val_enumtype[27] = {'s',  'e', 'c', 't', '\0', 'n', 'a',  'm',  'e',
-                                     '\0', 'v', 'a', 'l', 'u',  'e', '\0', 'e',  'n',
-                                     'u',  'm', ',', 't', 'y',  'p', 'e',  '\0', '\0'};
-  EXPECT_EQ(SETTINGS_TOKENS_EXTRA_NULL,
-            settings_parse(sect_name_val_enumtype,
-                           sizeof(sect_name_val_enumtype),
-                           &section,
-                           &name,
-                           &value,
-                           &type));
+  char sect_name_val_enumtype[27] = {
+      's', 'e',  'c', 't', '\0', 'n', 'a', 'm', 'e', '\0', 'v', 'a',  'l', 'u',
+      'e', '\0', 'e', 'n', 'u',  'm', ',', 't', 'y', 'p',  'e', '\0', '\0'};
+  EXPECT_EQ(
+      SETTINGS_TOKENS_EXTRA_NULL,
+      settings_parse(sect_name_val_enumtype, sizeof(sect_name_val_enumtype),
+                     &section, &name, &value, &type));
   EXPECT_STREQ("sect", section);
   EXPECT_STREQ("name", name);
   EXPECT_STREQ("value", value);
   EXPECT_STREQ("enum,type", type);
 
-  char sect_name_val_type_noterm[] = {'s',  'e', 'c', 't', '\0', 'n', 'a',  'm', 'e',
-                                      '\0', 'v', 'a', 'l', 'u',  'e', '\0', 'e', 'n',
-                                      'u',  'm', ',', 't', 'y',  'p', 'e'};
+  char sect_name_val_type_noterm[] = {
+      's', 'e', 'c',  't', '\0', 'n', 'a', 'm', 'e', '\0', 'v', 'a', 'l',
+      'u', 'e', '\0', 'e', 'n',  'u', 'm', ',', 't', 'y',  'p', 'e'};
   EXPECT_EQ(SETTINGS_TOKENS_INVALID,
             settings_parse(sect_name_val_type_noterm,
-                           sizeof(sect_name_val_type_noterm),
-                           &section,
-                           &name,
-                           &value,
-                           &type));
+                           sizeof(sect_name_val_type_noterm), &section, &name,
+                           &value, &type));
   EXPECT_EQ(NULL, section);
   EXPECT_EQ(NULL, name);
   EXPECT_EQ(NULL, value);

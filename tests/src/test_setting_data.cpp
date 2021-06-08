@@ -18,37 +18,24 @@
 static type_data_t *type_data_list = NULL;
 static const char *const enum_names[] = {"Test1", "Test2", NULL};
 
-static setting_data_t *create_setting_data()
-{
+static setting_data_t *create_setting_data() {
   settings_type_t type;
 
-  int res = type_register(&type_data_list,
-                          enum_to_string,
-                          enum_from_string,
-                          enum_format_type,
-                          enum_names,
-                          &type);
+  int res = type_register(&type_data_list, enum_to_string, enum_from_string,
+                          enum_format_type, enum_names, &type);
 
   EXPECT_EQ(0, res);
 
   static int var = 0;
 
-  setting_data_t *setting_data = setting_data_create(type_data_list,
-                                                     "section",
-                                                     "name",
-                                                     &var,
-                                                     sizeof(var),
-                                                     type,
-                                                     NULL,
-                                                     NULL,
-                                                     true,
-                                                     false);
+  setting_data_t *setting_data =
+      setting_data_create(type_data_list, "section", "name", &var, sizeof(var),
+                          type, NULL, NULL, true, false);
 
   return setting_data;
 }
 
-TEST(test_setting_data, format)
-{
+TEST(test_setting_data, format) {
   setting_data_t *setting_data = create_setting_data();
 
   ASSERT_TRUE(setting_data != NULL);
@@ -56,9 +43,10 @@ TEST(test_setting_data, format)
   char buf[255] = {0};
   int res = setting_data_format(setting_data, true, buf, sizeof(buf), NULL);
 
-  char expected[] = {'s',  'e', 'c', 't', 'i', 'o', 'n',  '\0', 'n', 'a', 'm', 'e',
-                     '\0', 'T', 'e', 's', 't', '1', '\0', 'e',  'n', 'u', 'm', ':',
-                     'T',  'e', 's', 't', '1', ',', 'T',  'e',  's', 't', '2', '\0'};
+  char expected[] = {'s',  'e', 'c', 't',  'i', 'o', 'n', '\0', 'n',
+                     'a',  'm', 'e', '\0', 'T', 'e', 's', 't',  '1',
+                     '\0', 'e', 'n', 'u',  'm', ':', 'T', 'e',  's',
+                     't',  '1', ',', 'T',  'e', 's', 't', '2',  '\0'};
 
   EXPECT_EQ(sizeof(expected), res);
 
@@ -67,8 +55,7 @@ TEST(test_setting_data, format)
   }
 }
 
-TEST(test_setting_data, list)
-{
+TEST(test_setting_data, list) {
   setting_data_t *list = NULL;
   setting_data_t *setting_data1 = create_setting_data();
   setting_data_t *setting_data2 = create_setting_data();

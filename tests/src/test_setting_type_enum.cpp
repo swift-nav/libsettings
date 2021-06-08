@@ -14,8 +14,7 @@
 
 #include <internal/setting_type_enum.h>
 
-static void test_format(const char *const enum_names[], std::string expected)
-{
+static void test_format(const char *const enum_names[], std::string expected) {
   char buf[255] = {0};
 
   int len = enum_format_type(enum_names, buf, sizeof(buf));
@@ -24,8 +23,7 @@ static void test_format(const char *const enum_names[], std::string expected)
   EXPECT_EQ(expected, std::string(buf));
 }
 
-TEST(test_setting_type_enum, format)
-{
+TEST(test_setting_type_enum, format) {
   const char *const bool_enum_names[] = {"False", "True", NULL};
   test_format(bool_enum_names, std::string(LIBSETTINGS_ENUM_TAG "False,True"));
 

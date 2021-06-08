@@ -18,8 +18,7 @@
 
 #include <test_stubs.hh>
 
-TEST(test_request_state, init_deinit)
-{
+TEST(test_request_state, init_deinit) {
   request_state_t state = {0};
   std::string test_str = "testing";
   const char *test_data = test_str.c_str();
@@ -37,32 +36,30 @@ TEST(test_request_state, init_deinit)
   EXPECT_EQ(false, state.pending);
 }
 
-TEST(test_request_state, match)
-{
+TEST(test_request_state, match) {
   request_state_t state = {0};
 
   EXPECT_EQ(false, request_state_match(&state));
 }
 
-TEST(test_request_state, check)
-{
+TEST(test_request_state, check) {
   static settings_t *settings = NULL;
 
   settings_api_t api = {
-    api.ctx = NULL,
-    api.send = send_dummy,
-    api.send_from = send_from_dummy,
-    api.wait_init = wait_init_dummy,
-    api.wait = wait_dummy,
-    api.wait_deinit = wait_deinit_dummy,
-    api.signal = signal_dummy,
-    api.wait = wait_thd_dummy,
-    api.signal = signal_thd_dummy,
-    api.lock = lock_dummy,
-    api.unlock = unlock_dummy,
-    api.register_cb = reg_cb_dummy,
-    api.unregister_cb = unreg_cb_dummy,
-    api.log = log_dummy,
+      api.ctx = NULL,
+      api.send = send_dummy,
+      api.send_from = send_from_dummy,
+      api.wait_init = wait_init_dummy,
+      api.wait = wait_dummy,
+      api.wait_deinit = wait_deinit_dummy,
+      api.signal = signal_dummy,
+      api.wait = wait_thd_dummy,
+      api.signal = signal_thd_dummy,
+      api.lock = lock_dummy,
+      api.unlock = unlock_dummy,
+      api.register_cb = reg_cb_dummy,
+      api.unregister_cb = unreg_cb_dummy,
+      api.log = log_dummy,
   };
 
   settings = settings_create(0x42, &api);
@@ -79,7 +76,8 @@ TEST(test_request_state, check)
 
   request_state_append(settings, &state);
 
-  EXPECT_EQ(&state, request_state_check(settings, test_data, strlen(test_data)));
+  EXPECT_EQ(&state,
+            request_state_check(settings, test_data, strlen(test_data)));
 
   request_state_remove(settings, &state);
 

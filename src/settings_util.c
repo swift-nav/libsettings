@@ -15,13 +15,8 @@
 
 #include <libsettings/settings_util.h>
 
-int settings_format(const char *section,
-                    const char *name,
-                    const char *value,
-                    const char *type,
-                    char *buf,
-                    size_t blen)
-{
+int settings_format(const char *section, const char *name, const char *value,
+                    const char *type, char *buf, size_t blen) {
   int n = 0;
   int l = 0;
 
@@ -47,13 +42,9 @@ int settings_format(const char *section,
 }
 
 /* Parse SBP message payload into setting parameters */
-settings_tokens_t settings_parse(const char *buf,
-                                 size_t blen,
-                                 const char **section,
-                                 const char **name,
-                                 const char **value,
-                                 const char **type)
-{
+settings_tokens_t settings_parse(const char *buf, size_t blen,
+                                 const char **section, const char **name,
+                                 const char **value, const char **type) {
   if (section) *section = NULL;
   if (name) *name = NULL;
   if (value) *value = NULL;
@@ -71,7 +62,8 @@ settings_tokens_t settings_parse(const char *buf,
     if (buf[idx] != '\0') {
       continue;
     }
-    if ((size_t)tok < sizeof(tokens) / sizeof(tokens[0]) && tokens[tok] != NULL) {
+    if ((size_t)tok < sizeof(tokens) / sizeof(tokens[0]) &&
+        tokens[tok] != NULL) {
       *(tokens[tok]) = &buf[str_start];
     }
     str_start = idx + 1;

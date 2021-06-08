@@ -16,8 +16,7 @@
 
 #include <internal/setting_type_enum.h>
 
-int enum_format_type(const void *priv, char *str, int slen)
-{
+int enum_format_type(const void *priv, char *str, int slen) {
   int n = 0;
   int l;
 
@@ -50,8 +49,8 @@ int enum_format_type(const void *priv, char *str, int slen)
   return n;
 }
 
-int enum_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
-{
+int enum_to_string(const void *priv, char *str, int slen, const void *blob,
+                   int blen) {
   (void)blen;
 
   const char *const *enum_names = priv;
@@ -59,8 +58,7 @@ int enum_to_string(const void *priv, char *str, int slen, const void *blob, int 
   return snprintf(str, slen, "%s", enum_names[index]);
 }
 
-bool enum_from_string(const void *priv, void *blob, int blen, const char *str)
-{
+bool enum_from_string(const void *priv, void *blob, int blen, const char *str) {
   (void)blen;
 
   const char *const *enum_names = priv;

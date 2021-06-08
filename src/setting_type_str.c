@@ -15,16 +15,15 @@
 
 #include <internal/setting_type_str.h>
 
-int str_to_string(const void *priv, char *str, int slen, const void *blob, int blen)
-{
+int str_to_string(const void *priv, char *str, int slen, const void *blob,
+                  int blen) {
   (void)priv;
   (void)blen;
 
   return snprintf(str, slen, "%s", (char *)blob);
 }
 
-bool str_from_string(const void *priv, void *blob, int blen, const char *str)
-{
+bool str_from_string(const void *priv, void *blob, int blen, const char *str) {
   (void)priv;
 
   int l = snprintf(blob, blen, "%s", str);

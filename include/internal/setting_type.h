@@ -17,8 +17,10 @@
 
 #include <libsettings/settings.h>
 
-typedef int (*to_string_fn)(const void *priv, char *str, int slen, const void *blob, int blen);
-typedef bool (*from_string_fn)(const void *priv, void *blob, int blen, const char *str);
+typedef int (*to_string_fn)(const void *priv, char *str, int slen,
+                            const void *blob, int blen);
+typedef bool (*from_string_fn)(const void *priv, void *blob, int blen,
+                               const char *str);
 typedef int (*format_type_fn)(const void *priv, char *str, int slen);
 
 /**
@@ -58,12 +60,9 @@ type_data_t *type_data_lookup(type_data_t *data_list, settings_type_t type);
  * @param type: type enum that is used to identify this type
  * @return
  */
-int type_register(type_data_t **data_list,
-                  to_string_fn to_string,
-                  from_string_fn from_string,
-                  format_type_fn format_type,
-                  const void *priv,
-                  settings_type_t *type);
+int type_register(type_data_t **data_list, to_string_fn to_string,
+                  from_string_fn from_string, format_type_fn format_type,
+                  const void *priv, settings_type_t *type);
 
 /**
  * @brief type_data_free - free type data list

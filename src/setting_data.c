@@ -20,23 +20,19 @@
 
 #include <internal/setting_data.h>
 
-setting_data_t *setting_data_create(type_data_t *type_list,
-                                    const char *section,
-                                    const char *name,
-                                    void *var,
-                                    size_t var_len,
+setting_data_t *setting_data_create(type_data_t *type_list, const char *section,
+                                    const char *name, void *var, size_t var_len,
                                     settings_type_t type,
                                     settings_notify_fn notify,
-                                    void *notify_context,
-                                    bool readonly,
-                                    bool watchonly)
-{
+                                    void *notify_context, bool readonly,
+                                    bool watchonly) {
   /* Look up type data */
   type_data_t *type_data = type_data_lookup(type_list, type);
   assert(type_data != NULL);
 
   /* Set up setting data */
-  setting_data_t *setting_data = (setting_data_t *)malloc(sizeof(*setting_data));
+  setting_data_t *setting_data =
+      (setting_data_t *)malloc(sizeof(*setting_data));
   if (setting_data == NULL) {
     return NULL;
   }
@@ -45,21 +41,21 @@ setting_data_t *setting_data_create(type_data_t *type_list,
   size_t name_len = strlen(name);
 
   *setting_data = (setting_data_t){
-    .section = malloc(section_len + 1),
-    .name = malloc(name_len + 1),
-    .var = var,
-    .var_len = var_len,
-    .var_copy = malloc(var_len),
-    .type_data = type_data,
-    .notify = notify,
-    .notify_context = notify_context,
-    .readonly = readonly,
-    .watchonly = watchonly,
-    .next = NULL,
+      .section = malloc(section_len + 1),
+      .name = malloc(name_len + 1),
+      .var = var,
+      .var_len = var_len,
+      .var_copy = malloc(var_len),
+      .type_data = type_data,
+      .notify = notify,
+      .notify_context = notify_context,
+      .readonly = readonly,
+      .watchonly = watchonly,
+      .next = NULL,
   };
 
-  if ((setting_data->section == NULL) || (setting_data->name == NULL)
-      || (setting_data->var_copy == NULL)) {
+  if ((setting_data->section == NULL) || (setting_data->name == NULL) ||
+      (setting_data->var_copy == NULL)) {
     setting_data_destroy(setting_data);
     free(setting_data);
     setting_data = NULL;
@@ -71,8 +67,7 @@ setting_data_t *setting_data_create(type_data_t *type_list,
   return setting_data;
 }
 
-void setting_data_destroy(setting_data_t *setting_data)
-{
+void setting_data_destroy(setting_data_t *setting_data) {
   if (setting_data->section) {
     free(setting_data->section);
     setting_data->section = NULL;
@@ -89,10 +84,11 @@ void setting_data_destroy(setting_data_t *setting_data)
   }
 }
 
-settings_write_res_t setting_data_update_value(setting_data_t *setting_data, const char *value)
-{
+settings_write_res_t setting_data_update_value(setting_data_t *setting_data,
+                                               const char *value) {
   if (setting_data->readonly) {
-    log_warn("trying to update read only setting %s.%s", setting_data->section, setting_data->name);
+    log_warn("trying to update read only setting %s.%s", setting_data->section,
+             setting_data->name);
     return SETTINGS_WR_READ_ONLY;
   }
 
@@ -100,8 +96,7 @@ settings_write_res_t setting_data_update_value(setting_data_t *setting_data, con
   memcpy(setting_data->var_copy, setting_data->var, setting_data->var_len);
   if (!setting_data->type_data->from_string(setting_data->type_data->priv,
                                             setting_data->var,
-                                            setting_data->var_len,
-                                            value)) {
+                                            setting_data->var_len, value)) {
     /* Revert value if conversion fails */
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
     log_error("parsing failed while updating setting value");
@@ -123,24 +118,20 @@ settings_write_res_t setting_data_update_value(setting_data_t *setting_data, con
   if (res != SETTINGS_WR_OK) {
     /* Revert value if notify returns error */
     log_error("setting value update notify failed for %s.%s",
-              setting_data->section,
-              setting_data->name);
+              setting_data->section, setting_data->name);
     memcpy(setting_data->var, setting_data->var_copy, setting_data->var_len);
   }
 
   return res;
 }
 
-int setting_data_format(setting_data_t *setting_data,
-                        bool type,
-                        char *buf,
-                        int blen,
-                        uint8_t *msg_hdr_len)
-{
+int setting_data_format(setting_data_t *setting_data, bool type, char *buf,
+                        int blen, uint8_t *msg_hdr_len) {
   int res = 0;
   int bytes = 0;
 
-  res = settings_format(setting_data->section, setting_data->name, NULL, NULL, buf, blen);
+  res = settings_format(setting_data->section, setting_data->name, NULL, NULL,
+                        buf, blen);
 
   if (res <= 0) {
     return -1;
@@ -152,11 +143,9 @@ int setting_data_format(setting_data_t *setting_data,
   }
 
   /* Value */
-  res = setting_data->type_data->to_string(setting_data->type_data->priv,
-                                           &buf[bytes],
-                                           blen - bytes,
-                                           setting_data->var,
-                                           setting_data->var_len);
+  res = setting_data->type_data->to_string(
+      setting_data->type_data->priv, &buf[bytes], blen - bytes,
+      setting_data->var, setting_data->var_len);
   if ((res < 0) || (res >= blen - bytes)) {
     return -1;
   }
@@ -172,8 +161,8 @@ int setting_data_format(setting_data_t *setting_data,
     return bytes;
   }
 
-  res =
-    setting_data->type_data->format_type(setting_data->type_data->priv, &buf[bytes], blen - bytes);
+  res = setting_data->type_data->format_type(setting_data->type_data->priv,
+                                             &buf[bytes], blen - bytes);
   if ((res < 0) || (res >= blen - bytes)) {
     return -1;
   }
@@ -183,16 +172,16 @@ int setting_data_format(setting_data_t *setting_data,
   return bytes;
 }
 
-void setting_data_append(setting_data_t **data_list, setting_data_t *setting_data)
-{
+void setting_data_append(setting_data_t **data_list,
+                         setting_data_t *setting_data) {
   if (*data_list == NULL) {
     *data_list = setting_data;
   } else {
     setting_data_t *s;
     /* Find last element in the same section */
     for (s = *data_list; s->next != NULL; s = s->next) {
-      if ((strcmp(s->section, setting_data->section) == 0)
-          && (strcmp(s->next->section, setting_data->section) != 0)) {
+      if ((strcmp(s->section, setting_data->section) == 0) &&
+          (strcmp(s->next->section, setting_data->section) != 0)) {
         break;
       }
     }
@@ -201,8 +190,8 @@ void setting_data_append(setting_data_t **data_list, setting_data_t *setting_dat
   }
 }
 
-void setting_data_remove(setting_data_t **data_list, setting_data_t **setting_data)
-{
+void setting_data_remove(setting_data_t **data_list,
+                         setting_data_t **setting_data) {
   assert(data_list != NULL);
   assert(setting_data != NULL);
   assert(*setting_data != NULL);
@@ -232,11 +221,10 @@ void setting_data_remove(setting_data_t **data_list, setting_data_t **setting_da
 }
 
 setting_data_t *setting_data_lookup(setting_data_t *data_list,
-                                    const char *section,
-                                    const char *name)
-{
+                                    const char *section, const char *name) {
   while (data_list != NULL) {
-    if ((strcmp(data_list->section, section) == 0) && (strcmp(data_list->name, name) == 0)) {
+    if ((strcmp(data_list->section, section) == 0) &&
+        (strcmp(data_list->name, name) == 0)) {
       break;
     }
     data_list = data_list->next;
@@ -244,8 +232,7 @@ setting_data_t *setting_data_lookup(setting_data_t *data_list,
   return data_list;
 }
 
-void setting_data_free(setting_data_t *data_list)
-{
+void setting_data_free(setting_data_t *data_list) {
   /* Free setting data list elements */
   while (data_list != NULL) {
     setting_data_t *s = data_list;

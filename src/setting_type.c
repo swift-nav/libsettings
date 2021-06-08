@@ -14,21 +14,16 @@
 
 #include <internal/setting_type.h>
 
-type_data_t *type_data_lookup(type_data_t *data_list, settings_type_t type)
-{
+type_data_t *type_data_lookup(type_data_t *data_list, settings_type_t type) {
   for (int i = 0; i < type && data_list != NULL; i++) {
     data_list = data_list->next;
   }
   return data_list;
 }
 
-int type_register(type_data_t **data_list,
-                  to_string_fn to_string,
-                  from_string_fn from_string,
-                  format_type_fn format_type,
-                  const void *priv,
-                  settings_type_t *type)
-{
+int type_register(type_data_t **data_list, to_string_fn to_string,
+                  from_string_fn from_string, format_type_fn format_type,
+                  const void *priv, settings_type_t *type) {
   type_data_t *type_data = (type_data_t *)malloc(sizeof(*type_data));
   if (type_data == NULL) {
     return -1;
@@ -52,8 +47,7 @@ int type_register(type_data_t **data_list,
   return 0;
 }
 
-void type_data_free(type_data_t *data_list)
-{
+void type_data_free(type_data_t *data_list) {
   /* Free type data list elements */
   while (data_list != NULL) {
     type_data_t *t = data_list;
