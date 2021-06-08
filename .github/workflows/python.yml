@@ -1,0 +1,46 @@
+name: Python
+
+on: [push, pull_request]
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - macos-10.15
+          - windows-2019
+        python-version:
+          - '2.x'
+          - '3.5'
+          - '3.6'
+          - '3.7'
+          - '3.8'
+          - '3.9'
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+
+      - name: Install tox
+        run: |
+          pip3 --version
+          pip3 install setuptools tox
+
+      - name: Run install
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            export PATH="$PATH:/C/Program Files/LLVM/bin"
+          fi
+
+          tox
