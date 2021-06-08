@@ -10,7 +10,7 @@ endif (NOT WIN32)
 
 configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
-# If you want to speficy python version: 'cmake -D PYTHON=python3 ..'
+# If you want to specify python version: 'cmake -D PYTHON=python3 ..'
 if (NOT PYTHON)
     set(PYTHON "python")
 endif (NOT PYTHON)
