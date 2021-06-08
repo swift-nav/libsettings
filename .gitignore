@@ -60,5 +60,4 @@ build*/
 # Python
 libsettings.egg-info
 python/*.c
-setup.py
 *.pyc

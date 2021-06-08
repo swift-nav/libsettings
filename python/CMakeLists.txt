@@ -1,14 +1,7 @@
 set(LIBSETTINGS_VENV "libsettings-venv")
 
-set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
 set(SETUP_PY    "${PROJECT_SOURCE_DIR}/setup.py")
 set(PY_OUTPUT   "${PROJECT_SOURCE_DIR}/python/libsettings.so")
-
-if (NOT WIN32)
-    set(PY_SHEBANG  "#!/usr/bin/env python")
-endif (NOT WIN32)
-
-configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
 # If you want to specify python version: 'cmake -D PYTHON=python3 ..'
 if (NOT PYTHON)

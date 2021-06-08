@@ -1,4 +1,3 @@
-${PY_SHEBANG}
 # Copyright (C) 2018 Swift Navigation Inc.
 # Contact: <dev@swift-nav.com>
 #
@@ -8,6 +7,8 @@ ${PY_SHEBANG}
 # THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
 # EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+
+import os.path
 
 from glob import glob
 from setuptools import setup, Extension
@@ -35,9 +36,11 @@ PLATFORMS = [
   'win32',
 ]
 
-include_dirs = ["include", "${x_sbp_IncludeDir}", "${x_swiftnav_IncludeDir}"]
-sources = glob("python/*.pyx") + glob("src/*.c") + glob("third_party/libswiftnav/src/logging*.c") 
-
+HERE = os.path.dirname(__file__)
+if HERE:
+    os.chdir(HERE)
+include_dirs = ["include", "third_party/libsbp/c/include", "third_party/libswiftnav/include"]
+sources = glob("python/*.pyx") + glob("src/*.c") + glob("third_party/libswiftnav/src/logging*.c")
 py_version = '{}{}'.format(sys.version_info[0], sys.version_info[1])
 
 cflags = ["-Wno-unused-label", "-std=c99"]
