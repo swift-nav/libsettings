@@ -6,13 +6,8 @@ include libswiftnav/include/swiftnav/logging.h
 include setup.py
 include LICENSE
 
-prune python
-
 include python/libsettings.c python/libsettings.pyx
 
 global-exclude CMakeLists.txt
 
 exclude .*
-
-prune cmake
-prune tests
