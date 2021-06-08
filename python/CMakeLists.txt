@@ -45,7 +45,7 @@ if (NOT MSVC)
             OUTPUT_VARIABLE PYTHON_PATH_REAL
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        if (${PYTHON_PATH_REAL}) 
+        if (${PYTHON_PATH_REAL})
             file(WRITE "${PYTHON_PATH_REAL}/Lib/site-packages/virtualenv_path_extensions.pth" "$ENV{VIRTUAL_ENV}/lib/site-packages")
         endif ()
 
@@ -82,7 +82,7 @@ if (NOT MSVC)
         else (VIRTUALENV)
             add_custom_command(
                 OUTPUT ${LIBSETTINGS_VENV}
-                COMMAND pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
+                COMMAND pip3 install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
             )
             add_custom_command(
                 OUTPUT "${PY_OUTPUT}"
