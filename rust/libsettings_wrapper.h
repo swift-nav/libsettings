@@ -42,30 +42,6 @@ typedef uint64_t _u64;
 #define bool _Bool
 #endif
 
-#if _WIN32 || _WIN64
-#if _WIN64
-#define PTR64
-#else
-#define PTR32
-#endif
-#elif __GNUC__ || __clang__
-#if __x86_64__ || __ppc64__ || __aarch64__
-#define PTR64
-#else
-#define PTR32
-#endif
-#else
-#define PTR32
-#endif
-
-#ifdef PTR64
-#warning "Using 64-bit pointers"
-typedef unsigned long size_t;
-#else
-#warning "Using 32-bit pointers"
-typedef uint32_t size_t;
-#endif
-
 #ifndef _BUILD_RUSTBIND_LIB_
 /* Put stuff here that shouldn't be seen during rustbindsettings build */
 #endif  //_BUILD_RUSTBIND_LIB_
