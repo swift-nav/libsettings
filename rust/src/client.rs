@@ -8,12 +8,15 @@ use crate::settings_manager::{lookup_setting_type, SettingType};
 
 use std::slice;
 
-use std::io::prelude::*;
-use std::net::TcpStream;
+use std::io::{Read, Write};
 
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+use std::boxed::Box;
+use std::convert::TryInto;
 use std::thread;
 
-use std::ffi::CString;
 use std::mem;
 use std::ptr;
 use std::ptr::NonNull;
@@ -22,6 +25,8 @@ use std::time::Duration;
 
 extern crate libc;
 use libc::c_void;
+
+use log::{debug, error, info, trace};
 
 const SBP_STATE: sbp_state_t = sbp_state_t {
     state: 0,
@@ -42,7 +47,8 @@ static SENDER_ID: u16 = 0;
 pub struct Context {
     libsettings_ctx: libsettings_ctx_t,
     sbp_state: sbp_state_t,
-    stream: TcpStream,
+    stream_r: Box<dyn Read>,
+    stream_w: Box<dyn Write>,
 }
 
 /* This wrapper allows us to pass a pointer to a Context object to a thread
@@ -66,12 +72,12 @@ pub extern "C" fn r_write(buff: *mut _u8, n: _u32, ctx: *mut libc::c_void) -> _s
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let slice = unsafe { slice::from_raw_parts(buff, n as usize) };
 
-    match context.stream.write_all(slice) {
+    match context.stream_w.write_all(slice) {
         Ok(()) => {
             return n as _s32;
         }
         Err(error) => {
-            eprintln!("r_write: error: {}!", error);
+            error!("r_write: error: {}!", error);
             return -1;
         }
     }
@@ -158,8 +164,6 @@ pub extern "C" fn r_unregister_cb(
 
 #[no_mangle]
 pub extern "C" fn r_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
-    //    eprintln!("r_wait!");
-
     assert!(timeout_ms > 0);
 
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
@@ -175,17 +179,17 @@ pub extern "C" fn r_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn r_read(buff: *mut _u8, n: _u32, ctx: *mut c_void) -> _s32 {
-    //    eprintln!("r_read: enter ({})!", n);
+    trace!("r_read: enter ({})!", n);
 
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let read_slice = unsafe { slice::from_raw_parts_mut(buff, n as usize) };
 
-    if let Ok(count) = context.stream.read(read_slice) {
+    if let Ok(count) = context.stream_r.read(read_slice) {
         if count == 0 {
-            eprintln!("Connection closed");
+            error!("Connection closed");
             return -1;
         }
-        //eprintln!("r_read: OK ({})!\n", count);
+        debug!("r_read: OK ({})!\n", count);
         return count as _s32;
     }
 
@@ -194,8 +198,6 @@ pub extern "C" fn r_read(buff: *mut _u8, n: _u32, ctx: *mut c_void) -> _s32 {
 
 #[no_mangle]
 pub extern "C" fn r_lock(ctx: *mut c_void) {
-    //    eprintln!("r_lock");
-
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
 
@@ -209,7 +211,6 @@ pub extern "C" fn r_lock(ctx: *mut c_void) {
 
 #[no_mangle]
 pub extern "C" fn r_unlock(ctx: *mut c_void) {
-    //    eprintln!("r_unlock");
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
 
@@ -221,7 +222,6 @@ pub extern "C" fn r_unlock(ctx: *mut c_void) {
 
 #[no_mangle]
 pub extern "C" fn r_signal(ctx: *mut c_void) {
-    //    eprintln!("r_signal");
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
     let result: bool = unsafe { c_libsettings_signal(libsettings_ctx_ptr) };
@@ -232,7 +232,6 @@ pub extern "C" fn r_signal(ctx: *mut c_void) {
 
 #[no_mangle]
 pub extern "C" fn r_wait_init(ctx: *mut c_void) -> i32 {
-    //    eprintln!("r_wait_init");
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
     let result: bool = unsafe { c_libsettings_lock(libsettings_ctx_ptr) };
@@ -245,7 +244,6 @@ pub extern "C" fn r_wait_init(ctx: *mut c_void) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn r_wait_deinit(ctx: *mut c_void) -> i32 {
-    //    eprintln!("r_wait_deinit");
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
     let result: bool = unsafe { c_libsettings_unlock(libsettings_ctx_ptr) };
@@ -257,7 +255,7 @@ pub extern "C" fn r_wait_deinit(ctx: *mut c_void) -> i32 {
 }
 
 fn sbp_receive_thread(ctx: *mut Context) {
-    eprintln!("Receive thread starting...");
+    debug!("Receive thread starting...");
 
     loop {
         let result: _s8 = unsafe { sbp_process(&mut (*ctx).sbp_state, Some(r_read)) };
@@ -266,17 +264,24 @@ fn sbp_receive_thread(ctx: *mut Context) {
         }
     }
 
-    eprintln!("Receive thread exiting...");
+    debug!("Receive thread exiting...");
 }
 
-pub fn write_setting(stream: TcpStream, section: String, name: String, value: String) {
+pub fn write_setting(
+    stream_r: Box<dyn Read>,
+    stream_w: Box<dyn Write>,
+    section: String,
+    name: String,
+    value: String,
+) {
     let mut context = Context {
         libsettings_ctx: libsettings_ctx_t {
             lock: ptr::null_mut(),
             condvar: ptr::null_mut(),
         },
         sbp_state: SBP_STATE,
-        stream: stream,
+        stream_r,
+        stream_w,
     };
 
     let mut api: settings_api_t = settings_api_t {
@@ -321,7 +326,7 @@ pub fn write_setting(stream: TcpStream, section: String, name: String, value: St
 
     thread::sleep(Duration::from_millis(50));
 
-    eprintln!(
+    info!(
         "Writing setting: section={}, name={}, value={}",
         section.clone(),
         name.clone(),
@@ -372,11 +377,11 @@ pub fn write_setting(stream: TcpStream, section: String, name: String, value: St
                     )
                 }
             }
-            _ => settings_write_res_e_SETTINGS_WR_SERVICE_FAILED,
+            _ => 0, // settings_write_res_e_SETTINGS_WR_SERVICE_FAILED.try_into().unwrap(),  // todo
         };
-        eprintln!("Settings write result: {}", res);
+        info!("Settings write result: {}", res);
     } else {
-        eprintln!("Unknown settings specified...");
+        error!("Unknown settings specified...");
     }
 
     read_thread.join().expect("failed to wait for read thread");
@@ -384,4 +389,179 @@ pub fn write_setting(stream: TcpStream, section: String, name: String, value: St
     unsafe {
         settings_destroy(&mut settings_ctx as *mut _);
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum SettingValue {
+    integer(i32),
+    boolean(bool),
+    double(f32),
+    string(Box<String>),
+}
+
+pub fn create_api(stream_r: Box<dyn Read>, stream_w: Box<dyn Write>) -> (Context, settings_api_t) {
+    let mut context = Context {
+        libsettings_ctx: libsettings_ctx_t {
+            lock: ptr::null_mut(),
+            condvar: ptr::null_mut(),
+        },
+        sbp_state: SBP_STATE,
+        stream_r,
+        stream_w,
+    };
+
+    let mut api = settings_api_t {
+        ctx: &mut context as *mut Context as *mut c_void,
+        send: Some(r_send),
+        send_from: Some(r_send_from),
+        lock: Some(r_lock),
+        unlock: Some(r_unlock),
+        log: None,
+        log_preformat: false,
+        register_cb: Some(r_register_cb),
+        unregister_cb: Some(r_unregister_cb),
+        signal: Some(r_signal),
+        signal_thd: None,
+        wait: Some(r_wait),
+        wait_init: Some(r_wait_init),
+        wait_deinit: Some(r_wait_deinit),
+        wait_thd: None,
+    };
+    (context, api)
+}
+
+pub fn read_setting(
+    //mut context: Context,
+    //mut api: settings_api_t,
+    stream_r: Box<dyn Read>,
+    stream_w: Box<dyn Write>,
+    section: String,
+    name: String,
+) -> SettingValue {
+    let mut context = Context {
+        libsettings_ctx: libsettings_ctx_t {
+            lock: ptr::null_mut(),
+            condvar: ptr::null_mut(),
+        },
+        sbp_state: SBP_STATE,
+        stream_r,
+        stream_w,
+    };
+
+    let mut api = settings_api_t {
+        ctx: &mut context as *mut Context as *mut c_void,
+        send: Some(r_send),
+        send_from: Some(r_send_from),
+        lock: Some(r_lock),
+        unlock: Some(r_unlock),
+        log: None,
+        log_preformat: false,
+        register_cb: Some(r_register_cb),
+        unregister_cb: Some(r_unregister_cb),
+        signal: Some(r_signal),
+        signal_thd: None,
+        wait: Some(r_wait),
+        wait_init: Some(r_wait_init),
+        wait_deinit: Some(r_wait_deinit),
+        wait_thd: None,
+    };
+
+    let c_libsettings_init_result: bool =
+        unsafe { c_libsettings_init(&mut context.libsettings_ctx) };
+
+    if !c_libsettings_init_result {
+        panic!("Failed to initialize libsettings binding library");
+    }
+
+    unsafe { sbp_state_init(&mut context.sbp_state) };
+    unsafe {
+        sbp_state_set_io_context(
+            &mut context.sbp_state,
+            &mut context as *mut Context as *mut c_void,
+        )
+    };
+
+    let mut settings_ctx = unsafe { settings_create(SENDER_ID, &mut api) };
+    let context_ptr = ContextWrapper(NonNull::new(&mut context as *mut Context).unwrap());
+
+    let read_thread = thread::spawn(move || {
+        sbp_receive_thread(context_ptr.0.as_ptr());
+    });
+
+    thread::sleep(Duration::from_millis(50));
+
+    debug!(
+        "Reading setting: section={}, name={}",
+        section.clone(),
+        name.clone(),
+    );
+
+    let c_section = CString::new(section.clone()).unwrap();
+    let c_name = CString::new(name.clone()).unwrap();
+    let mut return_value: SettingValue = SettingValue::integer(0);
+
+    if let Some(type_) = lookup_setting_type(&section.clone(), &name.clone()) {
+        let res = match type_ {
+            SettingType::StInteger => unsafe {
+                let mut value: i32 = 0;
+                let status = settings_read_int(
+                    settings_ctx,
+                    c_section.as_ptr(),
+                    c_name.as_ptr(),
+                    &mut value,
+                );
+                return_value = SettingValue::integer(value);
+                status
+            },
+            SettingType::StBoolean => unsafe {
+                let mut value: bool = false;
+                let status = settings_read_bool(
+                    settings_ctx,
+                    c_section.as_ptr(),
+                    c_name.as_ptr(),
+                    &mut value,
+                );
+                return_value = SettingValue::boolean(value);
+                status
+            },
+            SettingType::StDouble => unsafe {
+                let mut value: f32 = 0.0;
+                let status = settings_read_float(
+                    settings_ctx,
+                    c_section.as_ptr(),
+                    c_name.as_ptr(),
+                    &mut value,
+                );
+                return_value = SettingValue::double(value);
+                status
+            },
+            SettingType::StString | SettingType::StEnum => unsafe {
+                let mut buf = Vec::<c_char>::with_capacity(1024);
+                let status = settings_read_str(
+                    settings_ctx,
+                    c_section.as_ptr(),
+                    c_name.as_ptr(),
+                    buf.as_mut_ptr(),
+                    buf.capacity().try_into().unwrap(),
+                );
+                return_value = SettingValue::string(Box::new(
+                    CStr::from_ptr(buf.as_ptr().try_into().unwrap())
+                        .to_string_lossy()
+                        .into_owned(),
+                ));
+                status
+            },
+        };
+        debug!("Settings read result: {}", res);
+    } else {
+        error!("Unknown settings specified...");
+    }
+
+    read_thread.join().expect("failed to wait for read thread");
+
+    unsafe {
+        settings_destroy(&mut settings_ctx as *mut _);
+    }
+
+    return_value
 }

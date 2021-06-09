@@ -1,0 +1,76 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+
+env:
+  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+
+jobs:
+  lint:
+    name: Format and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - uses: actions-rs/cargo@v1
+        name: Format Check
+        with:
+          command: fmt
+          args: -- --check
+
+  test:
+    name: Tests
+    strategy:
+      matrix:
+        build-type: [Release]
+        os:
+          - windows-2019
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: bwoodsend/setup-winlibs-action@v1
+        if: matrix.os == 'windows-2019'
+        with:
+          destination: c:/
+
+      - name: Install MinGW Rust toolchain
+        if: matrix.os == 'windows-2019'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-gnu
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run tests (Windows)
+        if: matrix.os == 'windows-2019'
+        env:
+          LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
+          CC: gcc
+          CXX: g++
+          CMAKE_GENERATOR: MinGW Makefiles
+        run: cargo test --target=x86_64-pc-windows-gnu
+
+      - name: Run tests (Non-Windows)
+        if: matrix.os != 'windows-2019'
+        run: cargo test
