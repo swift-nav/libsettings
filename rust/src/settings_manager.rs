@@ -1,13 +1,12 @@
 extern crate yaml_rust;
 use yaml_rust::{Yaml, YamlLoader};
 
-use std::sync::{Mutex};
+use std::sync::Mutex;
 
 const _SOURCE: &'static str = include_str!("../../settings.yaml");
 
 #[derive(PartialEq, Debug)]
-pub enum SettingType
-{
+pub enum SettingType {
     StInteger,
     StBoolean,
     StDouble,
@@ -28,19 +27,24 @@ lazy_static! {
     };
 }
 
-pub fn lookup_setting_type(section: &str, name_in: &str) -> Option<SettingType>
-{
+pub fn lookup_setting_type(section: &str, name_in: &str) -> Option<SettingType> {
     let settings = &*SETTINGS.lock().unwrap();
     for setting in settings.as_vec().unwrap() {
         let setting = setting.as_hash().unwrap();
         let group = Yaml::from_str("group");
-        if !setting.contains_key(&group) { continue; }
+        if !setting.contains_key(&group) {
+            continue;
+        }
         let group = setting[&group].as_str().unwrap();
         let name = Yaml::from_str("name");
-        if !setting.contains_key(&name) { continue; }
+        if !setting.contains_key(&name) {
+            continue;
+        }
         let name = setting[&name].as_str().unwrap();
         let type_ = Yaml::from_str("type");
-        if !setting.contains_key(&type_) { continue; }
+        if !setting.contains_key(&type_) {
+            continue;
+        }
         let type_ = setting[&type_].as_str().unwrap();
         if group == section && name == name_in {
             let lower_type = type_.to_lowercase();
@@ -63,7 +67,13 @@ pub fn lookup_setting_type(section: &str, name_in: &str) -> Option<SettingType>
 
 #[test]
 fn test_lookup_setting_type() {
-    assert_eq!(lookup_setting_type("solution", "soln_freq"), Some(SettingType::StInteger));
-    assert_eq!(lookup_setting_type("tcp_server0", "enabled_sbp_messages"), Some(SettingType::StString));
+    assert_eq!(
+        lookup_setting_type("solution", "soln_freq"),
+        Some(SettingType::StInteger)
+    );
+    assert_eq!(
+        lookup_setting_type("tcp_server0", "enabled_sbp_messages"),
+        Some(SettingType::StString)
+    );
     assert_eq!(lookup_setting_type("solution", "froo_froo"), None);
 }
