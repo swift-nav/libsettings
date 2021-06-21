@@ -81,8 +81,8 @@ def main():
         try:
             host, port = port.split(':')
             selected_driver = TCPDriver(host, int(port))
-        except:  # noqa
-            raise Exception('Invalid host and/or port')
+        except Exception as e:
+            raise ValueError("Invalid host and/or port: {}".format(e))
     else:
         selected_driver = serial_link.get_driver(args.ftdi, port, baud)
 
