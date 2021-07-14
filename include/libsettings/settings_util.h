@@ -13,9 +13,10 @@
 #ifndef LIBSETTINGS_SETTINGS_UTIL_H
 #define LIBSETTINGS_SETTINGS_UTIL_H
 
-#include <inttypes.h>
+#include "libsettings/settings_declspec.h"
 
-#include <libsettings/settings_declspec.h>
+#include <inttypes.h>
+#include <stddef.h>
 
 typedef enum settings_tokens_e {
   SETTINGS_TOKENS_INVALID = -1, /** An error occurred */
