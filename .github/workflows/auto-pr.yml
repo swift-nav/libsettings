@@ -12,7 +12,8 @@ jobs:
     if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' && github.actor == 'dependabot[bot]' }}
     steps:
       - name: Add merge comment for dependabot PRs
-        uses: jo-sm/automerge-dependabot@v1
+        uses: jo-sm/automerge-dependabot@v1.3
         with:
           run-id: ${{ github.event.workflow_run.id }}
           token: ${{ secrets.REPO_COMMENT_TOKEN }}
+          only-given-run: "true"
