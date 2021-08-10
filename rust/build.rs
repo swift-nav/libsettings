@@ -1,9 +1,4 @@
-extern crate bindgen;
-
-use cmake;
-
 use std::env;
-
 use std::path::PathBuf;
 
 use cmake::Config;

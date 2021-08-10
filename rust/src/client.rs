@@ -1,30 +1,19 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-
-include!(concat!(env!("OUT_DIR"), "/libsettings.rs"));
-
-use crate::settings_manager::{lookup_setting_type, SettingType};
-
-use std::slice;
-
-use std::io::{Read, Write};
-
-use std::ffi::{CStr, CString};
-use std::os::raw::c_char;
-
 use std::boxed::Box;
 use std::convert::TryInto;
-use std::thread;
-
+use std::ffi::{CStr, CString};
+use std::io::{Read, Write};
 use std::mem;
+use std::os::raw::c_char;
 use std::ptr;
 use std::ptr::NonNull;
-
+use std::slice;
+use std::thread;
 use std::time::Duration;
 
-extern crate libc;
 use libc::c_void;
+
+use crate::bindings::*;
+use crate::settings_manager::{lookup_setting_type, SettingType};
 
 const SBP_STATE: sbp_state_t = sbp_state_t {
     state: 0,
@@ -66,102 +55,96 @@ unsafe impl Send for sbp_state_t {}
 unsafe impl Send for Context {}
 
 #[no_mangle]
-pub extern "C" fn r_write(buff: *mut _u8, n: _u32, ctx: *mut libc::c_void) -> _s32 {
-    let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
-    let slice = unsafe { slice::from_raw_parts(buff, n as usize) };
+unsafe extern "C" fn r_write(buff: *mut _u8, n: _u32, ctx: *mut libc::c_void) -> _s32 {
+    let context: &mut Context = &mut *(ctx as *mut Context);
+    let slice = slice::from_raw_parts(buff, n as usize);
 
     match context.stream_w.write_all(slice) {
-        Ok(()) => {
-            return n as _s32;
-        }
+        Ok(()) => n as _s32,
         Err(error) => {
             eprintln!("r_write: error: {}!", error);
-            return -1;
+            -1
         }
     }
 }
 
 #[no_mangle]
-pub extern "C" fn r_send(ctx: *mut c_void, msg_type: u16, len: u8, payload: *mut u8) -> i32 {
-    let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
-    unsafe {
-        return sbp_send_message(
-            &mut context.sbp_state,
-            msg_type,
-            SENDER_ID,
-            len,
-            payload,
-            Some(r_write),
-        ) as i32;
-    }
+unsafe extern "C" fn r_send(ctx: *mut c_void, msg_type: u16, len: u8, payload: *mut u8) -> i32 {
+    let context: &mut Context = &mut *(ctx as *mut Context);
+
+    sbp_send_message(
+        &mut context.sbp_state,
+        msg_type,
+        SENDER_ID,
+        len,
+        payload,
+        Some(r_write),
+    ) as i32
 }
 
 #[no_mangle]
-pub extern "C" fn r_send_from(
+unsafe extern "C" fn r_send_from(
     ctx: *mut ::std::os::raw::c_void,
     msg_type: u16,
     len: u8,
     payload: *mut u8,
     sender_id: u16,
 ) -> i32 {
-    let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
-    unsafe {
-        return sbp_send_message(
-            &mut context.sbp_state,
-            msg_type,
-            sender_id,
-            len,
-            payload,
-            Some(r_write),
-        ) as i32;
-    }
+    let context: &mut Context = &mut *(ctx as *mut Context);
+
+    sbp_send_message(
+        &mut context.sbp_state,
+        msg_type,
+        sender_id,
+        len,
+        payload,
+        Some(r_write),
+    ) as i32
 }
 
 #[no_mangle]
-pub extern "C" fn r_register_cb(
+unsafe extern "C" fn r_register_cb(
     ctx: *mut c_void,
     msg_type: u16,
     cb: sbp_msg_callback_t,
     cb_context: *mut c_void,
     node: *mut *mut sbp_msg_callbacks_node_t,
 ) -> i32 {
-    let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
-    unsafe {
-        let mut v = vec![0u8; mem::size_of::<sbp_msg_callbacks_node_t>()];
-        let n: *mut sbp_msg_callbacks_node_t = v.as_mut_ptr() as *mut sbp_msg_callbacks_node_t;
-        let res = sbp_register_callback(&mut context.sbp_state, msg_type, cb, cb_context, n);
-        if (node as i32) != 0 {
-            *node = n;
-            mem::forget(v);
-        }
-        return res as i32;
+    let context: &mut Context = &mut *(ctx as *mut Context);
+    let mut v = vec![0u8; mem::size_of::<sbp_msg_callbacks_node_t>()];
+    let n: *mut sbp_msg_callbacks_node_t = v.as_mut_ptr() as *mut sbp_msg_callbacks_node_t;
+    let res = sbp_register_callback(&mut context.sbp_state, msg_type, cb, cb_context, n);
+    if (node as i32) != 0 {
+        *node = n;
+        mem::forget(v);
     }
+    res as i32
 }
 
 #[no_mangle]
-pub extern "C" fn r_unregister_cb(
+unsafe extern "C" fn r_unregister_cb(
     ctx: *mut c_void,
     node: *mut *mut sbp_msg_callbacks_node_t,
 ) -> i32 {
-    let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
+    let context: &mut Context = &mut *(ctx as *mut Context);
     let res: _s8;
-    unsafe {
-        if (node as i32) != 0 {
-            res = sbp_remove_callback(&mut context.sbp_state, *node);
-            mem::drop(Vec::from_raw_parts(
-                *node,
-                0,
-                mem::size_of::<sbp_msg_callbacks_node_t>(),
-            ))
-        } else {
-            res = -127;
-        }
+
+    if (node as i32) != 0 {
+        res = sbp_remove_callback(&mut context.sbp_state, *node);
+        mem::drop(Vec::from_raw_parts(
+            *node,
+            0,
+            mem::size_of::<sbp_msg_callbacks_node_t>(),
+        ))
+    } else {
+        res = -127;
     }
-    return res as i32;
+
+    res as i32
 }
 
 #[no_mangle]
-pub extern "C" fn r_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
+extern "C" fn r_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
     assert!(timeout_ms > 0);
 
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
@@ -172,27 +155,28 @@ pub extern "C" fn r_wait(ctx: *mut c_void, timeout_ms: i32) -> i32 {
         panic!("c_libsettings_wait failed");
     }
 
-    return 0;
+    0
 }
 
 #[no_mangle]
-pub extern "C" fn r_read(buff: *mut _u8, n: _u32, ctx: *mut c_void) -> _s32 {
-    let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
-    let read_slice = unsafe { slice::from_raw_parts_mut(buff, n as usize) };
+unsafe extern "C" fn r_read(buff: *mut _u8, n: _u32, ctx: *mut c_void) -> _s32 {
+    let context: &mut Context = &mut *(ctx as *mut Context);
+    let read_slice = slice::from_raw_parts_mut(buff, n as usize);
 
     if let Ok(count) = context.stream_r.read(read_slice) {
         if count == 0 {
             eprintln!("Connection closed");
-            return -1;
+            -1
+        } else {
+            count as _s32
         }
-        return count as _s32;
+    } else {
+        -1
     }
-
-    return -1;
 }
 
 #[no_mangle]
-pub extern "C" fn r_lock(ctx: *mut c_void) {
+extern "C" fn r_lock(ctx: *mut c_void) {
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
 
@@ -205,7 +189,7 @@ pub extern "C" fn r_lock(ctx: *mut c_void) {
 }
 
 #[no_mangle]
-pub extern "C" fn r_unlock(ctx: *mut c_void) {
+extern "C" fn r_unlock(ctx: *mut c_void) {
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
 
@@ -216,7 +200,7 @@ pub extern "C" fn r_unlock(ctx: *mut c_void) {
 }
 
 #[no_mangle]
-pub extern "C" fn r_signal(ctx: *mut c_void) {
+extern "C" fn r_signal(ctx: *mut c_void) {
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
     let result: bool = unsafe { c_libsettings_signal(libsettings_ctx_ptr) };
@@ -226,26 +210,26 @@ pub extern "C" fn r_signal(ctx: *mut c_void) {
 }
 
 #[no_mangle]
-pub extern "C" fn r_wait_init(ctx: *mut c_void) -> i32 {
+extern "C" fn r_wait_init(ctx: *mut c_void) -> i32 {
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
     let result: bool = unsafe { c_libsettings_lock(libsettings_ctx_ptr) };
     if result {
-        return 0;
+        0
     } else {
-        return -1;
+        -1
     }
 }
 
 #[no_mangle]
-pub extern "C" fn r_wait_deinit(ctx: *mut c_void) -> i32 {
+extern "C" fn r_wait_deinit(ctx: *mut c_void) -> i32 {
     let context: &mut Context = unsafe { &mut *(ctx as *mut Context) };
     let libsettings_ctx_ptr: *mut libsettings_ctx_t = &mut context.libsettings_ctx;
     let result: bool = unsafe { c_libsettings_unlock(libsettings_ctx_ptr) };
     if result {
-        return 0;
+        0
     } else {
-        return -1;
+        -1
     }
 }
 
@@ -319,15 +303,13 @@ pub fn write_setting(
 
     eprintln!(
         "Writing setting: section={}, name={}, value={}",
-        section.clone(),
-        name.clone(),
-        value
+        section, name, value
     );
 
     let c_section = CString::new(section.clone()).unwrap();
     let c_name = CString::new(name.clone()).unwrap();
 
-    if let Some(type_) = lookup_setting_type(&section.clone(), &name.clone()) {
+    if let Some(type_) = lookup_setting_type(&section, &name) {
         let res = match type_ {
             SettingType::StInteger => {
                 let value: i32 = value
@@ -385,10 +367,10 @@ pub fn write_setting(
 
 #[derive(Debug, PartialEq)]
 pub enum SettingValue {
-    integer(i32),
-    boolean(bool),
-    double(f32),
-    string(Box<String>),
+    Integer(i32),
+    Boolean(bool),
+    Double(f32),
+    String(Box<String>),
 }
 
 pub fn create_api(stream_r: Box<dyn Read>, stream_w: Box<dyn Write>) -> (Context, settings_api_t) {
@@ -398,11 +380,11 @@ pub fn create_api(stream_r: Box<dyn Read>, stream_w: Box<dyn Write>) -> (Context
             condvar: ptr::null_mut(),
         },
         sbp_state: SBP_STATE,
-        stream_r: stream_r,
-        stream_w: stream_w,
+        stream_r,
+        stream_w,
     };
 
-    let mut api = settings_api_t {
+    let api = settings_api_t {
         ctx: &mut context as *mut Context as *mut c_void,
         send: Some(r_send),
         send_from: Some(r_send_from),
@@ -436,8 +418,8 @@ pub fn read_setting(
             condvar: ptr::null_mut(),
         },
         sbp_state: SBP_STATE,
-        stream_r: stream_r,
-        stream_w: stream_w,
+        stream_r,
+        stream_w,
     };
 
     let mut api = settings_api_t {
@@ -482,17 +464,13 @@ pub fn read_setting(
 
     thread::sleep(Duration::from_millis(50));
 
-    eprintln!(
-        "Reading setting: section={}, name={}",
-        section.clone(),
-        name.clone(),
-    );
+    eprintln!("Reading setting: section={}, name={}", section, name);
 
     let c_section = CString::new(section.clone()).unwrap();
     let c_name = CString::new(name.clone()).unwrap();
-    let mut return_value: SettingValue = SettingValue::integer(0);
+    let mut return_value: SettingValue = SettingValue::Integer(0);
 
-    if let Some(type_) = lookup_setting_type(&section.clone(), &name.clone()) {
+    if let Some(type_) = lookup_setting_type(&section, &name) {
         let res = match type_ {
             SettingType::StInteger => unsafe {
                 let mut value: i32 = 0;
@@ -502,7 +480,7 @@ pub fn read_setting(
                     c_name.as_ptr(),
                     &mut value,
                 );
-                return_value = SettingValue::integer(value);
+                return_value = SettingValue::Integer(value);
                 status
             },
             SettingType::StBoolean => unsafe {
@@ -513,7 +491,7 @@ pub fn read_setting(
                     c_name.as_ptr(),
                     &mut value,
                 );
-                return_value = SettingValue::boolean(value);
+                return_value = SettingValue::Boolean(value);
                 status
             },
             SettingType::StDouble => unsafe {
@@ -524,7 +502,7 @@ pub fn read_setting(
                     c_name.as_ptr(),
                     &mut value,
                 );
-                return_value = SettingValue::double(value);
+                return_value = SettingValue::Double(value);
                 status
             },
             SettingType::StString | SettingType::StEnum => unsafe {
@@ -536,10 +514,8 @@ pub fn read_setting(
                     buf.as_mut_ptr(),
                     buf.capacity().try_into().unwrap(),
                 );
-                return_value = SettingValue::string(Box::new(
-                    CStr::from_ptr(buf.as_ptr().try_into().unwrap())
-                        .to_string_lossy()
-                        .into_owned(),
+                return_value = SettingValue::String(Box::new(
+                    CStr::from_ptr(buf.as_ptr()).to_string_lossy().into_owned(),
                 ));
                 status
             },
