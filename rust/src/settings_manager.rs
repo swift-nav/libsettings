@@ -1,9 +1,8 @@
-extern crate yaml_rust;
-use yaml_rust::{Yaml, YamlLoader};
-
 use std::sync::Mutex;
 
-const _SOURCE: &'static str = include_str!("../../settings.yaml");
+use yaml_rust::{Yaml, YamlLoader};
+
+const SOURCE: &str = include_str!("../../settings.yaml");
 
 #[derive(PartialEq, Debug)]
 pub enum SettingType {
@@ -14,16 +13,10 @@ pub enum SettingType {
     StEnum,
 }
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref SETTINGS: Mutex<Yaml> = {
-        let y = YamlLoader::load_from_str(_SOURCE);
-        let docs = y.expect("Could not parse settings.yaml");
-        let mut the_doc: Option<Yaml> = None;
-        for elem in docs {
-            the_doc = Some(elem);
-            break;
-        }
-        return Mutex::new(the_doc.expect("No root document in settings.yaml"));
+        let mut docs = YamlLoader::load_from_str(SOURCE).expect("Could not parse settings.yaml");
+        Mutex::new(docs.remove(0))
     };
 }
 
@@ -62,7 +55,7 @@ pub fn lookup_setting_type(section: &str, name_in: &str) -> Option<SettingType> 
             break;
         }
     }
-    return None;
+    None
 }
 
 #[test]

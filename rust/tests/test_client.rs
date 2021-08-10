@@ -38,7 +38,7 @@ fn mock_read_setting_int() {
         name.to_string(),
     );
 
-    assert_eq!(response, SettingValue::integer(10));
+    assert_eq!(response, SettingValue::Integer(10));
 }
 
 #[test]
@@ -68,7 +68,7 @@ fn mock_read_setting_bool() {
         name.to_string(),
     );
 
-    assert_eq!(response, SettingValue::boolean(true));
+    assert_eq!(response, SettingValue::Boolean(true));
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn mock_read_setting_double() {
         name.to_string(),
     );
 
-    assert_eq!(response, SettingValue::double(0.1_f32));
+    assert_eq!(response, SettingValue::Double(0.1_f32));
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn mock_read_setting_string() {
         name.to_string(),
     );
 
-    assert_eq!(response, SettingValue::string(Box::new("foo".to_string())));
+    assert_eq!(response, SettingValue::String(Box::new("foo".to_string())));
 }
 
 #[test]
@@ -160,6 +160,6 @@ fn mock_read_setting_enum() {
 
     assert_eq!(
         response,
-        SettingValue::string(Box::new("Secondary".to_string()))
+        SettingValue::String(Box::new("Secondary".to_string()))
     );
 }
