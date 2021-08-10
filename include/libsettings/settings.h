@@ -22,10 +22,8 @@
 #ifndef LIBSETTINGS_SETTINGS_H
 #define LIBSETTINGS_SETTINGS_H
 
-#ifndef _RUSTC_BINDGEN_
 #include <inttypes.h>
 #include <stddef.h>
-#endif
 
 #include <libsbp/sbp.h>
 
