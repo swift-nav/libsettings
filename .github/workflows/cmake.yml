@@ -1,6 +1,14 @@
 ---
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+
 jobs:
   # Regular C build with two compilers, using the environment:
   build_using_compiler_in_environment:
