@@ -1,15 +1,10 @@
-#[cfg(feature = "tests")]
-use std::thread;
-
-use std::boxed::Box;
-
 use sbp::messages::settings::{MsgSettingsReadReq, MsgSettingsReadResp};
 use sbp::messages::SBPMessage;
 use sbp::SbpString;
 
 use libsettings::client::{read_setting, SettingValue};
 
-static SETTINGS_SENDER_ID: u16 = 0x42_u16;
+static SETTINGS_SENDER_ID: u16 = 0x42;
 
 #[test]
 fn mock_read_setting_int() {
@@ -128,7 +123,7 @@ fn mock_read_setting_string() {
         name.to_string(),
     );
 
-    assert_eq!(response, SettingValue::String(Box::new("foo".to_string())));
+    assert_eq!(response, SettingValue::String("foo".to_string()));
 }
 
 #[test]
@@ -158,8 +153,5 @@ fn mock_read_setting_enum() {
         name.to_string(),
     );
 
-    assert_eq!(
-        response,
-        SettingValue::String(Box::new("Secondary".to_string()))
-    );
+    assert_eq!(response, SettingValue::String("Secondary".to_string()));
 }

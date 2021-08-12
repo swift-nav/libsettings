@@ -378,7 +378,7 @@ pub enum SettingValue {
     Integer(i32),
     Boolean(bool),
     Double(f32),
-    String(Box<String>),
+    String(String),
 }
 
 pub fn create_api(stream_r: Box<dyn Read>, stream_w: Box<dyn Write>) -> (Context, settings_api_t) {
@@ -502,7 +502,7 @@ pub fn read_setting(
                 return_value = SettingValue::Boolean(value);
                 status
             },
-            SettingKind::Double => unsafe {
+            SettingKind::Float | SettingKind::Double => unsafe {
                 let mut value: f32 = 0.0;
                 let status = settings_read_float(
                     settings_ctx,
@@ -513,7 +513,7 @@ pub fn read_setting(
                 return_value = SettingValue::Double(value);
                 status
             },
-            SettingKind::String | SettingKind::Enum => unsafe {
+            SettingKind::String | SettingKind::Enum | SettingKind::PackedBitfield => unsafe {
                 let mut buf = Vec::<c_char>::with_capacity(1024);
                 let status = settings_read_str(
                     settings_ctx,
@@ -522,13 +522,11 @@ pub fn read_setting(
                     buf.as_mut_ptr(),
                     buf.capacity().try_into().unwrap(),
                 );
-                return_value = SettingValue::String(Box::new(
+                return_value = SettingValue::String(
                     CStr::from_ptr(buf.as_ptr()).to_string_lossy().into_owned(),
-                ));
+                );
                 status
             },
-
-            SettingKind::PackedBitfield | SettingKind::Float => todo!(),
         };
         debug!("Settings read result: {}", res);
     } else {
