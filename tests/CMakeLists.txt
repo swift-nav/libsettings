@@ -20,6 +20,8 @@
     ${PROJECT_SOURCE_DIR}/src/settings.c
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
 
+    target_compile_definitions(test_libsettings PRIVATE "_WINDLL")
+
   target_include_directories(test_libsettings
       PRIVATE
       ${PROJECT_SOURCE_DIR}/include
