@@ -44,6 +44,7 @@ if (NOT MSVC)
 
         # Build extension
         add_custom_command(
+            DEPENDS ${LIBSETTINGS_VENV}
             OUTPUT "${PY_OUTPUT}"
             COMMAND ${PYTHON} ${SETUP_PY} build_ext --force --compiler=mingw32 -L ${CMAKE_BINARY_DIR}
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
@@ -68,7 +69,9 @@ if (NOT MSVC)
                 COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
             )
             add_custom_command(
+                DEPENDS ${LIBSETTINGS_VENV}
                 OUTPUT "${PY_OUTPUT}"
+                COMMAND ./${LIBSETTINGS_VENV}/bin/cythonize ${PROJECT_SOURCE_DIR}/python/libsettings.pyx
                 COMMAND PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/${LIBSETTINGS_VENV}/lib/python${PYTHON_VERSION}/site-packages ${PYTHON} ${SETUP_PY} build_ext --force
                 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
             )
@@ -78,7 +81,9 @@ if (NOT MSVC)
                 COMMAND pip3 install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
             )
             add_custom_command(
+                DEPENDS ${LIBSETTINGS_VENV}
                 OUTPUT "${PY_OUTPUT}"
+                COMMAND cythonize ${PROJECT_SOURCE_DIR}/python/libsettings.pyx
                 COMMAND ${PYTHON} ${SETUP_PY} build_ext --force
                 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
             )
