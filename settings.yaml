@@ -1270,42 +1270,6 @@
      Lower values provide lower sensitivity and noisier phase measurements but better performance in dynamic conditions.
 
 - group: cn0_est
-  name: alpha
-  expert: true
-  Description: cn0 estimation parameter.
-  readonly: false
-
-- group: cn0_est
-  name: nbw
-  expert: true
-  Description: cn0 estimation parameter.
-  readonly: false
-
-- group: cn0_est
-  name: scale
-  expert: true
-  Description: cn0 estimation parameter.
-  readonly: false
-
-- group: cn0_est
-  name: cn0 shift
-  expert: true
-  Description: cn0 estimation parameter.
-  readonly: false
-
-- group: cn0_est
-  name: cn0_shift
-  expert: true
-  Description: cn0 estimation parameter.
-  readonly: false
-
-- group: cn0_est
-  name: cutoff
-  expert: true
-  Description: cn0 cutoff.
-  readonly: false
-
-- group: cn0_est
   name: pri2sec_threshold
   type: float
   expert: true

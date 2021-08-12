@@ -19,7 +19,7 @@ pub struct Setting {
     group: String,
 
     #[serde(rename = "type")]
-    kind: Option<SettingKind>,
+    kind: SettingKind,
 
     #[serde(deserialize_with = "deserialize_bool", default)]
     expert: bool,
@@ -73,7 +73,7 @@ pub fn lookup_setting(group: &str, name: &str) -> Option<&'static Setting> {
 }
 
 pub fn lookup_setting_kind(group: &str, name: &str) -> Option<SettingKind> {
-    lookup_setting(group, name).map(|s| s.kind).flatten()
+    lookup_setting(group, name).map(|s| s.kind)
 }
 
 fn deserialize_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
