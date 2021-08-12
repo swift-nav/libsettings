@@ -47,3 +47,6 @@ jobs:
           useVcpkgToolchainFile: true
           buildWithCMakeArgs: '-j 1'
           buildDirectory: '${{ runner.workspace }}/b/'
+
+      - name: Run tests
+        run: '${{ runner.workspace }}\b\tests\Debug\test_libsettings.exe'
