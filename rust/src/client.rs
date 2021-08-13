@@ -15,7 +15,7 @@ use libc::c_void;
 use log::{debug, error, info, trace};
 
 use crate::bindings::*;
-use crate::settings_manager::{lookup_setting_type, SettingType};
+use crate::settings_manager::{lookup_setting_kind, SettingKind};
 
 const SBP_STATE: sbp_state_t = sbp_state_t {
     state: 0,
@@ -315,11 +315,11 @@ pub fn write_setting(
         section, name, value
     );
 
-    if let Some(type_) = lookup_setting_type(&section, &name) {
+    if let Some(kind) = lookup_setting_kind(&section, &name) {
         let section = CString::new(section.clone()).unwrap();
         let name = CString::new(name.clone()).unwrap();
-        let res = match type_ {
-            SettingType::StInteger => {
+        let res = match kind {
+            SettingKind::Integer => {
                 let value: i32 = value
                     .parse::<i32>()
                     .expect("failed to parse argument value");
@@ -333,7 +333,7 @@ pub fn write_setting(
                     )
                 }
             }
-            SettingType::StBoolean => {
+            SettingKind::Boolean => {
                 let value: bool = value
                     .parse::<bool>()
                     .expect("failed to parse argument value");
@@ -347,7 +347,7 @@ pub fn write_setting(
                     )
                 }
             }
-            SettingType::StString => {
+            SettingKind::String => {
                 let value_cstring = CString::new(value).unwrap();
                 unsafe {
                     settings_write_str(
@@ -378,7 +378,7 @@ pub enum SettingValue {
     Integer(i32),
     Boolean(bool),
     Double(f32),
-    String(Box<String>),
+    String(String),
 }
 
 pub fn create_api(stream_r: Box<dyn Read>, stream_w: Box<dyn Write>) -> (Context, settings_api_t) {
@@ -478,9 +478,9 @@ pub fn read_setting(
     let c_name = CString::new(name.clone()).unwrap();
     let mut return_value: SettingValue = SettingValue::Integer(0);
 
-    if let Some(type_) = lookup_setting_type(&section, &name) {
-        let res = match type_ {
-            SettingType::StInteger => unsafe {
+    if let Some(kind) = lookup_setting_kind(&section, &name) {
+        let res = match kind {
+            SettingKind::Integer => unsafe {
                 let mut value: i32 = 0;
                 let status = settings_read_int(
                     settings_ctx,
@@ -491,7 +491,7 @@ pub fn read_setting(
                 return_value = SettingValue::Integer(value);
                 status
             },
-            SettingType::StBoolean => unsafe {
+            SettingKind::Boolean => unsafe {
                 let mut value: bool = false;
                 let status = settings_read_bool(
                     settings_ctx,
@@ -502,7 +502,7 @@ pub fn read_setting(
                 return_value = SettingValue::Boolean(value);
                 status
             },
-            SettingType::StDouble => unsafe {
+            SettingKind::Float | SettingKind::Double => unsafe {
                 let mut value: f32 = 0.0;
                 let status = settings_read_float(
                     settings_ctx,
@@ -513,7 +513,7 @@ pub fn read_setting(
                 return_value = SettingValue::Double(value);
                 status
             },
-            SettingType::StString | SettingType::StEnum => unsafe {
+            SettingKind::String | SettingKind::Enum | SettingKind::PackedBitfield => unsafe {
                 let mut buf = Vec::<c_char>::with_capacity(1024);
                 let status = settings_read_str(
                     settings_ctx,
@@ -522,9 +522,9 @@ pub fn read_setting(
                     buf.as_mut_ptr(),
                     buf.capacity().try_into().unwrap(),
                 );
-                return_value = SettingValue::String(Box::new(
+                return_value = SettingValue::String(
                     CStr::from_ptr(buf.as_ptr()).to_string_lossy().into_owned(),
-                ));
+                );
                 status
             },
         };
