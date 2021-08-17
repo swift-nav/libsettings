@@ -15,7 +15,7 @@ use libc::c_void;
 use log::{debug, error, info, trace};
 
 use crate::bindings::*;
-use crate::settings_manager::{lookup_setting_kind, SettingKind};
+use crate::settings_manager::{lookup_setting, SettingKind};
 
 const SBP_STATE: sbp_state_t = sbp_state_t {
     state: 0,
@@ -315,7 +315,7 @@ pub fn write_setting(
         section, name, value
     );
 
-    if let Some(kind) = lookup_setting_kind(&section, &name) {
+    if let Some(kind) = lookup_setting(&section, &name).map(|s| s.kind) {
         let section = CString::new(section.clone()).unwrap();
         let name = CString::new(name.clone()).unwrap();
         let res = match kind {
@@ -478,7 +478,7 @@ pub fn read_setting(
     let c_name = CString::new(name.clone()).unwrap();
     let mut return_value: SettingValue = SettingValue::Integer(0);
 
-    if let Some(kind) = lookup_setting_kind(&section, &name) {
+    if let Some(kind) = lookup_setting(&section, &name).map(|s| s.kind) {
         let res = match kind {
             SettingKind::Integer => unsafe {
                 let mut value: i32 = 0;

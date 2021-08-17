@@ -2,7 +2,7 @@ use std::fmt;
 
 use serde::{
     de::{self, Unexpected},
-    Deserialize,
+    Deserialize, Deserializer,
 };
 
 lazy_static::lazy_static! {
@@ -12,36 +12,45 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Setting {
-    name: String,
+    pub name: String,
 
-    group: String,
+    pub group: String,
 
     #[serde(rename = "type")]
-    kind: SettingKind,
+    pub kind: SettingKind,
 
     #[serde(deserialize_with = "deserialize_bool", default)]
-    expert: bool,
+    pub expert: bool,
 
     #[serde(deserialize_with = "deserialize_bool", default)]
-    readonly: bool,
+    pub readonly: bool,
 
     #[serde(rename = "Description")]
-    description: Option<String>,
+    pub description: Option<String>,
 
-    #[serde(alias = "default value")]
-    default_value: Option<String>,
+    #[serde(
+        alias = "default value",
+        deserialize_with = "deserialize_string",
+        default
+    )]
+    pub default_value: Option<String>,
 
     #[serde(rename = "Notes")]
-    notes: Option<String>,
+    pub notes: Option<String>,
 
-    units: Option<String>,
+    #[serde(deserialize_with = "deserialize_string", default)]
+    pub units: Option<String>,
 
-    #[serde(rename = "enumerated possible values")]
-    enumerated_possible_values: Option<String>,
+    #[serde(
+        rename = "enumerated possible values",
+        deserialize_with = "deserialize_string",
+        default
+    )]
+    pub enumerated_possible_values: Option<String>,
 
-    digits: Option<String>,
+    pub digits: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
@@ -68,17 +77,15 @@ pub enum SettingKind {
     PackedBitfield,
 }
 
-pub fn lookup_setting(group: &str, name: &str) -> Option<&'static Setting> {
+pub fn lookup_setting(group: impl AsRef<str>, name: impl AsRef<str>) -> Option<&'static Setting> {
+    let group = group.as_ref();
+    let name = name.as_ref();
     SETTINGS.iter().find(|s| s.group == group && s.name == name)
-}
-
-pub fn lookup_setting_kind(group: &str, name: &str) -> Option<SettingKind> {
-    lookup_setting(group, name).map(|s| s.kind)
 }
 
 fn deserialize_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
-    D: de::Deserializer<'de>,
+    D: Deserializer<'de>,
 {
     struct BoolVisitor;
 
@@ -96,11 +103,11 @@ where
             Ok(v)
         }
 
-        fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: de::Error,
         {
-            match s {
+            match v {
                 "True" | "true" => Ok(true),
                 "False" | "false" => Ok(false),
                 other => Err(de::Error::invalid_value(
@@ -114,20 +121,90 @@ where
     deserializer.deserialize_any(BoolVisitor)
 }
 
+fn deserialize_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct StringVisitor;
+
+    impl<'de> de::Visitor<'de> for StringVisitor {
+        type Value = Option<String>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("an optional string")
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            match v {
+                "N/A" | "" => Ok(None),
+                _ => Ok(Some(v.to_owned())),
+            }
+        }
+
+        fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+    }
+
+    deserializer.deserialize_any(StringVisitor)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_lookup_setting_kind() {
+    fn test_lookup_setting() {
         assert_eq!(
-            lookup_setting_kind("solution", "soln_freq"),
-            Some(SettingKind::Integer)
+            lookup_setting("solution", "soln_freq"),
+            Some(&Setting {
+                name: "soln_freq".into(),
+                group: "solution".into(),
+                kind: SettingKind::Integer,
+                readonly: false,
+                expert: false,
+                units: Some("Hz".into()),
+                default_value: Some("10".into()),
+                description: Some("The frequency at which a position solution is computed.".into()),
+                notes: None,
+                enumerated_possible_values: None,
+                digits: None,
+            })
         );
-        assert_eq!(
-            lookup_setting_kind("tcp_server0", "enabled_sbp_messages"),
-            Some(SettingKind::String)
-        );
-        assert_eq!(lookup_setting_kind("solution", "froo_froo"), None);
+
+        assert_eq!(lookup_setting("solution", "froo_froo"), None);
+    }
+
+    #[test]
+    fn test_na_is_none() {
+        let setting = lookup_setting("tcp_server0", "enabled_sbp_messages").unwrap();
+        assert_eq!(setting.units, None);
     }
 }
