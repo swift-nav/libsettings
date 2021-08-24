@@ -7,7 +7,7 @@ use serde::{
 
 lazy_static::lazy_static! {
     static ref SETTINGS: Vec<Setting> = {
-        serde_yaml::from_str(include_str!("../../settings.yaml"))
+        serde_yaml::from_str(include_str!("../../../settings.yaml"))
             .expect("Could not parse settings.yaml")
     };
 }
@@ -75,6 +75,24 @@ pub enum SettingKind {
 
     #[serde(rename = "packed bitfield")]
     PackedBitfield,
+}
+
+impl SettingKind {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            SettingKind::Integer => "integer",
+            SettingKind::Boolean => "boolean",
+            SettingKind::Float => "float",
+            SettingKind::Double => "double",
+            SettingKind::String => "string",
+            SettingKind::Enum => "enum",
+            SettingKind::PackedBitfield => "packed bitfield",
+        }
+    }
+}
+
+pub fn settings() -> &'static [Setting] {
+    &SETTINGS
 }
 
 pub fn lookup_setting(group: impl AsRef<str>, name: impl AsRef<str>) -> Option<&'static Setting> {

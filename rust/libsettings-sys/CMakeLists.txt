@@ -13,9 +13,9 @@ target_link_libraries(rustbindsettings Threads::Threads)
 
 target_include_directories(rustbindsettings
     PRIVATE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/..
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/../third_party/libsbp/c/include
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/../include
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/../..
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/../../third_party/libsbp/c/include
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/../../include
 )
 
 install(TARGETS rustbindsettings

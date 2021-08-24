@@ -2,7 +2,7 @@ use sbp::messages::settings::{MsgSettingsReadReq, MsgSettingsReadResp};
 use sbp::messages::SBPMessage;
 use sbp::SbpString;
 
-use libsettings::client::{read_setting, SettingValue};
+use libsettings::client::{Client, SettingValue};
 
 static SETTINGS_SENDER_ID: u16 = 0x42;
 
@@ -25,14 +25,14 @@ fn mock_read_setting_int() {
 
     stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
 
-    let stream_write = stream.clone();
-    let response = read_setting(
-        Box::new(stream),
-        Box::new(stream_write),
-        group.to_string(),
-        name.to_string(),
-    );
+    let mut client = Client::new(stream.clone(), stream.clone());
+    let response = client.read_setting(group, name);
+    assert_eq!(response, SettingValue::Integer(10));
 
+    stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+    stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+
+    let response = client.read_setting(group, name);
     assert_eq!(response, SettingValue::Integer(10));
 }
 
@@ -55,13 +55,8 @@ fn mock_read_setting_bool() {
 
     stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
 
-    let stream_write = stream.clone();
-    let response = read_setting(
-        Box::new(stream),
-        Box::new(stream_write),
-        group.to_string(),
-        name.to_string(),
-    );
+    let mut client = Client::new(stream.clone(), stream);
+    let response = client.read_setting(group, name);
 
     assert_eq!(response, SettingValue::Boolean(true));
 }
@@ -85,15 +80,10 @@ fn mock_read_setting_double() {
 
     stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
 
-    let stream_write = stream.clone();
-    let response = read_setting(
-        Box::new(stream),
-        Box::new(stream_write),
-        group.to_string(),
-        name.to_string(),
-    );
+    let mut client = Client::new(stream.clone(), stream);
+    let response = client.read_setting(group, name);
 
-    assert_eq!(response, SettingValue::Double(0.1_f32));
+    assert_eq!(response, SettingValue::Float(0.1_f32));
 }
 
 #[test]
@@ -115,13 +105,8 @@ fn mock_read_setting_string() {
 
     stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
 
-    let stream_write = stream.clone();
-    let response = read_setting(
-        Box::new(stream),
-        Box::new(stream_write),
-        group.to_string(),
-        name.to_string(),
-    );
+    let mut client = Client::new(stream.clone(), stream);
+    let response = client.read_setting(group, name);
 
     assert_eq!(response, SettingValue::String("foo".to_string()));
 }
@@ -145,13 +130,8 @@ fn mock_read_setting_enum() {
 
     stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
 
-    let stream_write = stream.clone();
-    let response = read_setting(
-        Box::new(stream),
-        Box::new(stream_write),
-        group.to_string(),
-        name.to_string(),
-    );
+    let mut client = Client::new(stream.clone(), stream);
+    let response = client.read_setting(group, name);
 
     assert_eq!(response, SettingValue::String("Secondary".to_string()));
 }
