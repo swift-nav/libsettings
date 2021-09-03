@@ -12,6 +12,18 @@ lazy_static::lazy_static! {
     };
 }
 
+pub fn settings() -> &'static [Setting] {
+    &SETTINGS
+}
+
+pub fn lookup_setting(group: impl AsRef<str>, name: impl AsRef<str>) -> Option<&'static Setting> {
+    let group = group.as_ref();
+    let name = name.as_ref();
+    settings()
+        .iter()
+        .find(|s| s.group == group && s.name == name)
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Setting {
     pub name: String,
@@ -91,14 +103,23 @@ impl SettingKind {
     }
 }
 
-pub fn settings() -> &'static [Setting] {
-    &SETTINGS
+#[derive(Debug, Clone, PartialEq)]
+pub enum SettingValue {
+    Integer(i32),
+    Boolean(bool),
+    Float(f32),
+    String(String),
 }
 
-pub fn lookup_setting(group: impl AsRef<str>, name: impl AsRef<str>) -> Option<&'static Setting> {
-    let group = group.as_ref();
-    let name = name.as_ref();
-    SETTINGS.iter().find(|s| s.group == group && s.name == name)
+impl fmt::Display for SettingValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SettingValue::Integer(s) => s.fmt(f),
+            SettingValue::Boolean(s) => s.fmt(f),
+            SettingValue::Float(s) => s.fmt(f),
+            SettingValue::String(s) => s.fmt(f),
+        }
+    }
 }
 
 fn deserialize_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>

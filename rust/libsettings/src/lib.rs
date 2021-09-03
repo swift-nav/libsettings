@@ -1,2 +1,3 @@
-pub mod client;
-pub mod settings_manager;
+pub mod settings;
+
+pub use settings::{settings, Setting, SettingKind, SettingValue};
