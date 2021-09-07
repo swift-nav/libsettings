@@ -49,19 +49,4 @@ typedef uint64_t _u64;
 #define _RUSTC_BINDGEN_ 1
 #include "libsettings/settings.h"
 
-typedef struct libsettings_ctx_s {
-  void *lock;
-  void *condvar;
-} libsettings_ctx_t;
-
-bool c_libsettings_init(libsettings_ctx_t *ctx);
-
-bool c_libsettings_lock(libsettings_ctx_t *ctx);
-bool c_libsettings_unlock(libsettings_ctx_t *ctx);
-
-bool c_libsettings_wait(libsettings_ctx_t *ctx, uint32_t ms);
-bool c_libsettings_signal(libsettings_ctx_t *ctx);
-
-bool c_libsettings_destroy(libsettings_ctx_t *ctx);
-
 #endif

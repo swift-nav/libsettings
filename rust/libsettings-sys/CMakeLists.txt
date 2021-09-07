@@ -3,13 +3,8 @@ cmake_minimum_required(VERSION 3.2)
 add_library(
    rustbindsettings
    STATIC
-   libsettings_locks.c
+   libsettings_wrapper.c
 )
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
-target_link_libraries(rustbindsettings Threads::Threads)
 
 target_include_directories(rustbindsettings
     PRIVATE
