@@ -27,12 +27,6 @@ jobs:
           override: true
           components: rustfmt
 
-      - name: Check bindings are up to date
-        run: |
-          cd rust/libsettings-sys
-          ./bindgen.sh
-          git diff --exit-code src/bindings.rs
-
       - uses: actions-rs/cargo@v1
         name: Format Check
         with:
