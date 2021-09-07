@@ -15,6 +15,5 @@ fn main() {
 
     println!("cargo:rustc-link-lib=static=sbp");
     println!("cargo:rustc-link-lib=static=settings");
-    println!("cargo:rustc-link-lib=static=swiftnav");
     println!("cargo:rustc-link-lib=static=rustbindsettings");
 }
