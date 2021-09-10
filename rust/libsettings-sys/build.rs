@@ -15,9 +15,13 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("./libsettings_wrapper.h")
-        .blocklist_type("FP__.*")
         .clang_arg("-I../../include")
         .clang_arg("-I../../third_party/libsbp/c/include")
+        .blocklist_item("FP_INFINITE")
+        .blocklist_item("FP_NAN")
+        .blocklist_item("FP_ZERO")
+        .blocklist_item("FP_SUBNORMAL")
+        .blocklist_item("FP_NORMAL")
         .generate()
         .expect("Unable to generate bindings");
 
