@@ -6,13 +6,13 @@ fn main() {
         .build();
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
 
-    let dst = cmake::Config::new(".").build();
-    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    // let dst = cmake::Config::new(".").build();
+    // println!("cargo:rustc-link-search=native={}/lib", dst.display());
 
     println!("cargo:rustc-link-lib=static=sbp");
     println!("cargo:rustc-link-lib=static=settings");
     println!("cargo:rustc-link-lib=static=swiftnav");
-    println!("cargo:rustc-link-lib=static=rustbindsettings");
+    // println!("cargo:rustc-link-lib=static=rustbindsettings");
 
     // let bindings = bindgen::Builder::default()
     //     .header("./libsettings_wrapper.h")
