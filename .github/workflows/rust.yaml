@@ -54,10 +54,10 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: bwoodsend/setup-winlibs-action@v1
-        if: matrix.os == 'windows-2019'
-        with:
-          destination: c:/
+      # - uses: bwoodsend/setup-winlibs-action@v1
+      #   if: matrix.os == 'windows-2019'
+      #   with:
+      #     destination: c:/
 
       - name: Install MinGW Rust toolchain
         if: matrix.os == 'windows-2019'
@@ -78,5 +78,5 @@ jobs:
         run: cargo test --target=x86_64-pc-windows-gnu
 
       - name: Run tests (Non-Windows)
-        if: matrix.os != 'windows-2019'
+        # if: matrix.os != 'windows-2019'
         run: cargo test
