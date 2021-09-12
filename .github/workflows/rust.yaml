@@ -8,9 +8,6 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+*"
   pull_request:
 
-env:
-  LIBCLANG_PATH_WIN: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
-
 jobs:
   lint:
     name: Format and lint
@@ -26,12 +23,6 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt
-
-      # - name: Check bindings are up to date
-      #   run: |
-      #     cd rust/libsettings-sys
-      #     ./bindgen.sh
-      #     git diff --exit-code src/bindings.rs
 
       - uses: actions-rs/cargo@v1
         name: Format Check
@@ -58,11 +49,12 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install LLVM and Clang # required for bindgen on Windows
+      # required for bindgen on Windows
+      - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
         if: matrix.os == 'windows-2019'
         with:
-          version: "10.0"
+          version: 10.0
 
       - name: Install rust ${{ matrix.binary_target }}
         uses: actions-rs/toolchain@v1
@@ -70,32 +62,5 @@ jobs:
           toolchain: stable-${{ matrix.binary_target }}
           profile: minimal
 
-      # - uses: bwoodsend/setup-winlibs-action@v1
-      #   if: matrix.os == 'windows-2019'
-      #   with:
-      #     destination: c:/
-
-      # - name: Install MinGW Rust toolchain
-      #   if: matrix.os == 'windows-2019'
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     target: x86_64-pc-windows-gnu
-      #     override: true
-      #     components: rustfmt, clippy
-
-      # - name: Run tests (Windows)
-      #   if: matrix.os == 'windows-2019'
-      #   env:
-      #     LIBCLANG_PATH: ${{ env.LIBCLANG_PATH_WIN }}
-      #     CC: gcc
-      #     CXX: g++
-      #     CMAKE_GENERATOR: MinGW Makefiles
-      #   run: cargo test --target=x86_64-pc-windows-gnu
-
-      # - name: Run tests (Non-Windows)
-      # if: matrix.os != 'windows-2019'
-      # run: cargo test
       - name: Run tests
-        # if: matrix.os != 'windows-2019'
         run: cargo test
