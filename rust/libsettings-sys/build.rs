@@ -16,6 +16,7 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("./libsettings_wrapper.h")
+        .blocklist_item("FP__.*")
         .clang_arg("-I../../include")
         .clang_arg("-I../../third_party/libswiftnav/include")
         .clang_arg("-I../../third_party/libsbp/c/include")
