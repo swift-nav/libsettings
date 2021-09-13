@@ -574,7 +574,6 @@ unsafe extern "C" fn unregister_cb(
     node: *mut *mut sbp_msg_callbacks_node_t,
 ) -> i32 {
     let context: &mut Context = &mut *(ctx as *mut _);
-    let _guard = context.lock.lock();
     if (node as i32) == 0 {
         return -127;
     }
@@ -676,4 +675,168 @@ extern "C" fn libsettings_wait_init(ctx: *mut c_void) -> i32 {
     let context: &mut Context = unsafe { &mut *(ctx as *mut _) };
     context.event = Some(Event::new());
     0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::io::{Read, Write};
+
+    use crossbeam_utils::thread::scope;
+    use sbp::codec::dencode::{FramedWrite, IterSinkExt};
+    use sbp::codec::sbp::SbpEncoder;
+    use sbp::link::LinkSource;
+    use sbp::messages::settings::{MsgSettingsReadReq, MsgSettingsReadResp};
+    use sbp::messages::SBPMessage;
+    use sbp::sbp_tools::SBPTools;
+    use sbp::SbpString;
+
+    static SETTINGS_SENDER_ID: u16 = 0x42;
+
+    fn read_setting(
+        rdr: impl Read + Send,
+        wtr: impl Write + 'static,
+        group: &str,
+        name: &str,
+    ) -> Option<Result<settings::SettingValue, Error<ReadSettingError>>> {
+        let messages = sbp::iter_messages(rdr).handle_errors(|e| panic!("{}", e));
+        let source = LinkSource::new();
+        let mut framed = FramedWrite::new(wtr, SbpEncoder::new());
+        let client = Client::new(source.link(), move |msg| {
+            framed.send(msg).map_err(Into::into)
+        });
+        scope(move |scope| {
+            scope.spawn(move |_| {
+                for message in messages {
+                    source.send(message);
+                }
+            });
+            client.read_setting(group, name)
+        })
+        .unwrap()
+    }
+
+    #[test]
+    fn mock_read_setting_int() {
+        let (group, name) = ("sbp", "obs_msg_max_size");
+        let mut stream = mockstream::SyncMockStream::new();
+
+        let request_msg = MsgSettingsReadReq {
+            sender_id: Some(SETTINGS_SENDER_ID),
+            setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
+        };
+
+        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+
+        let reply_msg = MsgSettingsReadResp {
+            sender_id: Some(0x42),
+            setting: SbpString::from(format!("{}\0{}\010\0", group, name).to_string()),
+        };
+
+        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+
+        let response = read_setting(stream.clone(), stream, group, name);
+
+        assert!(matches!(response, Some(Ok(SettingValue::Integer(10)))));
+    }
+
+    #[test]
+    fn mock_read_setting_bool() {
+        let (group, name) = ("surveyed_position", "broadcast");
+        let mut stream = mockstream::SyncMockStream::new();
+
+        let request_msg = MsgSettingsReadReq {
+            sender_id: Some(SETTINGS_SENDER_ID),
+            setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
+        };
+
+        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+
+        let reply_msg = MsgSettingsReadResp {
+            sender_id: Some(0x42),
+            setting: SbpString::from(format!("{}\0{}\0True\0", group, name).to_string()),
+        };
+
+        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+
+        let response = read_setting(stream.clone(), stream, group, name);
+
+        assert!(matches!(response, Some(Ok(SettingValue::Boolean(true)))));
+    }
+
+    #[test]
+    fn mock_read_setting_double() {
+        let (group, name) = ("surveyed_position", "surveyed_lat");
+        let mut stream = mockstream::SyncMockStream::new();
+
+        let request_msg = MsgSettingsReadReq {
+            sender_id: Some(SETTINGS_SENDER_ID),
+            setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
+        };
+
+        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+
+        let reply_msg = MsgSettingsReadResp {
+            sender_id: Some(SETTINGS_SENDER_ID),
+            setting: SbpString::from(format!("{}\0{}\00.1\0", group, name).to_string()),
+        };
+
+        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+
+        let response = read_setting(stream.clone(), stream, group, name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response, SettingValue::Float(0.1));
+    }
+
+    #[test]
+    fn mock_read_setting_string() {
+        let (group, name) = ("rtcm_out", "ant_descriptor");
+        let mut stream = mockstream::SyncMockStream::new();
+
+        let request_msg = MsgSettingsReadReq {
+            sender_id: Some(0x42),
+            setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
+        };
+
+        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+
+        let reply_msg = MsgSettingsReadResp {
+            sender_id: Some(SETTINGS_SENDER_ID),
+            setting: SbpString::from(format!("{}\0{}\0foo\0", group, name).to_string()),
+        };
+
+        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+
+        let response = read_setting(stream.clone(), stream, group, name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response, SettingValue::String("foo".into()));
+    }
+
+    #[test]
+    fn mock_read_setting_enum() {
+        let (group, name) = ("frontend", "antenna_selection");
+        let mut stream = mockstream::SyncMockStream::new();
+
+        let request_msg = MsgSettingsReadReq {
+            sender_id: Some(SETTINGS_SENDER_ID),
+            setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
+        };
+
+        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+
+        let reply_msg = MsgSettingsReadResp {
+            sender_id: Some(0x42),
+            setting: SbpString::from(format!("{}\0{}\0Secondary\0", group, name).to_string()),
+        };
+
+        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+
+        let response = read_setting(stream.clone(), stream, group, name)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response, SettingValue::String("Secondary".into()));
+    }
 }
