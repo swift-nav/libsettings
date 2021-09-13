@@ -17,7 +17,7 @@ use libsettings_sys::{
     settings_write_res_e_SETTINGS_WR_SETTING_REJECTED, settings_write_res_e_SETTINGS_WR_TIMEOUT,
     settings_write_res_e_SETTINGS_WR_VALUE_REJECTED, settings_write_str, size_t,
 };
-use log::{debug, error};
+use log::{debug, error, warn};
 use sbp::{
     link::{Key, Link},
     messages::{SBPMessage, SBP},
@@ -511,7 +511,7 @@ impl Event {
     fn set(&self) {
         let _ = self.lock.lock();
         if !self.condvar.notify_one() {
-            eprintln!("event set did not notify anything");
+            warn!("event set did not notify anything");
         }
     }
 }
