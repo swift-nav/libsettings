@@ -438,18 +438,18 @@ struct Context<'a> {
 impl Context<'_> {
     fn callback_broker(&self, msg: SBP) {
         let cb_data = {
-            let idx = match self
+            let idx = if let Some(idx) = self
                 .callbacks
                 .iter()
                 .position(|cb| cb.msg_type == msg.get_message_type())
             {
-                Some(idx) => idx,
-                None => {
-                    panic!(
-                        "callback not registered for message type {}",
-                        msg.get_message_type()
-                    )
-                }
+                idx
+            } else {
+                error!(
+                    "callback not registered for message type {}",
+                    msg.get_message_type()
+                );
+                return;
             };
             self.callbacks[idx]
         };
