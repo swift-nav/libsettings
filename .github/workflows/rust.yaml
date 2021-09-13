@@ -61,10 +61,12 @@ jobs:
           toolchain: stable-${{ matrix.binary_target }}
           profile: minimal
 
-      - name: Set Windows enviroment variables
+      - name: Run tests (Windows)
+        env:
+          LIBCLANG_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
         if: matrix.os == 'windows-2019'
-        run: |
-          echo "LIBCLANG_PATH=C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin" >> $GITHUB_ENV
+        run: cargo test
 
       - name: Run tests
+        if: matrix.os != 'windows-2019'
         run: cargo test
