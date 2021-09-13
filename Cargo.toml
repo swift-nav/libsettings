@@ -1,4 +1,2 @@
 [workspace]
-members = [
-  "rust/*",
-]
+members = ["rust/"]

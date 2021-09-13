@@ -1,19 +1,17 @@
 use std::fmt;
 
+use once_cell::sync::OnceCell;
 use serde::{
     de::{self, Unexpected},
     Deserialize, Deserializer,
 };
 
-lazy_static::lazy_static! {
-    static ref SETTINGS: Vec<Setting> = {
-        serde_yaml::from_str(include_str!("../../../settings.yaml"))
-            .expect("Could not parse settings.yaml")
-    };
-}
-
 pub fn settings() -> &'static [Setting] {
-    &SETTINGS
+    static SETTINGS: OnceCell<Vec<Setting>> = OnceCell::new();
+    SETTINGS.get_or_init(|| {
+        serde_yaml::from_str(include_str!("../../settings.yaml"))
+            .expect("could not parse settings.yaml")
+    })
 }
 
 pub fn lookup_setting(group: impl AsRef<str>, name: impl AsRef<str>) -> Option<&'static Setting> {
