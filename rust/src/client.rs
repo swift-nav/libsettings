@@ -47,8 +47,8 @@ impl<'a> Client<'a> {
 
         let api = Box::new(settings_api_t {
             ctx: ptr::null_mut(),
-            send: Some(send),
-            send_from: Some(send_from),
+            send: Some(libsettings_send),
+            send_from: Some(libsettings_send_from),
             wait_init: Some(libsettings_wait_init),
             wait: Some(libsettings_wait),
             wait_deinit: None,
@@ -332,6 +332,9 @@ impl From<i32> for WriteSettingError {
 
 impl From<u32> for WriteSettingError {
     fn from(n: u32) -> Self {
+        #[cfg(target_os = "windows")]
+        let n = n as i32;
+
         #[allow(non_upper_case_globals)]
         match n {
             settings_write_res_e_SETTINGS_WR_VALUE_REJECTED => WriteSettingError::ValueRejected,
@@ -589,12 +592,17 @@ unsafe extern "C" fn unregister_cb(
 }
 
 #[no_mangle]
-unsafe extern "C" fn send(ctx: *mut c_void, msg_type: u16, len: u8, payload: *mut u8) -> i32 {
-    send_from(ctx, msg_type, len, payload, 0)
+unsafe extern "C" fn libsettings_send(
+    ctx: *mut c_void,
+    msg_type: u16,
+    len: u8,
+    payload: *mut u8,
+) -> i32 {
+    libsettings_send_from(ctx, msg_type, len, payload, 0)
 }
 
 #[no_mangle]
-unsafe extern "C" fn send_from(
+unsafe extern "C" fn libsettings_send_from(
     ctx: *mut ::std::os::raw::c_void,
     msg_type: u16,
     len: u8,
@@ -610,12 +618,10 @@ unsafe extern "C" fn send_from(
             return -1;
         }
     };
-
     if let Err(err) = (context.sender)(msg) {
         error!("failed to send message: {}", err);
         return -1;
     };
-
     0
 }
 
