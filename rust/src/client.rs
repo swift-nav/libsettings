@@ -164,6 +164,14 @@ impl<'a> Client<'a> {
 
     pub fn read_setting(
         &self,
+        group: impl AsRef<str>,
+        name: impl AsRef<str>,
+    ) -> Option<Result<SettingValue, Error<ReadSettingError>>> {
+        self.read_setting_inner(group.as_ref(), name.as_ref())
+    }
+
+    fn read_setting_inner(
+        &self,
         group: &str,
         name: &str,
     ) -> Option<Result<SettingValue, Error<ReadSettingError>>> {
@@ -232,6 +240,15 @@ impl<'a> Client<'a> {
     }
 
     pub fn write_setting(
+        &self,
+        group: impl AsRef<str>,
+        name: impl AsRef<str>,
+        value: impl AsRef<str>,
+    ) -> Result<(), Error<WriteSettingError>> {
+        self.write_setting_inner(group.as_ref(), name.as_ref(), value.as_ref())
+    }
+
+    fn write_setting_inner(
         &self,
         group: &str,
         name: &str,
