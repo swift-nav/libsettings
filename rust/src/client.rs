@@ -1,7 +1,7 @@
 use std::{
     convert::TryInto,
     ffi::{self, CStr, CString},
-    os::raw::{c_char, c_ulong, c_void},
+    os::raw::{c_char, c_void},
     ptr, slice,
     time::Duration,
 };
@@ -15,7 +15,7 @@ use libsettings_sys::{
     settings_write_res_e_SETTINGS_WR_PARSE_FAILED, settings_write_res_e_SETTINGS_WR_READ_ONLY,
     settings_write_res_e_SETTINGS_WR_SERVICE_FAILED,
     settings_write_res_e_SETTINGS_WR_SETTING_REJECTED, settings_write_res_e_SETTINGS_WR_TIMEOUT,
-    settings_write_res_e_SETTINGS_WR_VALUE_REJECTED, settings_write_str,
+    settings_write_res_e_SETTINGS_WR_VALUE_REJECTED, settings_write_str, size_t,
 };
 use log::{debug, error};
 use sbp::{
@@ -33,7 +33,7 @@ pub struct Client<'a> {
 }
 
 impl<'a> Client<'a> {
-    pub fn with_link<F>(link: Link<'a, ()>, sender: F) -> Client<'a>
+    pub fn new<F>(link: Link<'a, ()>, sender: F) -> Client<'a>
     where
         F: FnMut(SBP) -> Result<(), Box<dyn std::error::Error + Send + Sync>> + 'static,
     {
@@ -132,13 +132,13 @@ impl<'a> Client<'a> {
                 &mut event as *mut Event as *mut _,
                 idx,
                 section.as_mut_ptr(),
-                BUF_SIZE as c_ulong,
+                BUF_SIZE as size_t,
                 name.as_mut_ptr(),
-                BUF_SIZE as c_ulong,
+                BUF_SIZE as size_t,
                 value.as_mut_ptr(),
-                BUF_SIZE as c_ulong,
+                BUF_SIZE as size_t,
                 fmt_type.as_mut_ptr(),
-                BUF_SIZE as c_ulong,
+                BUF_SIZE as size_t,
             )
         };
 
