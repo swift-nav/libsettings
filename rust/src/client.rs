@@ -411,11 +411,10 @@ struct ClientInner<'a> {
 
 impl Drop for ClientInner<'_> {
     fn drop(&mut self) {
-        // Safety: These were created via Box::into_raw and are not
-        // freed by the c library. We don't need to free event because
-        // it is pointer to the event held inside context so it gets dropped
         unsafe {
+            // Safety: Created via Box::into_raw
             let _ = Box::from_raw(self.context);
+            // Safety: Created via Box::into_raw
             let _ = Box::from_raw(self.api);
             settings_destroy(&mut self.ctx);
         }
