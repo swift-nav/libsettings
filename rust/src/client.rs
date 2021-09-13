@@ -26,7 +26,7 @@ use sbp::{
 
 use crate::{settings, SettingKind, SettingValue};
 
-const SENDER_ID: u16 = 66;
+const SENDER_ID: u16 = 0x42;
 
 pub struct Client<'a> {
     inner: Box<ClientInner<'a>>,
@@ -438,6 +438,12 @@ struct Context<'a> {
 impl Context<'_> {
     fn callback_broker(&self, msg: SBP) {
         let cb_data = {
+            eprintln!("A");
+            let _guard = self.lock.0.try_lock_for(std::time::Duration::from_secs(1));
+            if _guard.is_none() {
+                eprintln!("{:?}", msg);
+            }
+            eprintln!("B");
             let idx = if let Some(idx) = self
                 .callbacks
                 .iter()
@@ -576,6 +582,7 @@ unsafe extern "C" fn unregister_cb(
     if (node as i32) == 0 {
         return -127;
     }
+    let _guard = context.lock.lock();
     let idx = match context
         .callbacks
         .iter()
