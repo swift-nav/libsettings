@@ -32,6 +32,27 @@ pub struct Client<'a> {
     inner: Box<ClientInner<'a>>,
 }
 
+struct ClientInner<'a> {
+    context: *mut Context<'a>,
+    api: *mut settings_api_t,
+    ctx: *mut settings_t,
+}
+
+impl Drop for ClientInner<'_> {
+    fn drop(&mut self) {
+        unsafe {
+            // Safety: Created via Box::into_raw
+            let _ = Box::from_raw(self.context);
+            // Safety: Created via Box::into_raw
+            let _ = Box::from_raw(self.api);
+            settings_destroy(&mut self.ctx);
+        }
+    }
+}
+
+unsafe impl Send for ClientInner<'_> {}
+unsafe impl Sync for ClientInner<'_> {}
+
 impl<'a> Client<'a> {
     pub fn new<F>(link: Link<'a, ()>, sender: F) -> Client<'a>
     where
@@ -419,27 +440,6 @@ impl std::fmt::Display for ReadSettingError {
 }
 
 impl std::error::Error for ReadSettingError {}
-
-struct ClientInner<'a> {
-    context: *mut Context<'a>,
-    api: *mut settings_api_t,
-    ctx: *mut settings_t,
-}
-
-impl Drop for ClientInner<'_> {
-    fn drop(&mut self) {
-        unsafe {
-            // Safety: Created via Box::into_raw
-            let _ = Box::from_raw(self.context);
-            // Safety: Created via Box::into_raw
-            let _ = Box::from_raw(self.api);
-            settings_destroy(&mut self.ctx);
-        }
-    }
-}
-
-unsafe impl Send for ClientInner<'_> {}
-unsafe impl Sync for ClientInner<'_> {}
 
 type SenderFunc = Box<dyn FnMut(SBP) -> Result<(), Box<dyn std::error::Error + Send + Sync>>>;
 
