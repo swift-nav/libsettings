@@ -55,18 +55,16 @@ jobs:
         with:
           submodules: recursive
 
-      # required for bindgen on Windows
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        if: matrix.os == 'windows-2019'
-        with:
-          version: 10.0
-
       - name: Install rust ${{ matrix.binary_target }}
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable-${{ matrix.binary_target }}
           profile: minimal
+
+      - name: Set Windows enviroment variables
+        if: matrix.os == 'windows-2019'
+        run: |
+          echo "LIBCLANG_PATH=C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin" >> $GITHUB_ENV
 
       - name: Run tests
         run: cargo test
