@@ -341,12 +341,6 @@ pub enum WriteSettingError {
     Unknown,
 }
 
-impl From<i32> for WriteSettingError {
-    fn from(n: i32) -> Self {
-        (n as u32).into()
-    }
-}
-
 impl From<u32> for WriteSettingError {
     fn from(n: u32) -> Self {
         #[cfg(target_os = "windows")]
@@ -363,6 +357,12 @@ impl From<u32> for WriteSettingError {
             settings_write_res_e_SETTINGS_WR_TIMEOUT => WriteSettingError::Timeout,
             _ => WriteSettingError::Unknown,
         }
+    }
+}
+
+impl From<i32> for WriteSettingError {
+    fn from(n: i32) -> Self {
+        (n as u32).into()
     }
 }
 
@@ -400,15 +400,15 @@ pub struct ReadSettingError {
     code: u32,
 }
 
-impl From<i32> for ReadSettingError {
-    fn from(code: i32) -> Self {
-        (code as u32).into()
-    }
-}
-
 impl From<u32> for ReadSettingError {
     fn from(code: u32) -> Self {
         Self { code }
+    }
+}
+
+impl From<i32> for ReadSettingError {
+    fn from(code: i32) -> Self {
+        (code as u32).into()
     }
 }
 
