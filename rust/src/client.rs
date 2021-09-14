@@ -455,12 +455,7 @@ struct Context<'a> {
 impl Context<'_> {
     fn callback_broker(&self, msg: SBP) {
         let cb_data = {
-            eprintln!("A");
-            let _guard = self.lock.0.try_lock_for(std::time::Duration::from_secs(1));
-            if _guard.is_none() {
-                eprintln!("{:?}", msg);
-            }
-            eprintln!("B");
+            let _guard = self.lock.lock();
             let idx = if let Some(idx) = self
                 .callbacks
                 .iter()
@@ -547,7 +542,15 @@ impl Lock {
     }
 
     fn lock(&self) -> parking_lot::MutexGuard<()> {
-        self.0.lock()
+        // This would probably trigger on a high latency connection like serial
+        // or a slow network?  So should probably switch back to a plain lock
+        // once we're confirmed that the locking is correct.
+        let guard = self.0.try_lock_for(std::time::Duration::from_secs(1));
+        if let Some(guard) = guard {
+            guard
+        } else {
+            panic!("settings lock timed out");
+        }
     }
 
     fn acquire(&self) {
@@ -566,6 +569,7 @@ unsafe impl Sync for CtxPtr {}
 unsafe impl Send for CtxPtr {}
 
 #[no_mangle]
+/// Thread safety: Should be called with lock already held
 unsafe extern "C" fn register_cb(
     ctx: *mut c_void,
     msg_type: u16,
@@ -574,7 +578,6 @@ unsafe extern "C" fn register_cb(
     node: *mut *mut sbp_msg_callbacks_node_t,
 ) -> i32 {
     let context: &mut Context = &mut *(ctx as *mut _);
-    let _guard = context.lock.lock();
     let ctx_ptr = CtxPtr(ctx);
     let key = context.link.register_by_id(&[msg_type], move |msg: SBP| {
         let context: &mut Context = &mut *(ctx_ptr.0 as *mut _);
@@ -591,6 +594,7 @@ unsafe extern "C" fn register_cb(
 }
 
 #[no_mangle]
+/// Thread safety: Should be called with lock already held
 unsafe extern "C" fn unregister_cb(
     ctx: *mut c_void,
     node: *mut *mut sbp_msg_callbacks_node_t,
@@ -599,7 +603,6 @@ unsafe extern "C" fn unregister_cb(
     if (node as i32) == 0 {
         return -127;
     }
-    let _guard = context.lock.lock();
     let idx = match context
         .callbacks
         .iter()
