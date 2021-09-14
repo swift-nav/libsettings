@@ -542,15 +542,7 @@ impl Lock {
     }
 
     fn lock(&self) -> parking_lot::MutexGuard<()> {
-        // This would probably trigger on a high latency connection like serial
-        // or a slow network?  So should probably switch back to a plain lock
-        // once we're confirmed that the locking is correct.
-        let guard = self.0.try_lock_for(std::time::Duration::from_secs(1));
-        if let Some(guard) = guard {
-            guard
-        } else {
-            panic!("settings lock timed out");
-        }
+        self.0.lock()
     }
 
     fn acquire(&self) {
