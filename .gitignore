@@ -53,6 +53,7 @@ dkms.conf
 
 # IDE files
 .vscode/
+.idea/
 
 # build
 build*/
@@ -61,3 +62,7 @@ build*/
 libsettings.egg-info
 python/*.c
 *.pyc
+
+# Rust
+target/
+Cargo.lock

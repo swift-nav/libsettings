@@ -23,6 +23,7 @@
 #include <internal/request_state.h>
 #include <internal/setting_data.h>
 #include <internal/setting_def.h>
+#include <internal/setting_macros.h>
 #include <internal/setting_sbp_cb.h>
 
 #define UPDATE_FILTER_NONE 0x0
@@ -339,6 +340,7 @@ static sbp_msg_callback_t setting_sbp_cb_get(uint16_t msg_id) {
 }
 
 int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id) {
+  LIBSETTINGS_LOCK(ctx);
   setting_sbp_cb_t *sbp_cb_list = ctx->sbp_cb_list;
   setting_sbp_cb_t *last = NULL;
 
@@ -346,6 +348,7 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id) {
   while (sbp_cb_list != NULL) {
     if (sbp_cb_list->msg_id == msg_id) {
       /* Already registered */
+      LIBSETTINGS_UNLOCK(ctx);
       return 1;
     }
     last = sbp_cb_list;
@@ -354,6 +357,7 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id) {
 
   setting_sbp_cb_t *sbp_cb = malloc(sizeof(*sbp_cb));
   if (sbp_cb == NULL) {
+    LIBSETTINGS_UNLOCK(ctx);
     return -1;
   }
 
@@ -368,6 +372,7 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id) {
   if (res != 0) {
     log_error("error registering callback for msg id %d", msg_id);
     free(sbp_cb);
+    LIBSETTINGS_UNLOCK(ctx);
     return -1;
   }
 
@@ -378,12 +383,15 @@ int setting_sbp_cb_register(settings_t *ctx, uint16_t msg_id) {
     last->next = sbp_cb;
   }
 
+  LIBSETTINGS_UNLOCK(ctx);
   return 0;
 }
 
 int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id) {
+  LIBSETTINGS_LOCK(ctx);
   if (ctx->sbp_cb_list == NULL) {
     /* List is empty, nothing to unregister */
+    LIBSETTINGS_UNLOCK(ctx);
     return 1;
   }
 
@@ -401,6 +409,7 @@ int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id) {
 
   if (sbp_cb_list == NULL) {
     /* Not registered */
+    LIBSETTINGS_UNLOCK(ctx);
     return 1;
   }
 
@@ -423,5 +432,6 @@ int setting_sbp_cb_unregister(settings_t *ctx, uint16_t msg_id) {
   }
 
   free(sbp_cb);
+  LIBSETTINGS_UNLOCK(ctx);
   return ret;
 }
