@@ -16,7 +16,7 @@ serde_yaml = "0.8"
 
 [dependencies.sbp]
 git = "https://github.com/swift-nav/libsbp.git"
-rev = "0f35aacf110a9dbe0b832e5feb415933cd0c7f6e"
+rev = "a14a85123ac4e4a3b8830388cac72bc926799d17"
 features = ["link"]
 
 [dev-dependencies]
