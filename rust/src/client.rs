@@ -7,7 +7,12 @@ use std::{
 };
 
 use crossbeam_utils::thread;
-use libsettings_sys::{
+use log::{debug, error, warn};
+use sbp::{
+    link::{Key, Link},
+    Sbp, SbpMessage,
+};
+use sbp_settings_sys::{
     sbp_msg_callback_t, sbp_msg_callbacks_node_t, settings_api_t, settings_create,
     settings_destroy, settings_read_bool, settings_read_by_idx, settings_read_float,
     settings_read_int, settings_read_str, settings_t,
@@ -16,12 +21,6 @@ use libsettings_sys::{
     settings_write_res_e_SETTINGS_WR_SERVICE_FAILED,
     settings_write_res_e_SETTINGS_WR_SETTING_REJECTED, settings_write_res_e_SETTINGS_WR_TIMEOUT,
     settings_write_res_e_SETTINGS_WR_VALUE_REJECTED, settings_write_str, size_t,
-};
-use log::{debug, error, warn};
-use sbp::{
-    link::{Key, Link},
-    messages::{SBPMessage, SBP},
-    serialize::SbpSerialize,
 };
 
 use crate::{settings, SettingKind, SettingValue};
@@ -56,7 +55,7 @@ unsafe impl Sync for ClientInner<'_> {}
 impl<'a> Client<'a> {
     pub fn new<F>(link: Link<'a, ()>, sender: F) -> Client<'a>
     where
-        F: FnMut(SBP) -> Result<(), Box<dyn std::error::Error + Send + Sync>> + 'static,
+        F: FnMut(Sbp) -> Result<(), Box<dyn std::error::Error + Send + Sync>> + 'static,
     {
         let context = Box::new(Context {
             link,
@@ -441,7 +440,7 @@ impl std::fmt::Display for ReadSettingError {
 
 impl std::error::Error for ReadSettingError {}
 
-type SenderFunc = Box<dyn FnMut(SBP) -> Result<(), Box<dyn std::error::Error + Send + Sync>>>;
+type SenderFunc = Box<dyn FnMut(Sbp) -> Result<(), Box<dyn std::error::Error + Send + Sync>>>;
 
 #[repr(C)]
 struct Context<'a> {
@@ -453,37 +452,46 @@ struct Context<'a> {
 }
 
 impl Context<'_> {
-    fn callback_broker(&self, msg: SBP) {
+    fn callback_broker(&self, msg: Sbp) {
         let cb_data = {
             let _guard = self.lock.lock();
             let idx = if let Some(idx) = self
                 .callbacks
                 .iter()
-                .position(|cb| cb.msg_type == msg.get_message_type())
+                .position(|cb| cb.msg_type == msg.message_type())
             {
                 idx
             } else {
                 error!(
                     "callback not registered for message type {}",
-                    msg.get_message_type()
+                    msg.message_type()
                 );
                 return;
             };
             self.callbacks[idx]
         };
-
-        let cb = cb_data.cb.expect("callback was None");
+        let mut frame = match sbp::to_vec(&msg) {
+            Ok(frame) => frame,
+            Err(e) => {
+                error!("failed to frame sbp message {}", e);
+                return;
+            }
+        };
+        let frame_len = frame.len();
+        let payload = &mut frame[sbp::HEADER_LEN..frame_len - sbp::CRC_LEN];
+        let cb = match cb_data.cb {
+            Some(cb) => cb,
+            None => {
+                error!("provided callback was none");
+                return;
+            }
+        };
         let cb_context = cb_data.cb_context;
-
-        let mut payload = Vec::with_capacity(256);
-        msg.append_to_sbp_buffer(&mut payload);
-        let payload_ptr = payload.as_mut_ptr();
-
         unsafe {
             cb(
-                msg.get_sender_id().unwrap_or(0),
-                msg.sbp_size() as u8,
-                payload_ptr,
+                msg.sender_id().unwrap_or(0),
+                payload.len() as u8,
+                payload.as_mut_ptr(),
                 cb_context,
             )
         };
@@ -571,7 +579,7 @@ unsafe extern "C" fn register_cb(
 ) -> i32 {
     let context: &mut Context = &mut *(ctx as *mut _);
     let ctx_ptr = CtxPtr(ctx);
-    let key = context.link.register_by_id(&[msg_type], move |msg: SBP| {
+    let key = context.link.register_by_id(&[msg_type], move |msg: Sbp| {
         let context: &mut Context = &mut *(ctx_ptr.0 as *mut _);
         context.callback_broker(msg)
     });
@@ -627,11 +635,14 @@ unsafe extern "C" fn libsettings_send_from(
     sender_id: u16,
 ) -> i32 {
     let context: &mut Context = &mut *(ctx as *mut _);
-    let mut buf = slice::from_raw_parts(payload, len as usize);
-    let msg = match SBP::parse(msg_type, sender_id, &mut buf) {
+    let msg = match Sbp::from_frame(sbp::Frame {
+        msg_type,
+        sender_id,
+        payload: slice::from_raw_parts(payload, len as usize),
+    }) {
         Ok(msg) => msg,
         Err(err) => {
-            error!("parse error: {}", err);
+            error!("error parsing message: {}", err);
             return -1;
         }
     };
@@ -702,33 +713,29 @@ mod tests {
     use std::io::{Read, Write};
 
     use crossbeam_utils::thread::scope;
-    use sbp::codec::dencode::{FramedWrite, IterSinkExt};
-    use sbp::codec::sbp::SbpEncoder;
     use sbp::link::LinkSource;
     use sbp::messages::settings::{MsgSettingsReadReq, MsgSettingsReadResp};
-    use sbp::messages::SBPMessage;
-    use sbp::sbp_tools::SBPTools;
-    use sbp::SbpString;
+    use sbp::{SbpIterExt, SbpString};
 
     static SETTINGS_SENDER_ID: u16 = 0x42;
 
     fn read_setting(
         rdr: impl Read + Send,
-        wtr: impl Write + 'static,
+        mut wtr: impl Write + 'static,
         group: &str,
         name: &str,
     ) -> Option<Result<settings::SettingValue, Error<ReadSettingError>>> {
-        let messages = sbp::iter_messages(rdr).handle_errors(|e| panic!("{}", e));
-        let source = LinkSource::new();
-        let mut framed = FramedWrite::new(wtr, SbpEncoder::new());
-        let client = Client::new(source.link(), move |msg| {
-            framed.send(msg).map_err(Into::into)
-        });
         scope(move |scope| {
+            let source = LinkSource::new();
+            let link = source.link();
             scope.spawn(move |_| {
+                let messages = sbp::iter_messages(rdr).handle_errors(|e| panic!("{}", e));
                 for message in messages {
                     source.send(message);
                 }
+            });
+            let client = Client::new(link, move |msg| {
+                sbp::to_writer(&mut wtr, &msg).map_err(Into::into)
             });
             client.read_setting(group, name)
         })
@@ -745,14 +752,14 @@ mod tests {
             setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
         };
 
-        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+        stream.wait_for(sbp::to_vec(&request_msg).unwrap().as_ref());
 
         let reply_msg = MsgSettingsReadResp {
             sender_id: Some(0x42),
             setting: SbpString::from(format!("{}\0{}\010\0", group, name).to_string()),
         };
 
-        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+        stream.push_bytes_to_read(sbp::to_vec(&reply_msg).unwrap().as_ref());
 
         let response = read_setting(stream.clone(), stream, group, name);
 
@@ -769,14 +776,14 @@ mod tests {
             setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
         };
 
-        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+        stream.wait_for(sbp::to_vec(&request_msg).unwrap().as_ref());
 
         let reply_msg = MsgSettingsReadResp {
             sender_id: Some(0x42),
             setting: SbpString::from(format!("{}\0{}\0True\0", group, name).to_string()),
         };
 
-        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+        stream.push_bytes_to_read(sbp::to_vec(&reply_msg).unwrap().as_ref());
 
         let response = read_setting(stream.clone(), stream, group, name);
 
@@ -793,14 +800,14 @@ mod tests {
             setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
         };
 
-        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+        stream.wait_for(sbp::to_vec(&request_msg).unwrap().as_ref());
 
         let reply_msg = MsgSettingsReadResp {
             sender_id: Some(SETTINGS_SENDER_ID),
             setting: SbpString::from(format!("{}\0{}\00.1\0", group, name).to_string()),
         };
 
-        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+        stream.push_bytes_to_read(sbp::to_vec(&reply_msg).unwrap().as_ref());
 
         let response = read_setting(stream.clone(), stream, group, name)
             .unwrap()
@@ -818,14 +825,14 @@ mod tests {
             setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
         };
 
-        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+        stream.wait_for(sbp::to_vec(&request_msg).unwrap().as_ref());
 
         let reply_msg = MsgSettingsReadResp {
             sender_id: Some(SETTINGS_SENDER_ID),
             setting: SbpString::from(format!("{}\0{}\0foo\0", group, name).to_string()),
         };
 
-        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+        stream.push_bytes_to_read(sbp::to_vec(&reply_msg).unwrap().as_ref());
 
         let response = read_setting(stream.clone(), stream, group, name)
             .unwrap()
@@ -843,14 +850,14 @@ mod tests {
             setting: SbpString::from(format!("{}\0{}\0", group, name).to_string()),
         };
 
-        stream.wait_for(&request_msg.to_frame().unwrap().to_vec());
+        stream.wait_for(sbp::to_vec(&request_msg).unwrap().as_ref());
 
         let reply_msg = MsgSettingsReadResp {
             sender_id: Some(0x42),
             setting: SbpString::from(format!("{}\0{}\0Secondary\0", group, name).to_string()),
         };
 
-        stream.push_bytes_to_read(&reply_msg.to_frame().unwrap().to_vec());
+        stream.push_bytes_to_read(sbp::to_vec(&reply_msg).unwrap().as_ref());
 
         let response = read_setting(stream.clone(), stream, group, name)
             .unwrap()
