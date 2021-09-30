@@ -5,7 +5,7 @@ authors = ["Swift Navigation <dev@swift-nav.com>"]
 edition = "2018"
 description = "FFI bindings for SwiftNav's settings library"
 repository = "https://github.com/swift-nav/libsettings"
-license-file = "../LICENSE"
+license-file = "../../LICENSE"
 readme = "../../README.md"
 
 [dependencies]
