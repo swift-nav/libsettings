@@ -66,3 +66,4 @@ python/*.c
 # Rust
 target/
 Cargo.lock
+rust/sbp-settings-sys/src/libsettings

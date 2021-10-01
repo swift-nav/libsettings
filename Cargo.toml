@@ -1,2 +1,2 @@
 [workspace]
-members = ["rust/"]
+members = ["rust", "rust/sbp-settings-sys"]
