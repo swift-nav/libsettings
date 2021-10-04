@@ -14,6 +14,10 @@ Open source SwiftNav settings API library.
 
 `libsettings` aims to provide a standardized settings framework for projects accessing Piksi settings.
 
+## Bindings
+
+This repository includes [python](./python) bindings.  For rust bindings see [libsettings-rs](https://github.com/swift-nav/libsettings-rs).
+
 ## Building
 
 ### Unix
@@ -112,7 +116,3 @@ To install the Python binding from GitHub repo (using pip) run the following com
 ```sh
 pip install git+https://github.com/swift-nav/libsettings.git@branch_name#subdirectory=dist
 ```
-
-## Example usage
-
-TODO. First stage, insert link to PFWP settings client after it's merged..
