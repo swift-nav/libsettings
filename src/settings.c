@@ -101,7 +101,7 @@
 
 static const char *const bool_enum_names[] = {"False", "True", NULL};
 
-static settings_log_t client_log = NULL;
+static settings_log_preformatted_t client_log_preformatted = NULL;
 
 /* Workaround for Cython not properly supporting variadic arguments */
 __attribute__((format(printf, 2, 3))) static void log_preformat(int level,
@@ -114,15 +114,15 @@ __attribute__((format(printf, 2, 3))) static void log_preformat(int level,
   va_end(args);
 
   if (ret < 0) {
-    client_log(LOG_ERROR, "log_preformat encoding error");
+    client_log_preformatted(LOG_ERROR, "log_preformat encoding error");
     return;
   } else if ((size_t)ret >= sizeof(buffer))
 
   {
-    client_log(LOG_WARN, "log_preformat too long message");
+    client_log_preformatted(LOG_WARN, "log_preformat too long message");
   }
 
-  client_log(level, buffer);
+  client_log_preformatted(level, buffer);
 }
 
 static int send_single_thd(settings_t *ctx, uint16_t message_type,
@@ -627,13 +627,11 @@ int settings_read_by_idx(settings_t *ctx, void *event, uint16_t idx,
 settings_t *settings_create(uint16_t sender_id, settings_api_t *client_iface) {
   assert(client_iface != NULL);
 
-  if (client_iface->log != NULL) {
-    if (client_iface->log_preformat) {
-      client_log = client_iface->log;
-      logging_set_implementation(log_preformat, detailed_log_);
-    } else {
-      logging_set_implementation(client_iface->log, detailed_log_);
-    }
+  if (client_iface->log_preformatted != NULL) {
+    client_log_preformatted = client_iface->log_preformatted;
+    logging_set_implementation(log_preformat, detailed_log_);
+  } else if (client_iface->log != NULL) {
+    logging_set_implementation(client_iface->log, detailed_log_);
   }
 
   log_info("Building settings framework");
