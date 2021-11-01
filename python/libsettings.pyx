@@ -71,6 +71,7 @@ cdef extern from "../include/libsettings/settings.h":
     ctypedef int (*settings_unreg_cb_t)(void *ctx, sbp_msg_callbacks_node_t **node)
 
     ctypedef void (*settings_log_t)(int priority, const char *format, ...)
+    ctypedef void (*settings_log_preformatted_t)(int priority, const char *format)
 
     cdef struct settings_api_s:
         void *ctx
@@ -87,7 +88,8 @@ cdef extern from "../include/libsettings/settings.h":
         settings_reg_cb_t register_cb
         settings_unreg_cb_t unregister_cb
         settings_log_t log
-        bint log_preformat
+        settings_log_preformatted_t log_preformatted
+
     ctypedef settings_api_s settings_api_t
 
     settings_t *settings_create(uint16_t sender_id, settings_api_t *api_impl)
@@ -144,8 +146,7 @@ cdef class Settings:
         self.c_api.unlock = &unlock_wrapper
         self.c_api.register_cb = &register_cb_wrapper
         self.c_api.unregister_cb = &unregister_cb_wrapper
-        self.c_api.log = log_wrapper
-        self.c_api.log_preformat = True
+        self.c_api.log_preformatted = log_wrapper
 
         self.ctx = settings_create(sender_id, &self.c_api)
 
@@ -301,7 +302,7 @@ cdef class Settings:
 
 cdef int send_wrapper(void *ctx, uint16_t msg_type, uint8_t length, uint8_t *payload):
     settings = <object>ctx
-    
+
     if settings._debug:
         print 'send_wrapper', msg_type
         print ":".join("{:02x}".format(ord(c)) for c in payload[:length])
@@ -390,7 +391,7 @@ cdef int unregister_cb_wrapper(void *ctx, sbp_msg_callbacks_node_t **node):
 
     return 0
 
-cdef void log_wrapper(int priority, const char *fmt, ...):
+cdef void log_wrapper(int priority, const char *fmt):
     # Currently no proper way to cythonize the variadic arguments..
     # https://github.com/cython/cython/wiki/FAQ#how-do-i-use-variable-args
     print fmt

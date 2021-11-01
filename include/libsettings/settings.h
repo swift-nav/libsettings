@@ -106,6 +106,7 @@ typedef int (*settings_reg_cb_t)(void *ctx, uint16_t msg_type,
 typedef int (*settings_unreg_cb_t)(void *ctx, sbp_msg_callbacks_node_t **node);
 
 typedef void (*settings_log_t)(int priority, const char *format, ...);
+typedef void (*settings_log_preformatted_t)(int priority, const char *format);
 
 typedef struct settings_api_s {
   void *ctx;
@@ -124,7 +125,7 @@ typedef struct settings_api_s {
   settings_reg_cb_t register_cb;
   settings_unreg_cb_t unregister_cb;
   settings_log_t log;
-  bool log_preformat;
+  settings_log_preformatted_t log_preformatted;
 } settings_api_t;
 
 /**
