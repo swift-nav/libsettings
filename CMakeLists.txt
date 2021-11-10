@@ -51,7 +51,7 @@ swift_create_project_options(
 include(ClangFormat)
 swift_setup_clang_format()
 
-include(ClangTidy)
+include(OldClangTidy)
 swift_setup_clang_tidy(PATTERNS "src/*.c")
 
 ################################################################################
