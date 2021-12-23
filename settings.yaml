@@ -2569,12 +2569,12 @@
 
 - group: ins
   name: dr_duration_max
-  expert: true
+  expert: false
   type: double
   units: seconds
   default value: '600'
   readonly: false
-  Description: Indicates the maximum duration in seconds for which the inertial system will dead reckon
+  Description: Indicates the maximum duration in seconds for which the inertial system will dead reckon.
   Notes:       The default value of 600 seconds was chosen as the expected duration for which the Duro Inertial solution can maintain sub-meter accuracy.
 
 - group: ins
@@ -2608,6 +2608,16 @@
     This value should overestimate the actual expected error.
 
 - group: ins
+  name: pos_std_deviation_cutoff_meters
+  expert: true
+  type: double
+  units: meters
+  default value: '30'
+  readonly: False
+  Description: GNSS position standard deviation cutoff - only solutions with a standard deviation lower than this will be used.
+  Notes: |
+
+- group: ins
   name: vehicle_frame_deviation
   type: double
   units: degrees
@@ -2618,6 +2628,297 @@
     Must be greater than 0.
 
     This value should overestimate the actual expected error.
+
+- group: ins
+  name: fused_soln_freq
+  type: double
+  expert: False
+  units: hertz
+  default value: '10'
+  readonly: False
+  Description: Fusion engine output rate in Hertz.
+  Notes: |
+
+- group: ins
+  name: solution_accuracy_confidence_level
+  type: enum
+  expert: true
+  units: percent
+  default value: '68'
+  readonly: False
+  enumerated possible values: 40,68
+  Description: Sets the confidence level for the message SBP MSG_LLH_ACC.
+  Notes: |
+
+- group: ins
+  name: gyro_angular_random_walk_degpersqrth_sensorframe_x
+  type: double
+  expert: true
+  units: degrees per square root hour
+  default value: '.69'
+  readonly: False
+  Description: Angular rate white noise.
+  Notes: |
+
+  - group: ins
+  name: gyro_angular_random_walk_degpersqrth_sensorframe_y
+  type: double
+  expert: true
+  units: degrees per square root hour
+  default value: '.69'
+  readonly: False
+  Description: Angular rate white noise.
+  Notes: |
+
+  - group: ins
+  name: gyro_angular_random_walk_degpersqrth_sensorframe_z
+  type: double
+  expert: true
+  units: degrees per square root hour
+  default value: '.69'
+  readonly: False
+  Description: Angular rate white noise.
+  Notes: |
+
+  - group: ins
+  name: gyro_bias_instability_avar_degperh_sensorframe_x
+  type: double
+  expert: true
+  units: degrees per hour
+  default value: '10'
+  readonly: False
+  Description: Angular rate bias instability as defined in an Allan Variance plot.
+  Notes: |
+
+  - group: ins
+  name: gyro_bias_instability_avar_degperh_sensorframe_y
+  type: double
+  expert: true
+  units: degrees per hour
+  default value: '10'
+  readonly: False
+  Description: Angular rate bias instability as defined in an Allan Variance plot.
+  Notes: |
+
+    - group: ins
+  name: gyro_bias_instability_avar_degperh_sensorframe_z
+  type: double
+  expert: true
+  units: degrees per hour
+  default value: '10'
+  readonly: False
+  Description: Angular rate bias instability as defined in an Allan Variance plot.
+  Notes: |
+
+  - group: ins
+  name: accel_velocity_random_walk_microgpersqrtHz_sensorframe_x
+  type: double
+  expert: true
+  units: micro-g per square root hertz
+  default value: '177'
+  readonly: False
+  Description: Accelerometer white noise.
+  Notes: |
+
+  - group: ins
+  name: accel_velocity_random_walk_microgpersqrtHz_sensorframe_y
+  type: double
+  expert: true
+  units: micro-g per square root hertz
+  default value: '177'
+  readonly: False
+  Description: Accelerometer white noise.
+  Notes: |
+
+  - group: ins
+  name: accel_velocity_random_walk_microgpersqrtHz_sensorframe_z
+  type: double
+  expert: true
+  units: micro-g per square root hertz
+  default value: '177'
+  readonly: False
+  Description: Accelerometer white noise.
+  Notes: |
+
+  - group: ins
+  name: accel_bias_instability_avar_millig_sensorframe_x
+  type: double
+  expert: true
+  units: milli-g
+  default value: '0.3'
+  readonly: False
+  Description: Accelerometer bias instability as defined in an Allan Variance plot.
+  Notes: |
+
+  - group: ins
+  name: accel_bias_instability_avar_millig_sensorframe_y
+  type: double
+  expert: true
+  units: milli-g
+  default value: '0.3'
+  readonly: False
+  Description: Accelerometer bias instability as defined in an Allan Variance plot.
+  Notes: |
+
+  - group: ins
+  name: accel_bias_instability_avar_millig_sensorframe_z
+  type: double
+  expert: true
+  units: milli-g
+  default value: '0.3'
+  readonly: False
+  Description: Accelerometer bias instability as defined in an Allan Variance plot.
+  Notes: |
+
+  - group: ins
+  name: lowpass_filter_cutoff_hz
+  type: double
+  expert: true
+  units: gertz
+  default value: '1'
+  readonly: False
+  Description: The cut-off frequency of the low-pass filter (smaller than half the nominal_sample_rate_hz).
+  Notes: |
+
+  - group: ins
+  name: zupt_acceleration_threshold_mpers2
+  type: double
+  expert: true
+  units: meters per second squared
+  default value: '0.05'
+  readonly: False
+  Description: Maximum allowed acceleration while in ZUPT.
+  Notes: |
+
+  - group: ins
+  name: zupt_angular_rate_threshold_degpers
+  type: double
+  expert: true
+  units:  degrees per second
+  default value: '0.3'
+  readonly: False
+  Description: Maximum allowed angular rate while in in ZUPT.
+  Notes: |
+
+  - group: ins
+  name: zupt_enable_partial_zerovel_update
+  type: boolean
+  expert: true
+  units:
+  default value: 'true'
+  readonly: False
+  Description: Enable partial zero-velocity update (ZUPT).
+  Notes: |
+
+  - group: ins
+  name: zupt_enable_full_zerovel_update
+  type: boolean
+  expert: true
+  units:
+  default value: 'true'
+  readonly: False
+  Description: Enable full zero-velocity update (ZUPT).
+  Notes: |
+
+  - group: ins
+  name: zupt_enable_zero_angular_rate_update
+  type: boolean
+  expert: true
+  units:
+  default value: 'true'
+  readonly: False
+  Description: Enable zero angular rate update.
+  Notes: |
+
+  - group: ins
+  name: zupt_settings_1
+  type: double
+  expert: True
+  units:
+  default value: '0.1'
+  readonly: False
+  Description:
+  Notes: |
+
+  - group: ins
+  name: zupt_settings_2
+  type: double
+  expert: True
+  units:
+  default value: '0.1'
+  readonly: False
+  Description:
+  Notes: |
+
+  - group: ins
+  name: zupt_settings_3
+  type: double
+  expert: True
+  units:
+  default value: '0.05'
+  readonly: False
+  Description:
+  Notes: |
+
+  - group: ins
+  name: zupt_settings_4
+  type: double
+  expert: True
+  units:
+  default value: '0.5'
+  readonly: False
+  Description:
+  Notes: |
+
+  - group: ins
+  name: zupt_settings_5
+  type: double
+  expert: True
+  units:
+  default value: '4'
+  readonly: False
+  Description:
+  Notes: |
+
+  - group: ins
+  name: alignment_cog_enable
+  type: boolean
+  expert: true
+  units:
+  default value: 'true'
+  readonly: False
+  Description: Enable updating the alignment algorithm by assuming course over ground (i.e. the horizontal direction of the velocity vector) is equal to the vehicle heading.
+  Notes: |
+
+  - group: ins
+  name: alignment_cog_low_speed_disambiguation_enable
+  type: boolean
+  expert: true
+  units:
+  default value: 'false'
+  readonly: False
+  Description: If this parameter is set to true, COG updates will also be used if the current vehicle speed does not exceed alignment_cog_min_speed_meters_per_second.
+  Notes: |
+
+  - group: ins
+  name: alignment_cog_min_speed_meters_per_second
+  type: double
+  expert: true
+  units: meters per second
+  default value: '5'
+  readonly: False
+  Description: If enabled, COG updates will only be used if the current vehicle speed exceeds this threshold.
+  Notes: |
+
+  - group: ins
+  name: alignment_settings_1
+  type: double
+  expert: true
+  units:
+  default value: '3'
+  readonly: False
+  Description:
+  Notes: |
 
 - group: metrics_daemon
   name: metrics_update_interval
