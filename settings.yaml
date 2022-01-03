@@ -2660,7 +2660,7 @@
   Description: Angular rate white noise.
   Notes: |
 
-  - group: ins
+- group: ins
   name: gyro_angular_random_walk_degpersqrth_sensorframe_y
   type: double
   expert: true
@@ -2670,7 +2670,7 @@
   Description: Angular rate white noise.
   Notes: |
 
-  - group: ins
+- group: ins
   name: gyro_angular_random_walk_degpersqrth_sensorframe_z
   type: double
   expert: true
@@ -2680,7 +2680,7 @@
   Description: Angular rate white noise.
   Notes: |
 
-  - group: ins
+- group: ins
   name: gyro_bias_instability_avar_degperh_sensorframe_x
   type: double
   expert: true
@@ -2690,7 +2690,7 @@
   Description: Angular rate bias instability as defined in an Allan Variance plot.
   Notes: |
 
-  - group: ins
+- group: ins
   name: gyro_bias_instability_avar_degperh_sensorframe_y
   type: double
   expert: true
@@ -2700,7 +2700,7 @@
   Description: Angular rate bias instability as defined in an Allan Variance plot.
   Notes: |
 
-    - group: ins
+- group: ins
   name: gyro_bias_instability_avar_degperh_sensorframe_z
   type: double
   expert: true
@@ -2710,7 +2710,7 @@
   Description: Angular rate bias instability as defined in an Allan Variance plot.
   Notes: |
 
-  - group: ins
+- group: ins
   name: accel_velocity_random_walk_microgpersqrtHz_sensorframe_x
   type: double
   expert: true
@@ -2720,7 +2720,7 @@
   Description: Accelerometer white noise.
   Notes: |
 
-  - group: ins
+- group: ins
   name: accel_velocity_random_walk_microgpersqrtHz_sensorframe_y
   type: double
   expert: true
@@ -2730,7 +2730,7 @@
   Description: Accelerometer white noise.
   Notes: |
 
-  - group: ins
+- group: ins
   name: accel_velocity_random_walk_microgpersqrtHz_sensorframe_z
   type: double
   expert: true
@@ -2740,7 +2740,7 @@
   Description: Accelerometer white noise.
   Notes: |
 
-  - group: ins
+- group: ins
   name: accel_bias_instability_avar_millig_sensorframe_x
   type: double
   expert: true
@@ -2750,7 +2750,7 @@
   Description: Accelerometer bias instability as defined in an Allan Variance plot.
   Notes: |
 
-  - group: ins
+- group: ins
   name: accel_bias_instability_avar_millig_sensorframe_y
   type: double
   expert: true
@@ -2760,7 +2760,7 @@
   Description: Accelerometer bias instability as defined in an Allan Variance plot.
   Notes: |
 
-  - group: ins
+- group: ins
   name: accel_bias_instability_avar_millig_sensorframe_z
   type: double
   expert: true
@@ -2770,7 +2770,7 @@
   Description: Accelerometer bias instability as defined in an Allan Variance plot.
   Notes: |
 
-  - group: ins
+- group: ins
   name: lowpass_filter_cutoff_hz
   type: double
   expert: true
@@ -2780,7 +2780,7 @@
   Description: The cut-off frequency of the low-pass filter (smaller than half the nominal_sample_rate_hz).
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_acceleration_threshold_mpers2
   type: double
   expert: true
@@ -2790,7 +2790,7 @@
   Description: Maximum allowed acceleration while in ZUPT.
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_angular_rate_threshold_degpers
   type: double
   expert: true
@@ -2800,7 +2800,7 @@
   Description: Maximum allowed angular rate while in in ZUPT.
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_enable_partial_zerovel_update
   type: boolean
   expert: true
@@ -2810,7 +2810,7 @@
   Description: Enable partial zero-velocity update (ZUPT).
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_enable_full_zerovel_update
   type: boolean
   expert: true
@@ -2820,7 +2820,7 @@
   Description: Enable full zero-velocity update (ZUPT).
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_enable_zero_angular_rate_update
   type: boolean
   expert: true
@@ -2830,7 +2830,7 @@
   Description: Enable zero angular rate update.
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_settings_1
   type: double
   expert: True
@@ -2840,7 +2840,7 @@
   Description:
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_settings_2
   type: double
   expert: True
@@ -2850,7 +2850,7 @@
   Description:
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_settings_3
   type: double
   expert: True
@@ -2860,7 +2860,7 @@
   Description:
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_settings_4
   type: double
   expert: True
@@ -2870,7 +2870,7 @@
   Description:
   Notes: |
 
-  - group: ins
+- group: ins
   name: zupt_settings_5
   type: double
   expert: True
@@ -2880,7 +2880,7 @@
   Description:
   Notes: |
 
-  - group: ins
+- group: ins
   name: alignment_cog_enable
   type: boolean
   expert: true
@@ -2890,7 +2890,7 @@
   Description: Enable updating the alignment algorithm by assuming course over ground (i.e. the horizontal direction of the velocity vector) is equal to the vehicle heading.
   Notes: |
 
-  - group: ins
+- group: ins
   name: alignment_cog_low_speed_disambiguation_enable
   type: boolean
   expert: true
@@ -2900,7 +2900,7 @@
   Description: If this parameter is set to true, COG updates will also be used if the current vehicle speed does not exceed alignment_cog_min_speed_meters_per_second.
   Notes: |
 
-  - group: ins
+- group: ins
   name: alignment_cog_min_speed_meters_per_second
   type: double
   expert: true
@@ -2910,7 +2910,7 @@
   Description: If enabled, COG updates will only be used if the current vehicle speed exceeds this threshold.
   Notes: |
 
-  - group: ins
+- group: ins
   name: alignment_settings_1
   type: double
   expert: true
