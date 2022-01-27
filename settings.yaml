@@ -1096,7 +1096,7 @@
 - group: uart0
   name: flow_control
   expert: false
-  type: boolean
+  type: enum
   units: NA
   default value: 'None'
   readonly: false
