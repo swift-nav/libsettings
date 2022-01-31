@@ -178,7 +178,7 @@
   readonly: false
   enumerated possible values:
   Description: Allow output of RTCMv3 ephemeris messages.
-  Notes: Message ID - 1019 (GPS Ephemeris), 1020 (GLONASS Ephemeris),
+  Notes: RTCM Message Type - 1019 (GPS Ephemeris), 1020 (GLONASS Ephemeris),
     1045/1046 (Galileo Ephemeris), 1042 (Beidou Ephemeris)
 
 - group: sbp
