@@ -169,6 +169,18 @@
   Notes: The Antenna Height field provides the height of the Antenna Reference Point
     above the marker used in the survey campaign.
 
+- group: rtcm_out
+  name: enable_ephemeris
+  expert: true
+  type: boolean
+  units: N/A
+  default value: 'false'
+  readonly: false
+  enumerated possible values:
+  Description: Allow output of RTCMv3 ephemeris messages.
+  Notes: RTCM Message Type - 1019 (GPS Ephemeris), 1020 (GLONASS Ephemeris),
+    1045/1046 (Galileo Ephemeris), 1042 (Beidou Ephemeris)
+
 - group: sbp
   name: obs_msg_max_size
   expert: true
@@ -1084,7 +1096,7 @@
 - group: uart0
   name: flow_control
   expert: false
-  type: boolean
+  type: enum
   units: NA
   default value: 'None'
   readonly: false
@@ -2218,6 +2230,14 @@
 
 - group: standalone_logging
   name: blacklist_sdcard
+  expert: true
+  type: boolean
+  default value: 'False'
+  readonly: false
+  Description: Enable/Disable SD Card.
+
+- group: standalone_logging
+  name: sdcard_enable
   expert: true
   type: boolean
   default value: 'False'
