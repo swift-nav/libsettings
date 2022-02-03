@@ -100,6 +100,13 @@ static void setting_update_value(settings_t *ctx, const char *msg, uint8_t len,
     return;
   }
 
+  /* Reject messages that are too large for READ_BY_INDEX_RESP*/
+  if (len > SETTINGS_BUFLEN - READ_BY_INDEX_OFFSET){
+    setting_send_write_response(ctx, setting_data, SETTINGS_WR_VALUE_REJECTED);
+    log_warn("setting update value, message too long len:%u", len );
+    return;
+  }
+
   settings_write_res_t write_result =
       setting_data_update_value(setting_data, value);
 
