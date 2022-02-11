@@ -46,6 +46,7 @@ typedef int settings_type_t;
 typedef struct settings_s settings_t;
 
 #define SETTINGS_BUFLEN 255
+#define MAX_SETTING_WRITE_LEN 252
 
 /**
  * @brief   Standard settings type definitions.

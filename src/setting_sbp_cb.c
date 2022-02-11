@@ -100,6 +100,14 @@ static void setting_update_value(settings_t *ctx, const char *msg, uint8_t len,
     return;
   }
 
+  /* Reject messages that are too large for READ_BY_INDEX_RESP*/
+  if (len > MAX_SETTING_WRITE_LEN) {
+    setting_send_write_response(ctx, setting_data, SETTINGS_WR_VALUE_REJECTED);
+    log_warn("setting message rejected, length:%u limit:%u", len,
+             MAX_SETTING_WRITE_LEN);
+    return;
+  }
+
   settings_write_res_t write_result =
       setting_data_update_value(setting_data, value);
 
