@@ -879,7 +879,7 @@
   units: meters per second
   default value: '5'
   readonly: False
-  Description: If enabled, COG updates will only be used if the current vehicle speed exceeds this threshold.
+  Description: If enabled, COG updates will only be used if the current vehicle speed exceeds this threshold. Value should be >= 1m/s.
   Notes: |
 
 - group: ins
