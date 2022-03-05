@@ -322,7 +322,8 @@
   units: Hz
   Description: The data rate (in Hz) for IMU raw output.
   Notes: It is recommended to use Ethernet or USB for IMU data output
-    for data rates over 25 Hz.
+    for data rates over 25 Hz. Make sure that the rate is greater than that of
+    INS solutions.
 
 - group: imu
   name: acc_range
@@ -608,7 +609,7 @@
   default value: '10'
   readonly: False
   Description: Fusion engine output rate in Hertz.
-  Notes: |
+  Notes: Make sure that the rate is less than the imu rate.
 
 - group: ins
   name: solution_accuracy_confidence_level
