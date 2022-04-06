@@ -549,7 +549,7 @@
   Description: Indicates the maximum duration in seconds for which the inertial system will dead reckon.
   Notes: The default value of 600 seconds was chosen as the expected duration for which the Duro Inertial solution can maintain sub-meter accuracy.
 
-  group: ins
+- group: ins
   name: dr_timeout_pos_stddev
   expert: false
   type: double
@@ -558,8 +558,8 @@
   readonly: false
   Description: Indicates the maximum standard deviation of position for which the inertial system will dead reckon.
   Notes: The default value of 20 meters was chosen as the logical minimum standard of the position accuracy during dead reckon mode. 
--
-  group: ins
+
+- group: ins
   name: build_name
   expert: true
   type: string
