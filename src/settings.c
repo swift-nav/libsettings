@@ -93,6 +93,11 @@
 #include <internal/setting_type_int.h>
 #include <internal/setting_type_str.h>
 
+/* This is GCC specific so void for others */
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
 
