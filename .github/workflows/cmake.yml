@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:v0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -39,7 +39,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:v0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -55,7 +55,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:v0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -76,7 +76,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:v0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -89,7 +89,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:v0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
