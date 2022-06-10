@@ -1265,7 +1265,7 @@
   default value: 'False'
   readonly: false
   enumerated possible values: True,False
-  Description: Enable NTRIP client. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
+  Description: Enable NTRIP client.
   Notes: If True, NTRIP client will be used.
 
 - group: ntrip
