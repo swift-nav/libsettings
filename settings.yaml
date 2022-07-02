@@ -2313,7 +2313,7 @@
 - group: system_info
   name: serial_number
   expert: False
-  type: integer
+  type: string
   units: N/A
   default value: N/A
   readonly: True
