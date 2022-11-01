@@ -119,8 +119,18 @@ if (NOT MSVC)
        -ggdb ${CMAKE_C_FLAGS}")
 endif (NOT MSVC)
 
-if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-warning-option -Wno-error=typedef-redefinition")
+
+  if (CMAKE_C_FLAGS MATCHES "-fsanitize=")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/sanitize-ignorelist.txt")
+  endif()
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  if (CMAKE_CXX_FLAGS MATCHES "-fsanitize=")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-blacklist=${PROJECT_SOURCE_DIR}/sanitize-ignorelist.txt")
+  endif()
 endif()
 
 if (ENABLE_STACK_ANALYSIS AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -149,4 +159,3 @@ endif()
 if(libsettings_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
-
