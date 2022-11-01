@@ -53,6 +53,8 @@ TEST(test_setting_data, format) {
   for (int i = 0; i < sizeof(expected); ++i) {
     EXPECT_EQ(expected[i], buf[i]);
   }
+
+  setting_data_free(setting_data);
 }
 
 TEST(test_setting_data, list) {
@@ -77,4 +79,6 @@ TEST(test_setting_data, list) {
   setting_data_remove(&list, &setting_data1);
   ASSERT_TRUE(list == NULL);
   ASSERT_TRUE(setting_data1 == NULL);
+
+  setting_data_free(list);
 }
