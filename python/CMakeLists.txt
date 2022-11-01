@@ -1,7 +1,7 @@
 set(LIBSETTINGS_VENV "libsettings-venv")
 
 set(SETUP_PY    "${PROJECT_SOURCE_DIR}/setup.py")
-set(PY_OUTPUT   "${PROJECT_SOURCE_DIR}/python/libsettings.so")
+set(PY_OUTPUT   "libsettings.so")
 
 # If you want to specify python version: 'cmake -D PYTHON=python3 ..'
 if (NOT PYTHON)
