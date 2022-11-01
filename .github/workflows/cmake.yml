@@ -33,17 +33,6 @@ jobs:
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:0.19
-        with:
-          cmakeflags: -Dlibsettings_ENABLE_PYTHON=0 -DCMAKE_POSITION_INDEPENDENT_CODE=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          preset: coverage
   # Static analyzers:
   linters:
     strategy:
@@ -92,3 +81,86 @@ jobs:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
           preset: install
+  # Run SonarCloud analysis and coverage report:
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      SONAR_SCANNER_VERSION: 4.7.0.2747
+      SONAR_SERVER_URL: "https://sonarcloud.io"
+      SONAR_ORG: swift-nav
+      SONAR_PROJECT_KEY: swift-nav_libsettings
+      BUILD_WRAPPER_OUT_DIR: sonarcloud-out
+      ANALYSIS_CACHE_DIR: sonarcloud-cache
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 11
+      - name: Set up Python for gcovr
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install gcovr
+        run: |
+          pip install gcovr==5.0
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Download and set up sonar-scanner
+        env:
+          SONAR_SCANNER_DOWNLOAD_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${{ env.SONAR_SCANNER_VERSION }}-linux.zip
+        run: |
+          mkdir -p $HOME/.sonar
+          curl -sSLo $HOME/.sonar/sonar-scanner.zip ${{ env.SONAR_SCANNER_DOWNLOAD_URL }}
+          unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+          echo "$HOME/.sonar/sonar-scanner-${{ env.SONAR_SCANNER_VERSION }}-linux/bin" >> $GITHUB_PATH
+      - name: Download and set up build-wrapper
+        env:
+          BUILD_WRAPPER_DOWNLOAD_URL: ${{ env.SONAR_SERVER_URL }}/static/cpp/build-wrapper-linux-x86.zip
+        run: |
+          curl -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
+          unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
+          echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
+      - name: Run CMake
+        run: |
+          cmake \
+            -Dlibsettings_ENABLE_PYTHON=0 \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=1 \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="--coverage" \
+            -DCMAKE_CXX_FLAGS="--coverage"
+      - name: Build with coverage
+        run: |
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make VERBOSE=1
+      - name: Generate coverage report
+        run: |
+          gcovr -v --sonarqube -o coverage.xml
+      - name: Cache SonarCloud analysis files
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.ANALYSIS_CACHE_DIR }}
+          key: ${{ runner.os }}-analysis
+          restore-keys: ${{ runner.os }}-analysis
+      - name: Run sonar-scanner
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" \
+          --define sonar.organization="${{ env.SONAR_ORG }}" \
+          --define sonar.projectKey="${{ env.SONAR_PROJECT_KEY }}" \
+          --define sonar.sources="src,python" \
+          --define sonar.tests="tests" \
+          --define sonar.python.version="2.7,3.7,3.8,3.9,3.10,3.11" \
+          --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
+          --define sonar.cfamily.cache.enabled="true" \
+          --define sonar.cfamily.cache.path="${{ env.ANALYSIS_CACHE_DIR }} " \
+          --define sonar.coverageReportPaths="coverage.xml"
