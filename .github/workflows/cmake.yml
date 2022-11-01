@@ -68,8 +68,6 @@ jobs:
           - clang-sanitize-address
           - clang-sanitize-memory
           - clang-sanitize-undefined
-          - clang-sanitize-dataflow
-          - clang-sanitize-safe-stack
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
