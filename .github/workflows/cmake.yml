@@ -1,5 +1,5 @@
 ---
-name: CI
+name: CMake
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -39,7 +39,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -55,7 +55,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -65,18 +65,18 @@ jobs:
     strategy:
       matrix:
         preset:
-          - clang-sanitizer-address
-          - clang-sanitizer-memory
-          - clang-sanitizer-undefined
-          - clang-sanitizer-dataflow
-          - clang-sanitizer-safe-stack
+          - clang-sanitize-address
+          - clang-sanitize-memory
+          - clang-sanitize-undefined
+          - clang-sanitize-dataflow
+          - clang-sanitize-safe-stack
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
@@ -89,7 +89,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: docker://lpenz/ghaction-cmake:v0.11
+      - uses: docker://lpenz/ghaction-cmake:0.19
         with:
           dependencies_debian: python3-pip python3-setuptools python3-wheel libpython3-dev
           cmakeflags: -DPYTHON=python3 -DCMAKE_POSITION_INDEPENDENT_CODE=1
