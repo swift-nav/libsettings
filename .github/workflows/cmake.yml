@@ -65,7 +65,7 @@ jobs:
       matrix:
         preset:
           - clang-sanitize-address
-          - clang-sanitize-memory
+#          - clang-sanitize-memory
           - clang-sanitize-undefined
     runs-on: ubuntu-latest
     steps:
