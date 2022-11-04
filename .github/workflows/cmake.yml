@@ -159,7 +159,7 @@ jobs:
           --define sonar.projectKey="${{ env.SONAR_PROJECT_KEY }}" \
           --define sonar.sources="src,python" \
           --define sonar.tests="tests" \
-          --define sonar.python.version="2.7,3.7,3.8,3.9,3.10,3.11" \
+          --define sonar.python.version="3.7,3.8,3.9,3.10,3.11" \
           --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
           --define sonar.cfamily.cache.enabled="true" \
           --define sonar.cfamily.cache.path="${{ env.ANALYSIS_CACHE_DIR }} " \
