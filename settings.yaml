@@ -469,6 +469,17 @@
     will be used in a solution.
 
 - group: solution
+  name: min_modelled_baseline_len_km
+  expert: true
+  type: float
+  units: kilometers
+  default value: '0'
+  readonly: false
+  enumerated possible values:
+  Description: Min modelled baseline length for RTK variance model
+  Notes: Recommend using value 50km with RTK VRS corrections
+
+- group: solution
   name: disable_raim
   expert: true
   type: boolean
