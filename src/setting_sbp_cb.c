@@ -303,10 +303,13 @@ static void setting_read_by_index_done_callback(uint16_t sender_id, uint8_t len,
 
   /* Traverse the pending requests */
   request_state_t *state = ctx->req_list;
-  while (state != NULL && state->msg_id == SBP_MSG_SETTINGS_READ_BY_INDEX_REQ) {
-    state->read_by_idx_done = true;
-    request_state_signal(state, &ctx->client_iface,
-                         SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
+  while (state != NULL) {
+    // request state signal only if the msg_id matches
+    if (state->msg_id == SBP_MSG_SETTINGS_READ_BY_INDEX_REQ) {
+      state->read_by_idx_done = true;
+      request_state_signal(state, &ctx->client_iface,
+                           SBP_MSG_SETTINGS_READ_BY_INDEX_REQ);
+    }
     state = state->next;
   }
 }
