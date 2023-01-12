@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include <libsettings/settings.h>
+#include <swiftnav/logging.h>
 
 #include <internal/request_state.h>
 #include <internal/setting_def.h>
@@ -95,7 +96,12 @@ bool request_state_match(const request_state_t *state) {
 int request_state_signal(request_state_t *state, settings_api_t *api,
                          uint16_t msg_id) {
   assert(state);
-  assert(msg_id == state->msg_id);
+
+  if (msg_id != state->msg_id) {
+    log_error("Error: request msg_id [%d] do not match state msg_id [%d]",
+              msg_id, state->msg_id);
+    assert(!"request msg_id do not match state msg_id");
+  }
 
   state->match = true;
   state->pending = false;
