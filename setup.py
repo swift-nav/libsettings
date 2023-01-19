@@ -13,34 +13,39 @@ import os.path
 from glob import glob
 from setuptools import setup, Extension
 
-import os, sys
+import os
+import sys
 
 CLASSIFIERS = [
-  'Intended Audience :: Developers',
-  'Intended Audience :: Science/Research',
-  'Operating System :: POSIX :: Linux',
-  'Operating System :: MacOS :: MacOS X',
-  'Operating System :: Microsoft :: Windows',
-  'Programming Language :: Python',
-  'Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator',
-  'Topic :: Software Development :: Libraries :: Python Modules',
-  'Programming Language :: Python :: 2.7',
-  'Programming Language :: Python :: 3.5',
-  'Programming Language :: Python :: 3.6',
-  'Programming Language :: Python :: 3.7',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: Microsoft :: Windows',
+    'Programming Language :: Python',
+    'Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
 ]
 
 PLATFORMS = [
-  'linux',
-  'osx',
-  'win32',
+    'linux',
+    'osx',
+    'win32',
 ]
 
 HERE = os.path.dirname(__file__)
 if HERE:
     os.chdir(HERE)
-include_dirs = ["include", "third_party/libsbp/c/include", "third_party/libswiftnav/include"]
-sources = glob("python/*.pyx") + glob("src/*.c") + glob("third_party/libswiftnav/src/logging*.c")
+include_dirs = ["include", "third_party/libsbp/c/include",
+                "third_party/libswiftnav/include"]
+sources = glob("python/*.pyx") + glob("src/*.c") + \
+    glob("third_party/libswiftnav/src/logging*.c")
 py_version = '{}{}'.format(sys.version_info[0], sys.version_info[1])
 
 cflags = ["-Wno-unused-label", "-std=c99"]
@@ -73,4 +78,5 @@ setup(
             extra_link_args=ldflags,
         )
     ],
+    install_requires=["sbp"]
 )

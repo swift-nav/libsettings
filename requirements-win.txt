@@ -1,0 +1,2 @@
+cmake
+cython==0.29.33

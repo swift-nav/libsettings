@@ -1,12 +1,4 @@
 echo off
-if NOT %1%==3.5 (
-    if NOT %1%==3.6 (
-        if NOT %1%==3.7 (
-            echo This script is for Python versions 3.5, 3.6 and 3.7
-            EXIT /B 1
-        )
-    )
-)
 rmdir /s /q build
 CALL conda remove -y --name py%1 --all
 CALL conda create -y -n py%1 python=%1 pip
@@ -15,7 +7,7 @@ for /f %%i in ('python -c "import struct;print( 8 * struct.calcsize('P'))"') do 
 CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars%PYARCH%.bat"
 pip install virtualenvwrapper-win
 CALL rmvirtualenv venv
-CALL mkvirtualenv -r requirements-win-cp35-cp36-cp37.txt venv
+CALL mkvirtualenv -r requirements-win.txt venv
 md build
 cd build
 cmake ..

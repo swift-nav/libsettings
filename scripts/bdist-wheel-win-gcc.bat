@@ -1,8 +1,4 @@
 echo off
-if NOT %1%==2.7 (
-    echo This script is for Python version 2.7
-    EXIT /B 1
-)
 rmdir /s /q build
 CALL conda remove -y --name py%1 --all
 CALL conda create -y -n py%1 python=%1 pip

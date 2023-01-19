@@ -64,30 +64,21 @@ Architecture (32/64-bit) is determined by conda installation.
 * .dll and .lib can be found under `build/src/Release/`
 * Python distribution package can be found under `dist/`
 
-#### Prerequisities for Python 2.7.x
-
-* conda
-
-#### Commands for Python 2.7.x
-
-For MinGW make to work correctly sh.exe must NOT be in your path.
-
-``` sh
-./scripts/bdist-wheel-win-gcc.bat 2.7
-```
-
-#### Prerequisities for Python 3.5.x or 3.6.x or 3.7.x
+#### Prerequisities for Python
 
 * conda
 * Microsoft Visual C++ 14.0, for example from:
   https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017
 
-#### Commands for Python 3.5.x or 3.6.x or 3.7.x
+#### Commands for Python
 
 ``` sh
-./scripts/bdist-wheel-win-msvc.bat 3.5
 ./scripts/bdist-wheel-win-msvc.bat 3.6
 ./scripts/bdist-wheel-win-msvc.bat 3.7
+./scripts/bdist-wheel-win-msvc.bat 3.8
+./scripts/bdist-wheel-win-msvc.bat 3.9
+./scripts/bdist-wheel-win-msvc.bat 3.10
+./scripts/bdist-wheel-win-msvc.bat 3.11
 ```
 
 #### Prebuilt wheels creation
