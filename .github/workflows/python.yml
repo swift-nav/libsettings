@@ -52,4 +52,4 @@ jobs:
             export PATH="$PATH:/C/Program Files/LLVM/bin"
           fi
 
-          tox
+          tox -vv
