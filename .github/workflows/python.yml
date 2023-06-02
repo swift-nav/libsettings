@@ -26,13 +26,16 @@ jobs:
           - '3.9'
           - '3.10'
           - '3.11'
+
     runs-on: ${{ matrix.os }}
 
     steps:
+
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: recursive
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -51,5 +54,4 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             export PATH="$PATH:/C/Program Files/LLVM/bin"
           fi
-
           tox -vv
