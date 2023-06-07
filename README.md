@@ -6,7 +6,8 @@ Open source SwiftNav settings API library.
 
 ## Bindings
 
-This repository includes [python](./python) bindings.  For rust bindings see [libsettings-rs](https://github.com/swift-nav/libsettings-rs).
+This repository includes [python](./python) bindings.  For rust bindings see
+[libsettings-rs](https://github.com/swift-nav/libsettings-rs).
 
 ## Building
 
@@ -22,14 +23,16 @@ This repository includes [python](./python) bindings.  For rust bindings see [li
 * Python
 * pip
 * CMake
-* virtualenv (pip install virtualenv)
+* conda environment or virtualenv (via `pip install virtualenv`)
 
 You can do without 'virtualenv' but beaware that in this case contents of
-`requirements.txt` shall be installed to your Python environment. You can
-specify the Python version while calling 'cmake' otherwise the default one
-is used.
+`requirements-dev.txt` shall be installed to your Python environment. You can
+specify the Python version while calling 'cmake' otherwise the default one is
+used.
 
 #### Commands
+
+To build the native (C) code:
 
 ``` sh
 mkdir build
@@ -40,6 +43,8 @@ cd ..
 ```
 
 #### Source distribution package creation (Python)
+
+Run
 
 ``` sh
 pip install build
@@ -101,10 +106,12 @@ To test your build you should search for the built distribution package under
 `dist` directory. Install it using ´pip´ and then:
 
 ``` sh
-python settings_client.py --tcp -p <piksi_ip>:55555
+python python/settings_client.py --tcp -p 192.168.0.222:55555
 ```
 
 ## Installing from package managers
+
 Some bindings are available on package managers:
 
-* [`python`]: available on PyPI: `pip install libsettings`
+* [`python`]: available on [PyPI](https://pypi.org/project/libsettings/): `pip install libsettings`
+* [`rust`]: available on [cargo](https://crates.io/crates/sbp-settings): `cargo add install libsettings`

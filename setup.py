@@ -16,25 +16,25 @@ from setuptools import setup, Extension
 import os, sys
 
 CLASSIFIERS = [
-  'Intended Audience :: Developers',
-  'Intended Audience :: Science/Research',
-  'Operating System :: POSIX :: Linux',
-  'Operating System :: MacOS :: MacOS X',
-  'Operating System :: Microsoft :: Windows',
-  'Programming Language :: Python',
-  'Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator',
-  'Topic :: Software Development :: Libraries :: Python Modules',
-  'Programming Language :: Python :: 3.7',
-  'Programming Language :: Python :: 3.8',
-  'Programming Language :: Python :: 3.9',
-  'Programming Language :: Python :: 3.10',
-  'Programming Language :: Python :: 3.11',
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
 ]
 
 PLATFORMS = [
-  'linux',
-  'osx',
-  'win32',
+  "linux",
+  "osx",
+  "win32",
 ]
 
 HERE = os.path.dirname(__file__)
@@ -48,24 +48,24 @@ sources = glob("python/*.pyx") + glob("src/*.c") + glob("third_party/libswiftnav
 ldflags = []
 libraries = []
 
-if os.name == 'nt':
+if os.name == "nt":
     cflags = []
 else:
     cflags = ["-Wno-unused-label", "-std=c99"]
 
 setup(
-    name='libsettings',
-    version="0.1.13",
+    name="libsettings",
+    version="0.1.14",
     author="Swift Navigation",
     author_email="dev@swift-nav.com",
     description="Open source SwiftNav settings API library.",
     url="https://github.com/swift-nav/libsettings",
     classifiers=CLASSIFIERS,
     platforms=PLATFORMS,
-    options={'bdist_wheel': {'universal': True}},
+    options={"bdist_wheel": {"universal": True}},
     ext_modules=[
         Extension(
-            'libsettings',
+            "libsettings",
             sources,
             libraries=libraries,
             include_dirs=include_dirs,
