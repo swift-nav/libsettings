@@ -135,7 +135,7 @@ cdef class Settings:
 
     def __init__(self, link, sender_id=SENDER_ID, debug=False):
         self.c_api.ctx = <void *>self
-        self.c_api.send = &send_wrapper
+        self.c_api.send = <settings_send_t>&send_wrapper
         self.c_api.send_from = &send_from_wrapper
         self.c_api.wait_init = &wait_init_wrapper
         self.c_api.wait = &wait_wrapper
