@@ -135,18 +135,18 @@ cdef class Settings:
 
     def __init__(self, link, sender_id=SENDER_ID, debug=False):
         self.c_api.ctx = <void *>self
-        self.c_api.send = &send_wrapper
-        self.c_api.send_from = &send_from_wrapper
-        self.c_api.wait_init = &wait_init_wrapper
-        self.c_api.wait = &wait_wrapper
-        self.c_api.signal = &signal_wrapper
-        self.c_api.wait_thd = &wait_thd_wrapper
-        self.c_api.signal_thd = &signal_thd_wrapper
-        self.c_api.lock = &lock_wrapper
-        self.c_api.unlock = &unlock_wrapper
-        self.c_api.register_cb = &register_cb_wrapper
-        self.c_api.unregister_cb = &unregister_cb_wrapper
-        self.c_api.log_preformatted = log_wrapper
+        self.c_api.send = <settings_send_t>&send_wrapper
+        self.c_api.send_from = <settings_send_from_t>&send_from_wrapper
+        self.c_api.wait_init = <settings_wait_init_t>&wait_init_wrapper
+        self.c_api.wait = <settings_wait_t>&wait_wrapper
+        self.c_api.signal = <settings_signal_t>&signal_wrapper
+        self.c_api.wait_thd = <settings_wait_thd_t>&wait_thd_wrapper
+        self.c_api.signal_thd = <settings_signal_thd_t>&signal_thd_wrapper
+        self.c_api.lock = <settings_lock_t>&lock_wrapper
+        self.c_api.unlock = <settings_unlock_t>&unlock_wrapper
+        self.c_api.register_cb = <settings_reg_cb_t>&register_cb_wrapper
+        self.c_api.unregister_cb = <settings_unreg_cb_t>&unregister_cb_wrapper
+        self.c_api.log_preformatted = <settings_log_preformatted_t>log_wrapper
 
         self.ctx = settings_create(sender_id, &self.c_api)
 
