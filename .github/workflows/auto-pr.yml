@@ -1,11 +1,10 @@
+---
 name: Add comment to successful Dependabot PRs
-
-on:
+'on':
   workflow_run:
     workflows: ["CI"]
     types:
       - completed
-
 jobs:
   add-dependabot-comment:
     runs-on: ubuntu-latest

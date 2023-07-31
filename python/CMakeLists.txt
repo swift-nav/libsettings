@@ -66,7 +66,7 @@ if (NOT MSVC)
             add_custom_command(
                 OUTPUT ${LIBSETTINGS_VENV}
                 COMMAND virtualenv ${LIBSETTINGS_VENV} -p ${PYTHON}
-                COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
+                COMMAND ./${LIBSETTINGS_VENV}/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements-dev.txt
             )
             add_custom_command(
                 DEPENDS ${LIBSETTINGS_VENV}
@@ -78,7 +78,7 @@ if (NOT MSVC)
         else (VIRTUALENV)
             add_custom_command(
                 OUTPUT ${LIBSETTINGS_VENV}
-                COMMAND pip3 install -r ${PROJECT_SOURCE_DIR}/requirements-unix.txt
+                COMMAND pip3 install -r ${PROJECT_SOURCE_DIR}/requirements-dev.txt
             )
             add_custom_command(
                 DEPENDS ${LIBSETTINGS_VENV}

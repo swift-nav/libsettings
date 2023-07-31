@@ -66,3 +66,5 @@ python/*.c
 # Rust
 target/
 Cargo.lock
+
+dist/

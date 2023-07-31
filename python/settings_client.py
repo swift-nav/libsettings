@@ -21,7 +21,14 @@ from sbp.client import Framer, Handler
 from sbp.client.drivers.network_drivers import TCPDriver
 from sbp.settings import SBP_MSG_SETTINGS_SAVE, SBP_MSG_SETTINGS_WRITE
 
-from piksi_tools import serial_link
+try:
+    from piksi_tools import serial_link
+    SERIAL_PORT = serial_link.SERIAL_PORT
+    SERIAL_BAUD = serial_link.SERIAL_BAUD
+except:
+    serial_link = None
+    SERIAL_PORT = ""
+    SERIAL_BAUD = ""
 
 from libsettings import Settings
 
@@ -38,13 +45,13 @@ def get_args():
     parser.add_argument(
         '-p',
         '--port',
-        default=[serial_link.SERIAL_PORT],
+        default=[SERIAL_PORT],
         nargs=1,
         help='specify the serial port to use.')
     parser.add_argument(
         "-b",
         "--baud",
-        default=[serial_link.SERIAL_BAUD],
+        default=[SERIAL_BAUD],
         nargs=1,
         help="specify the baud rate to use.")
     parser.add_argument(
@@ -84,7 +91,10 @@ def main():
         except Exception as e:
             raise ValueError("Invalid host and/or port: {}".format(e))
     else:
-        selected_driver = serial_link.get_driver(args.ftdi, port, baud)
+        if not serial_link:
+            raise RuntimeError("no serial port support: piksi_tools.serial_link module not available")
+        else:
+            selected_driver = serial_link.get_driver(args.ftdi, port, baud)
 
     # Driver with context
     with selected_driver as driver:
