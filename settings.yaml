@@ -2970,11 +2970,11 @@
 - group: uart0
   name: baudrate
   expert: false
-  type: integer
+  type: enum
   units: bps
   default value: '115200'
   readonly: false
-  enumerated possible values:
+  enumerated possible values: 57600,115200,230400,460800,921600
   Description: The Baud rate for the UART 0.
   Notes: The maximum baud rate supported by the USB to RS232 adapter cable provided in the Piksi Multi / Duro kits is 230400.
 
@@ -3040,11 +3040,11 @@
 - group: uart1
   name: baudrate
   expert: false
-  type: integer
+  type: enum
   units: bps
   default value: '115200'
   readonly: false
-  enumerated possible values:
+  enumerated possible values: 57600,115200,230400,460800,921600
   Description: The Baud rate for the UART 1.
   Notes: The maximum baud rate supported by the USB to RS232 adapter cable provided in the Piksi Multi / Duro kits is 230400.
 
