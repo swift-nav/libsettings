@@ -2678,7 +2678,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for TCP client 0. The client will initiate a connection with the server and establish bi-directional communications.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -2739,7 +2739,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for TCP client 1. The client will initiate a connection with the server and establish bi-directional communications.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
