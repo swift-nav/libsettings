@@ -2631,7 +2631,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for TLS client 0. The client will initiate a connection with the server and establish bi-directional communications.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -2641,6 +2641,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
+
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
     The connection is bi-directional so these modes behave the same as the UART modes.
 
@@ -2996,7 +2998,7 @@
   units: N/A
   default value: 'SBP (Swift Binary Protocol)'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for UART0.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -3066,7 +3068,7 @@
   units: N/A
   default value: 'SBP (Swift Binary Protocol)'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for UART 1.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -3252,7 +3254,7 @@
   units: N/A
   default value: 'SBP (Swift Binary Protocol)'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for UDP server 0. The server will listen for incoming packets from a client for uni-directional communications.
   Notes: |
     "SBP" configures the interface to receive incoming SBP messages.
@@ -3262,6 +3264,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not receive any other messages.
 
     "RTCMv3 OUT" has no effect for a UDP server.
+
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: udp_server0
   name: enabled_sbp_messages
@@ -3290,7 +3294,7 @@
   units: N/A
   default value: 'SBP (Swift Binary Protocol)'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for UDP server 1. The server will listen for incoming packets from a client for uni-directional communications.
   Notes: |
     "SBP" configures the interface to receive incoming SBP messages.
@@ -3300,6 +3304,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not receive any other messages.
 
     "RTCMv3 OUT" has no effect for a UDP server.
+
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: udp_server1
   name: enabled_sbp_messages
@@ -3344,7 +3350,7 @@
   units: N/A
   default value: 'SBP (Swift Binary Protocol)'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for USB0.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -3355,6 +3361,8 @@
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
 
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
+
 - group: can0
   name: mode
   expert: true
@@ -3362,7 +3370,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 Out
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for CAN client 0. The client will send packets to a CAN bus.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting.
@@ -3372,6 +3380,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
+
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: can0
   name: enabled_sbp_messages
@@ -3396,7 +3406,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 Out
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for CAN client 0. The client will send packets to a CAN bus.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting.
@@ -3406,6 +3416,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
+
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: can1
   name: enabled_sbp_messages
