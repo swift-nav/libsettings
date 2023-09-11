@@ -2680,7 +2680,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT,Disabled
   Description: Communication protocol for TCP client 0. The client will initiate a connection with the server and establish bi-directional communications.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -2741,7 +2741,7 @@
   units: N/A
   default value: 'Disabled'
   readonly: false
-  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
+  enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT,Disabled
   Description: Communication protocol for TCP client 1. The client will initiate a connection with the server and establish bi-directional communications.
   Notes: |
     "SBP" configures the interface to transmit messages specified in the 'enabled_sbp_messages' setting and to receive incoming SBP messages. If the mode is changed from SBP the console will no longer be able to communicate over the interface.
@@ -2800,7 +2800,7 @@
   expert: false
   type: enum
   units: N/A
-  default value: 'SBP (Swift Binary Protocol)'
+  default value: 'SBP'
   readonly: false
   enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for TCP server 0. The server will listen for incoming client connections and establish a bi-directional communications.
@@ -2860,7 +2860,7 @@
   expert: false
   type: enum
   units: N/A
-  default value: 'SBP (Swift Binary Protocol)'
+  default value: 'SBP'
   readonly: false
   enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for TCP server 1. The server will listen for incoming client connections and establish a bi-directional communications.
@@ -2996,7 +2996,7 @@
   expert: false
   type: enum
   units: N/A
-  default value: 'SBP (Swift Binary Protocol)'
+  default value: 'SBP'
   readonly: false
   enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for UART0.
@@ -3066,7 +3066,7 @@
   expert: false
   type: enum
   units: N/A
-  default value: 'SBP (Swift Binary Protocol)'
+  default value: 'SBP'
   readonly: false
   enumerated possible values: SBP,NMEA OUT,RTCMv3 IN,RTCMv3 OUT,EMP OUT
   Description: Communication protocol for UART 1.
@@ -3097,7 +3097,7 @@
     3456/10 would provide message with ID 3456 at 1/10th the normal rate. For uart1,
     the default value is optimal for logging and communication with the console.
 
-- group: uart0
+- group: uart1
   name: enabled_emp_messages
   expert: false
   type: string
