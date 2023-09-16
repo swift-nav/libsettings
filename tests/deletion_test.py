@@ -14,20 +14,25 @@ import logging
 from libsettings import Settings
 
 from sbp.client import Framer, Handler
-from sbp.client.drivers.network_drivers import TCPDriver
-
-_PIKSI_DEFAULT_PORT = 55555
-_PIKSI_DEFAULT_HOST = "192.168.0.222"
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class SourceIterableStub:
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        raise StopIteration
+
+    def breakiter(self):
+        pass
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
-    driver = TCPDriver(_PIKSI_DEFAULT_HOST, _PIKSI_DEFAULT_PORT)
-
-    with Handler(Framer(driver.read, driver.write)) as link:
+    with Handler(SourceIterableStub()) as link:
         _LOGGER.debug('Expecting message "Building settings framework" in STDOUT...')
         settings = Settings(link)
 
