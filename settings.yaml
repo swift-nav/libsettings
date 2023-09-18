@@ -2782,6 +2782,8 @@
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
 
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
+    
     The connection is bi-directional so these modes behave the same as the UART modes.
 
 - group: tls_client0
