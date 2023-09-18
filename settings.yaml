@@ -3405,6 +3405,8 @@
 
     "RTCMv3 OUT" has no effect for a UDP server.
 
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
+
 - group: udp_server0
   name: enabled_sbp_messages
   expert: false
@@ -3442,6 +3444,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not receive any other messages.
 
     "RTCMv3 OUT" has no effect for a UDP server.
+
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: udp_server1
   name: enabled_sbp_messages
@@ -3526,6 +3530,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
+    
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: can0
   name: mode
@@ -3544,6 +3550,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
+    
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: can0
   name: enabled_sbp_messages
@@ -3578,6 +3586,8 @@
     "RTCMv3 IN" configures the interface to receive RTK corrections in RTCMv3 format. The interface will receive 1002, 1004, 1005, 1006, 1010, 1012, 1033, 1230 and MSM4-7 RTCMv3 messages and will not transmit or receive any other messages.
 
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
+    
+    "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
 
 - group: can1
   name: enabled_sbp_messages
