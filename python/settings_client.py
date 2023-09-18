@@ -125,9 +125,6 @@ def main():
             for setting in l:
                 print(setting)
 
-            print("Release Settings")
-            s.destroy()
-
 
 if __name__ == "__main__":
     main()

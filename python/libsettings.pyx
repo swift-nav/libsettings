@@ -158,7 +158,7 @@ cdef class Settings:
 
         self._callbacks = {}
 
-    def destroy(self):
+    def __del__(self):
         settings_destroy(&self.ctx)
 
     def write(self, section, name, value, encoding='ascii', multithread=False):
