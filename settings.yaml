@@ -138,6 +138,15 @@
   Notes: Distance is measured from the pulling face of the front coupler to the pulling face of the rear coupler.
 
 - group: aar
+  name: loco_coupler_height_m
+  expert: false
+  type: float
+  units: m
+  default_value: 0.84
+  Description: Locomotive coupler height. Range [0.0..655.35].
+  Notes: Distance is measured from the top of the rail up.
+
+- group: aar
   name: pccf_mfg_id
   expert: true
   type: integer
@@ -1834,7 +1843,7 @@
   name: base_alt_m
   expert: false
   type: double
-  units: degrees
+  units: meters
   default value: '0.0'
   readonly: false
   enumerated possible values:
@@ -2783,7 +2792,7 @@
     "RTCMv3 OUT" configures the interface to transmit RTCMv3 messages.
 
     "EMP OUT" configures the interface to transmit messages specified in the 'enabled emp messages' setting.
-    
+
     The connection is bi-directional so these modes behave the same as the UART modes.
 
 - group: tls_client0
@@ -3116,7 +3125,7 @@
   units: bps
   default value: '115200'
   readonly: false
-  enumerated possible values: 57600,115200,230400,460800,921600
+  enumerated possible values: 1200,2400,4800,9600,19200,38400,57600,115200,230400,460800,921600
   Description: The Baud rate for the UART 0.
   Notes: The maximum baud rate supported by the USB to RS232 adapter cable provided in the Piksi Multi / Duro kits is 230400.
 
@@ -3186,7 +3195,7 @@
   units: bps
   default value: '115200'
   readonly: false
-  enumerated possible values: 57600,115200,230400,460800,921600
+  enumerated possible values: 1200,2400,4800,9600,19200,38400,57600,115200,230400,460800,921600
   Description: The Baud rate for the UART 1.
   Notes: The maximum baud rate supported by the USB to RS232 adapter cable provided in the Piksi Multi / Duro kits is 230400.
 
