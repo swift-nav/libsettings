@@ -1519,6 +1519,82 @@
   Description: Minimum speed for updating the current Course-Over-Ground value.
   Notes: For value '0' Course-Over-Ground is updated always when a fix is available. For non '0' values, the Course-Over-Ground value will only be recomputed and updated when the speed exceeds the specified value.
 
+- group: nmea
+  name: max_reported_sats
+  expert: true
+  type: integer
+  units: N/A
+  default value: '99'
+  readonly: false
+  Description: Maximum number of used satellites reported in GGA message. Range [0..99].
+  Notes:
+
+- group: nmea
+  name: pos_mode_spp_report_as
+  expert: true
+  type: enum
+  units: N/A
+  default value: 'SPP'
+  readonly: false
+  enumerated possible values: Invalid,SPP
+  Description: A valid SPP solution will be reported as selected in GGA, RMC, VTG, GLL and GSA messages.
+  Notes:
+
+- group: nmea
+  name: pos_mode_dgnss_report_as
+  expert: true
+  type: enum
+  units: N/A
+  default value: 'DGNSS'
+  readonly: false
+  enumerated possible values: Invalid,SPP,DGNSS
+  Description: A valid DGNSS solution will be reported as selected in GGA, RMC, VTG, GLL and GSA messages.
+  Notes:
+
+- group: nmea
+  name: pos_mode_float_rtk_report_as
+  expert: true
+  type: enum
+  units: N/A
+  default value: 'Float RTK'
+  readonly: false
+  enumerated possible values: Invalid,SPP,DGNSS,Float RTK
+  Description: A valid Float RTK solution will be reported as selected in GGA, RMC, VTG, GLL and GSA messages.
+  Notes:
+
+- group: nmea
+  name: pos_mode_fixed_rtk_report_as
+  expert: true
+  type: enum
+  units: N/A
+  default value: 'Fixed RTK'
+  readonly: false
+  enumerated possible values: Invalid,SPP,DGNSS,Float RTK,Fixed RTK
+  Description: A valid Fixed RTK solution will be reported as selected in GGA, RMC, VTG, GLL and GSA messages.
+  Notes:
+
+- group: nmea
+  name: pos_mode_dr_report_as
+  expert: true
+  type: enum
+  units: N/A
+  default value: 'DR'
+  readonly: false
+  enumerated possible values: Invalid,SPP,DR
+  Description: A valid DR solution will be reported as selected in GGA, RMC, VTG, GLL and GSA messages.
+  Notes: If the SPP is selected, the number of used satellites will be set to 4, PDOP to 3.0, HDOP to 2.0, and VDOP to 2.0.
+
+- group: nmea
+  name: pos_mode_sbas_report_as
+  expert: true
+  type: enum
+  units: N/A
+  default value: 'DGNSS'
+  readonly: false
+  enumerated possible values: Invalid,SPP,DGNSS
+  Description: A valid SBAS solution will be reported as selected in GGA, RMC, VTG, GLL and GSA messages.
+  Notes:
+
 - group: ntrip
   name: enable
   expert: false
