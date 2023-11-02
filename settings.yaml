@@ -25,54 +25,54 @@
   expert: true
   type: float
   units: MPH
-  default_value: 0.2
+  default_value: 0.05
   Description: Speed SD threshold below which speed High Precision mode is reported. Range [0.0..1000.0].
-  Notes:
+  Notes: Default value is as defined in AAR S-9103 v1.0 standard.
 
 - group: aar
   name: pcsh_ss_ssd_thr_standard_mph
   expert: true
   type: float
   units: MPH
-  default_value: 1.0
+  default_value: 0.5
   Description: Speed SD threshold below which speed Standard mode is reported. Range [0.0..1000.0].
-  Notes:
+  Notes: Default value is as defined in AAR S-9103 v1.0 standard.
 
 - group: aar
   name: pcsh_ss_ssd_thr_degraded_mph
   expert: true
   type: float
   units: MPH
-  default_value: 2.5
+  default_value: 1.0
   Description: Speed SD threshold below which speed Degraded mode is reported. Range [0.0..1000.0].
-  Notes: Speed Very Low Confidence mode is reported when the speed is valid and speed SD is above this threshold.
+  Notes: Speed Very Low Confidence mode is reported when the speed is valid and speed SD is above this threshold. Default value is as defined in AAR S-9103 v1.0 standard.
 
 - group: aar
   name: pcsh_ss_hsd_thr_high_precision_deg
   expert: true
   type: float
   units: degrees
-  default_value: 0.5
+  default_value: 1.0
   Description: Heading SD threshold below which heading High Precision mode is reported. Range [0.0..180.0].
-  Notes:
+  Notes: Default value is as defined in AAR S-9103 v1.0 standard.
 
 - group: aar
   name: pcsh_ss_hsd_thr_standard_deg
   expert: true
   type: float
   units: degrees
-  default_value: 2.0
+  default_value: 5.0
   Description: Heading SD threshold below which heading Standard mode is reported. Range [0.0..180.0].
-  Notes:
+  Notes: Default value is as defined in AAR S-9103 v1.0 standard.
 
 - group: aar
   name: pcsh_ss_hsd_thr_degraded_deg
   expert: true
   type: float
   units: degrees
-  default_value: 5.0
+  default_value: 20.0
   Description: Heading SD threshold below which heading Degraded mode is reported. Range [0.0..180.0].
-  Notes: Heading Very Low Confidence mode is reported when the heading is valid and heading SD is above this threshold.
+  Notes: Heading Very Low Confidence mode is reported when the heading is valid and heading SD is above this threshold. Default value is as defined in AAR S-9103 v1.0 standard.
 
 - group: aar
   name: pcof_along_track_offset_m
