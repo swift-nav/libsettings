@@ -21,12 +21,10 @@ jobs:
           fetch-depth: 0
           submodules: recursive
       - uses: actions/setup-python@v3
-        with:
-          python-version: ">=3 <3.12"
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.os.needs_qemu }}
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.16.2 cython==3.0.5
+        run: python -m pip install cibuildwheel==2.16.2 cython>=3.0.5
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
@@ -47,10 +45,8 @@ jobs:
           fetch-depth: 0
           submodules: recursive
       - uses: actions/setup-python@v3
-        with:
-          python-version: ">=3 <3.12"
       - name: Install build
-        run: python -m pip install build cython==3.0.5
+        run: python -m pip install build cython>=3.0.5
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
