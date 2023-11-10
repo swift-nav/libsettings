@@ -24,7 +24,7 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.os.needs_qemu }}
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel cython
+        run: python -m pip install setuptools cibuildwheel cython
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
@@ -46,7 +46,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-python@v3
       - name: Install build
-        run: python -m pip install build cython
+        run: python -m pip install setuptools build cython
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
