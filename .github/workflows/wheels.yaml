@@ -15,8 +15,6 @@ jobs:
       matrix:
         os:
           - { name: "ubuntu-20.04", needs_qemu: true }
-          - { name: "windows-2019", needs_qemu: false }
-          - { name: "macOS-11", needs_qemu: false }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -28,7 +26,7 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.os.needs_qemu }}
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.13.0 cython
+        run: python -m pip install cibuildwheel==2.16.2 cython==3.0.5
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
@@ -52,7 +50,7 @@ jobs:
         with:
           python-version: ">=3 <3.12"
       - name: Install build
-        run: python -m pip install build cython
+        run: python -m pip install build cython==3.0.5
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
