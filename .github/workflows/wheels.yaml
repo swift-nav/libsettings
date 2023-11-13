@@ -1,12 +1,12 @@
 name: Wheels
-'on':
+"on":
   pull_request: ~
   push:
     branches:
-      - 'master'
+      - "master"
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+*'
-      - 'v[0-9]+.[0-9]+.[0-9]+*'
+      - "[0-9]+.[0-9]+.[0-9]+*"
+      - "v[0-9]+.[0-9]+.[0-9]+*"
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os.name }}
@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - {name: "ubuntu-20.04", needs_qemu: true}
-          - {name: "windows-2019", needs_qemu: false}
-          - {name: "macOS-11", needs_qemu: false}
+          - { name: "ubuntu-20.04", needs_qemu: true }
+          - { name: "windows-2019", needs_qemu: false }
+          - { name: "macOS-11", needs_qemu: false }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -26,7 +26,7 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.os.needs_qemu }}
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.13.0 cython
+        run: python -m pip install setuptools cibuildwheel==2.13.0 cython
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
@@ -48,7 +48,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-python@v3
       - name: Install build
-        run: python -m pip install build cython
+        run: python -m pip install setuptools build cython
       - name: Build wheels
         run: |
           cythonize python/libsettings.pyx
