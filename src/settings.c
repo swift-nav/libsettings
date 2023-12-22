@@ -98,6 +98,8 @@
 #define __attribute__(x)
 #endif
 
+#define SBP_SENDER_ID 0x42
+
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5
 
@@ -109,9 +111,8 @@ static const char *const bool_enum_names[] = {"False", "True", NULL};
 static settings_log_preformatted_t client_log_preformatted = NULL;
 
 /* Workaround for Cython not properly supporting variadic arguments */
-__attribute__((format(printf, 2, 3))) static void log_preformat(int level,
-                                                                const char *fmt,
-                                                                ...) {
+__attribute__((format(printf, 2, 3))) static void
+log_preformat(int level, const char *fmt, ...) {
   char buffer[SETTINGS_BUFLEN];
   va_list args;
   va_start(args, fmt);
