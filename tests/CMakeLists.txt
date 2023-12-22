@@ -1,4 +1,4 @@
-  add_executable(
+add_executable(
     test_libsettings
     src/test_request_state.cpp
     src/test_setting_data.cpp
@@ -20,28 +20,29 @@
     ${PROJECT_SOURCE_DIR}/src/settings.c
     ${PROJECT_SOURCE_DIR}/src/settings_util.c)
 
-  target_include_directories(test_libsettings
+target_include_directories(test_libsettings
       PRIVATE
       ${PROJECT_SOURCE_DIR}/include
       ${PROJECT_SOURCE_DIR}/tests/include
       $<TARGET_PROPERTY:sbp,INCLUDE_DIRECTORIES>
       )
 
-  target_link_libraries(test_libsettings swiftnav gtest_main)
+target_link_libraries(test_libsettings swiftnav gtest_main)
+target_compile_options(test_libsettings PRIVATE -Wno-error=deprecated-declarations)
 
-  if (WIN32)
-    add_custom_command(
+if (WIN32)
+  add_custom_command(
       TARGET test_libsettings POST_BUILD
       COMMENT "Running unit tests"
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/libgtest.dll ${CMAKE_BINARY_DIR}/tests
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/libgtest_main.dll ${CMAKE_BINARY_DIR}/tests
       COMMAND test_libsettings
     )
-  else (WIN32)
-    add_custom_command(
+else (WIN32)
+  add_custom_command(
       TARGET test_libsettings POST_BUILD
       COMMENT "Running unit tests"
       COMMAND test_libsettings
     )
-  endif (WIN32)
+endif (WIN32)
 

@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <libsbp/settings.h>
+#include <libsbp/legacy/settings.h>
 
 #include <swiftnav/logging.h>
 

@@ -76,7 +76,7 @@
 #include <sys/stat.h>
 
 #include <libsbp/sbp.h>
-#include <libsbp/settings.h>
+#include <libsbp/legacy/settings.h>
 
 #include <swiftnav/logging.h>
 
