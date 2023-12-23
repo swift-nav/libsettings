@@ -33,7 +33,7 @@
 #define UPDATE_FILTER_READONLY (0x1 << 1)
 #define UPDATE_FILTER_WATCHONLY (0x1 << 2)
 
-#define update_filter_check(filter_mask, filter_enum)                          \
+#define update_filter_check(filter_mask, filter_enum) \
   (filter_mask & filter_enum)
 
 /**
@@ -132,21 +132,21 @@ static void setting_register_resp_callback(uint16_t sender_id, uint8_t len,
   msg_settings_register_resp_t *resp = (msg_settings_register_resp_t *)msg;
 
   switch ((settings_reg_res_t)resp->status) {
-  case SETTINGS_REG_PARSE_FAILED:
-    /* In case the request was corrupted during transfer, let the timeout
-     * trigger and request be sent again, parse error is printed in
-     * sbp_settings_daemon */
-    return;
+    case SETTINGS_REG_PARSE_FAILED:
+      /* In case the request was corrupted during transfer, let the timeout
+       * trigger and request be sent again, parse error is printed in
+       * sbp_settings_daemon */
+      return;
 
-  /* Use the returned value to update in all cases */
-  case SETTINGS_REG_OK:
-  case SETTINGS_REG_OK_PERM:
-  case SETTINGS_REG_REGISTERED:
-    break;
+    /* Use the returned value to update in all cases */
+    case SETTINGS_REG_OK:
+    case SETTINGS_REG_OK_PERM:
+    case SETTINGS_REG_REGISTERED:
+      break;
 
-  default:
-    log_error("invalid reg resp return code %d", resp->status);
-    return;
+    default:
+      log_error("invalid reg resp return code %d", resp->status);
+      return;
   }
 
   /* Check for a response to a pending registration request */
@@ -323,26 +323,26 @@ static void setting_read_by_index_done_callback(uint16_t sender_id, uint8_t len,
 
 static sbp_msg_callback_t setting_sbp_cb_get(uint16_t msg_id) {
   switch (msg_id) {
-  case SBP_MSG_SETTINGS_REGISTER_RESP:
-    return setting_register_resp_callback;
+    case SBP_MSG_SETTINGS_REGISTER_RESP:
+      return setting_register_resp_callback;
 
-  case SBP_MSG_SETTINGS_WRITE:
-    return setting_write_callback;
+    case SBP_MSG_SETTINGS_WRITE:
+      return setting_write_callback;
 
-  case SBP_MSG_SETTINGS_WRITE_RESP:
-    return setting_write_resp_callback;
+    case SBP_MSG_SETTINGS_WRITE_RESP:
+      return setting_write_resp_callback;
 
-  case SBP_MSG_SETTINGS_READ_RESP:
-    return setting_read_resp_callback;
+    case SBP_MSG_SETTINGS_READ_RESP:
+      return setting_read_resp_callback;
 
-  case SBP_MSG_SETTINGS_READ_BY_INDEX_RESP:
-    return setting_read_by_index_resp_callback;
+    case SBP_MSG_SETTINGS_READ_BY_INDEX_RESP:
+      return setting_read_by_index_resp_callback;
 
-  case SBP_MSG_SETTINGS_READ_BY_INDEX_DONE:
-    return setting_read_by_index_done_callback;
+    case SBP_MSG_SETTINGS_READ_BY_INDEX_DONE:
+      return setting_read_by_index_done_callback;
 
-  default:
-    assert(!"callback not found");
+    default:
+      assert(!"callback not found");
   }
 
   /* To make cythonizer happy.. */

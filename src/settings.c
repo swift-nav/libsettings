@@ -75,8 +75,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include <libsbp/sbp.h>
 #include <libsbp/legacy/settings.h>
+#include <libsbp/sbp.h>
 
 #include <swiftnav/logging.h>
 
@@ -111,8 +111,9 @@ static const char *const bool_enum_names[] = {"False", "True", NULL};
 static settings_log_preformatted_t client_log_preformatted = NULL;
 
 /* Workaround for Cython not properly supporting variadic arguments */
-__attribute__((format(printf, 2, 3))) static void
-log_preformat(int level, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) static void log_preformat(int level,
+                                                                const char *fmt,
+                                                                ...) {
   char buffer[SETTINGS_BUFLEN];
   va_list args;
   va_start(args, fmt);
