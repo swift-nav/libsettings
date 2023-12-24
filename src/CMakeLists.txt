@@ -15,6 +15,10 @@ add_library(settings
             setting_type_float.c
             setting_type_int.c
             setting_type_str.c)
+target_compile_options(settings
+  PRIVATE
+    -Wno-error=deprecated-declarations
+)
 
 target_link_libraries(settings swiftnav)
 

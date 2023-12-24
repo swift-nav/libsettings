@@ -75,8 +75,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <libsbp/legacy/settings.h>
 #include <libsbp/sbp.h>
-#include <libsbp/settings.h>
 
 #include <swiftnav/logging.h>
 
@@ -97,6 +97,8 @@
 #ifndef __GNUC__
 #define __attribute__(x)
 #endif
+
+#define SBP_SENDER_ID 0x42
 
 #define REGISTER_TIMEOUT_MS 500
 #define REGISTER_TRIES 5

@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <libsbp/settings.h>
+#include <libsbp/legacy/settings.h>
 
 #include <swiftnav/logging.h>
 
@@ -25,6 +25,8 @@
 #include <internal/setting_def.h>
 #include <internal/setting_macros.h>
 #include <internal/setting_sbp_cb.h>
+
+#define SBP_SENDER_ID 0x42
 
 #define UPDATE_FILTER_NONE 0x0
 #define UPDATE_FILTER_BASIC (0x1 << 3)
